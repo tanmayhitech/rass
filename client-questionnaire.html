@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rass by Ridhima — Client Store Questionnaire</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #FAF8F5;
+      color: #292624;
+    }
+    .font-serif {
+      font-family: 'Playfair Display', serif;
+    }
+    .custom-radio:checked + label {
+      border-color: #A783A2;
+      background-color: #FAF5F9;
+    }
+    .custom-checkbox:checked + label {
+      border-color: #A783A2;
+      background-color: #FAF5F9;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 lg:p-10">
+
+  <div class="max-w-3xl mx-auto bg-white rounded-3xl border border-[#E7E0DA] shadow-xl overflow-hidden">
+    
+    <!-- Header Banner -->
+    <div class="bg-gradient-to-r from-[#F6F0F4] via-[#FAF8F5] to-[#F3ECE5] p-6 sm:p-10 border-b border-[#E7E0DA] relative">
+      <div class="flex items-center justify-between mb-4">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#A783A2]/15 text-[#936E8F] uppercase tracking-widest">
+          ✦ Client Store Form
+        </span>
+        <span class="text-xs text-[#77716F]">Time to complete: ~3 mins</span>
+      </div>
+      <h1 class="font-serif text-2xl sm:text-4xl text-[#292624] font-medium tracking-tight mb-2">
+        Rass by Ridhima
+      </h1>
+      <p class="text-sm sm:text-base text-[#5C5855] leading-relaxed max-w-xl">
+        Quick interactive questionnaire to personalize your store's <strong>About Page</strong> and <strong>Help & Client Care Page</strong>. Answer below and click <em>"Copy for WhatsApp"</em> at the bottom!
+      </p>
+    </div>
+
+    <form id="quizForm" class="p-6 sm:p-10 space-y-10" onsubmit="event.preventDefault();">
+
+      <!-- ================= SECTION 1: ABOUT US ================= -->
+      <div class="space-y-6">
+        <div class="flex items-center gap-3 border-b border-[#E7E0DA] pb-3">
+          <span class="w-7 h-7 rounded-full bg-[#A783A2] text-white flex items-center justify-center text-xs font-bold">1</span>
+          <div>
+            <h2 class="font-serif text-xl sm:text-2xl text-[#292624]">About Page & Brand Story</h2>
+            <p class="text-xs text-[#77716F]">Craftsmanship, philosophy, and Hyderabad heritage</p>
+          </div>
+        </div>
+
+        <!-- Question 1: Headline -->
+        <div class="space-y-3">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            1. Which brand tagline or headline feels best for your hero section?
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <input type="radio" id="tagline1" name="tagline" value="Rooted in Tradition, Made for Today." class="hidden custom-radio" checked>
+              <label for="tagline1" class="block p-3.5 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer transition text-xs font-medium">
+                ✦ "Rooted in Tradition, Made for Today."
+              </label>
+            </div>
+            <div>
+              <input type="radio" id="tagline2" name="tagline" value="Curated pieces for the Modern Muse." class="hidden custom-radio">
+              <label for="tagline2" class="block p-3.5 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer transition text-xs font-medium">
+                ✦ "Curated pieces for the Modern Muse."
+              </label>
+            </div>
+            <div>
+              <input type="radio" id="tagline3" name="tagline" value="Everyday Heirlooms, Effortlessly Yours." class="hidden custom-radio">
+              <label for="tagline3" class="block p-3.5 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer transition text-xs font-medium">
+                ✦ "Everyday Heirlooms, Effortlessly Yours."
+              </label>
+            </div>
+            <div>
+              <input type="radio" id="tagline4" name="tagline" value="Other" class="hidden custom-radio">
+              <label for="tagline4" class="block p-3.5 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer transition text-xs font-medium">
+                ✦ Custom / Write your own below
+              </label>
+            </div>
+          </div>
+          <input type="text" id="customTagline" placeholder="Optional: Type custom tagline here..." class="w-full text-xs p-3 rounded-xl border border-[#E7E0DA] focus:outline-none focus:border-[#A783A2] bg-[#FAF8F5]">
+        </div>
+
+        <!-- Question 2: Brand Story / Why Started -->
+        <div class="space-y-3">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            2. What inspired you to start Rass? (Select all that apply)
+          </label>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="why1" name="whyStarted" value="Bridge gap between heavy bridal locker jewellery and fast fashion" class="w-4 h-4 text-[#A783A2] rounded accent-[#A783A2]" checked>
+              <label for="why1" class="text-xs text-[#4A4542]">Bridge the gap between heavy bridal locker jewellery and disposable fast fashion</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="why2" name="whyStarted" value="Offer premium anti-tarnish finish with featherlight comfort" class="w-4 h-4 text-[#A783A2] rounded accent-[#A783A2]" checked>
+              <label for="why2" class="text-xs text-[#4A4542]">Provide premium anti-tarnish finish with featherlight everyday comfort</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="why3" name="whyStarted" value="Celebrate Indian artisanal karigari (filigree, rawa, Kundan) in modern silhouettes" class="w-4 h-4 text-[#A783A2] rounded accent-[#A783A2]" checked>
+              <label for="why3" class="text-xs text-[#4A4542]">Celebrate Indian artisanal karigari (filigree, rawa ball detailing, Kundan) in modern silhouettes</label>
+            </div>
+          </div>
+          <textarea id="whyCustom" rows="2" placeholder="Any personal memory or specific story from Founder Ridhima..." class="w-full text-xs p-3 rounded-xl border border-[#E7E0DA] focus:outline-none focus:border-[#A783A2] bg-[#FAF8F5]"></textarea>
+        </div>
+
+        <!-- Question 3: Materials & Craft -->
+        <div class="space-y-3">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            3. Which metals and embellishments are used?
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <label class="p-2.5 rounded-lg border border-[#E7E0DA] flex items-center gap-2 text-xs cursor-pointer hover:border-[#A783A2]">
+              <input type="checkbox" name="materials" value="Brass with Gold/Silver Polish" checked class="accent-[#A783A2]">
+              <span>Brass & Polish</span>
+            </label>
+            <label class="p-2.5 rounded-lg border border-[#E7E0DA] flex items-center gap-2 text-xs cursor-pointer hover:border-[#A783A2]">
+              <input type="checkbox" name="materials" value="Dual-tone Oxidised" checked class="accent-[#A783A2]">
+              <span>Dual-tone Oxidised</span>
+            </label>
+            <label class="p-2.5 rounded-lg border border-[#E7E0DA] flex items-center gap-2 text-xs cursor-pointer hover:border-[#A783A2]">
+              <input type="checkbox" name="materials" value="Semi-Precious Stones & Kundan" checked class="accent-[#A783A2]">
+              <span>Kundan & Stones</span>
+            </label>
+            <label class="p-2.5 rounded-lg border border-[#E7E0DA] flex items-center gap-2 text-xs cursor-pointer hover:border-[#A783A2]">
+              <input type="checkbox" name="materials" value="Freshwater / Shell Pearls" checked class="accent-[#A783A2]">
+              <span>Pearls & Beads</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 4: Founder Note -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            4. Include a personal "Founder's Note" from Ridhima?
+          </label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input type="radio" name="founderNote" value="Yes" checked class="accent-[#A783A2]">
+              <span>Yes, add a warm personal note from Ridhima</span>
+            </label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input type="radio" name="founderNote" value="No" class="accent-[#A783A2]">
+              <span>No, keep it brand-only</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SECTION 2: POLICIES & HELP ================= -->
+      <div class="space-y-6 pt-4">
+        <div class="flex items-center gap-3 border-b border-[#E7E0DA] pb-3">
+          <span class="w-7 h-7 rounded-full bg-[#A783A2] text-white flex items-center justify-center text-xs font-bold">2</span>
+          <div>
+            <h2 class="font-serif text-xl sm:text-2xl text-[#292624]">Help & Store Policies</h2>
+            <p class="text-xs text-[#77716F]">Shipping, dispatch, returns, and payments</p>
+          </div>
+        </div>
+
+        <!-- Question 5: Dispatch & Shipping -->
+        <div class="space-y-3">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            5. What is your dispatch and delivery timeline from Hyderabad?
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <input type="radio" id="dispatch1" name="dispatchTime" value="24-48 business hours" class="hidden custom-radio" checked>
+              <label for="dispatch1" class="block p-3 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer text-xs font-medium">
+                📦 Dispatched in 24–48 hours (Standard)
+              </label>
+            </div>
+            <div>
+              <input type="radio" id="dispatch2" name="dispatchTime" value="2-3 working days" class="hidden custom-radio">
+              <label for="dispatch2" class="block p-3 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer text-xs font-medium">
+                📦 Dispatched in 2–3 working days
+              </label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div>
+              <label class="block text-xs text-[#77716F] mb-1">Transit time across India:</label>
+              <input type="text" id="transitTime" value="3 to 5 business days" class="w-full text-xs p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5]">
+            </div>
+            <div>
+              <label class="block text-xs text-[#77716F] mb-1">Free shipping on orders above:</label>
+              <input type="text" id="freeShippingMin" value="₹1,999 (Flat ₹99 below that)" class="w-full text-xs p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5]">
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 6: Cash on Delivery -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            6. Cash on Delivery (COD) Policy
+          </label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 p-3 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer text-xs">
+              <input type="radio" name="codPolicy" value="Prepaid Only (No COD to ensure authentic orders & zero transit damage)" checked class="accent-[#A783A2]">
+              <span><strong>Prepaid Only (No COD)</strong> — Standard for delicate artisanal jewellery to avoid transit damage</span>
+            </label>
+            <label class="flex items-center gap-2 p-3 rounded-xl border border-[#E7E0DA] hover:border-[#A783A2] cursor-pointer text-xs">
+              <input type="radio" name="codPolicy" value="COD Available with extra fee" class="accent-[#A783A2]">
+              <span><strong>COD Available</strong> with extra fee</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 7: Returns & Exchange -->
+        <div class="space-y-3">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            7. Return & Exchange Policy
+          </label>
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="retExchangeOnly" checked class="accent-[#A783A2]">
+              <label for="retExchangeOnly" class="text-xs text-[#4A4542]"><strong>Exchange Only</strong> (No cash refunds, replacements for defect/sizing)</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="retVideo" checked class="accent-[#A783A2]">
+              <label for="retVideo" class="text-xs text-[#4A4542]"><strong>360° Unboxing Video mandatory</strong> to report transit damage/missing items</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="retDays" checked class="accent-[#A783A2]">
+              <label for="retDays" class="text-xs text-[#4A4542]">Must notify within <strong>48 hours / 7 days</strong> of delivery</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 8: Custom Orders & Gifting -->
+        <div class="space-y-2">
+          <label class="block text-sm font-semibold text-[#1A1817]">
+            8. Custom Orders & Bulk Gifting
+          </label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input type="radio" name="customOrders" value="Yes, available via WhatsApp Concierge" checked class="accent-[#A783A2]">
+              <span>Yes, open for bridesmaid / festive bulk orders</span>
+            </label>
+            <label class="flex items-center gap-2 text-xs cursor-pointer">
+              <input type="radio" name="customOrders" value="No, website items only" class="accent-[#A783A2]">
+              <span>No, catalogue pieces only</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= SECTION 3: CONTACT & ASSETS ================= -->
+      <div class="space-y-6 pt-4">
+        <div class="flex items-center gap-3 border-b border-[#E7E0DA] pb-3">
+          <span class="w-7 h-7 rounded-full bg-[#A783A2] text-white flex items-center justify-center text-xs font-bold">3</span>
+          <div>
+            <h2 class="font-serif text-xl sm:text-2xl text-[#292624]">Support & Media Verification</h2>
+            <p class="text-xs text-[#77716F]">Confirm your contact links</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label class="block text-[#77716F] mb-1 font-medium">WhatsApp Support Number:</label>
+            <input type="text" id="supportWhatsapp" value="+91 98197 33572" class="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5]">
+          </div>
+          <div>
+            <label class="block text-[#77716F] mb-1 font-medium">Support Email:</label>
+            <input type="text" id="supportEmail" value="care@rassbyridhima.com" class="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5]">
+          </div>
+          <div>
+            <label class="block text-[#77716F] mb-1 font-medium">Instagram Handle:</label>
+            <input type="text" id="supportInsta" value="@rassbyridhima" class="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5]">
+          </div>
+          <div>
+            <label class="block text-[#77716F] mb-1 font-medium">Support Hours:</label>
+            <input type="text" id="supportHours" value="Mon–Sat, 10:00 AM – 7:00 PM IST" class="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5]">
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[#FAF5F9] border border-[#E7E0DA] space-y-2">
+          <span class="text-xs font-semibold text-[#A783A2] uppercase tracking-wider block">📸 Media Upload Reminder</span>
+          <p class="text-xs text-[#5C5855]">
+            Please share 1 founder photo and 2–3 workshop / jewellery flatlay photos via Google Drive or WhatsApp when convenient.
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-6 border-t border-[#E7E0DA] space-y-3 no-print">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onclick="copyForWhatsApp()"
+            class="flex-1 py-3.5 px-6 rounded-full bg-[#A783A2] hover:bg-[#936E8F] text-white font-semibold text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+          >
+            <span>📋 Copy Answers for WhatsApp</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="downloadJSON()"
+            class="py-3.5 px-6 rounded-full bg-white border border-[#E7E0DA] hover:border-[#A783A2] text-[#292624] font-semibold text-sm transition flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>💾 Save as File</span>
+          </button>
+        </div>
+
+        <div id="toast" class="hidden p-3 rounded-xl bg-[#292624] text-white text-xs text-center font-medium transition-all">
+          ✓ Copied to clipboard! You can now paste directly into WhatsApp or email.
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    function getFormData() {
+      const form = document.getElementById('quizForm');
+      const taglineRadio = document.querySelector('input[name="tagline"]:checked');
+      const customTagline = document.getElementById('customTagline').value.trim();
+      const tagline = customTagline ? customTagline : (taglineRadio ? taglineRadio.value : '');
+
+      const whyChecked = Array.from(document.querySelectorAll('input[name="whyStarted"]:checked')).map(el => el.value);
+      const whyCustom = document.getElementById('whyCustom').value.trim();
+      if (whyCustom) whyChecked.push(whyCustom);
+
+      const materials = Array.from(document.querySelectorAll('input[name="materials"]:checked')).map(el => el.value);
+      const founderNote = document.querySelector('input[name="founderNote"]:checked')?.value || 'Yes';
+
+      const dispatchTime = document.querySelector('input[name="dispatchTime"]:checked')?.value || '24-48 business hours';
+      const transitTime = document.getElementById('transitTime').value;
+      const freeShippingMin = document.getElementById('freeShippingMin').value;
+      const codPolicy = document.querySelector('input[name="codPolicy"]:checked')?.value || 'Prepaid Only';
+
+      const retExchangeOnly = document.getElementById('retExchangeOnly').checked;
+      const retVideo = document.getElementById('retVideo').checked;
+      const retDays = document.getElementById('retDays').checked;
+
+      const customOrders = document.querySelector('input[name="customOrders"]:checked')?.value || 'Yes';
+      const supportWhatsapp = document.getElementById('supportWhatsapp').value;
+      const supportEmail = document.getElementById('supportEmail').value;
+      const supportInsta = document.getElementById('supportInsta').value;
+      const supportHours = document.getElementById('supportHours').value;
+
+      return {
+        tagline,
+        whyStarted: whyChecked,
+        materials,
+        founderNote,
+        dispatchTime,
+        transitTime,
+        freeShippingMin,
+        codPolicy,
+        returns: {
+          exchangeOnly: retExchangeOnly,
+          videoMandatory: retVideo,
+          window: retDays ? '48 hours / 7 days' : 'Standard'
+        },
+        customOrders,
+        contact: {
+          whatsapp: supportWhatsapp,
+          email: supportEmail,
+          instagram: supportInsta,
+          hours: supportHours
+        }
+      };
+    }
+
+    function copyForWhatsApp() {
+      const d = getFormData();
+      const text = `*RASS BY RIDHIMA — STORE CONTENT BRIEF*\n` +
+        `----------------------------------------\n` +
+        `*1. ABOUT PAGE*\n` +
+        `• Tagline: ${d.tagline}\n` +
+        `• Core Brand Philosophy: ${d.whyStarted.join('; ')}\n` +
+        `• Materials & Stones: ${d.materials.join(', ')}\n` +
+        `• Founder Note: ${d.founderNote}\n\n` +
+        `*2. HELP & CLIENT CARE*\n` +
+        `• Dispatch Time: ${d.dispatchTime}\n` +
+        `• Delivery Transit: ${d.transitTime}\n` +
+        `• Free Shipping: ${d.freeShippingMin}\n` +
+        `• COD Policy: ${d.codPolicy}\n` +
+        `• Returns & Exchange: ${d.returns.exchangeOnly ? 'Exchange Only' : 'Returns accepted'}, Unboxing video ${d.returns.videoMandatory ? 'Mandatory' : 'Optional'}\n` +
+        `• Custom/Bulk Orders: ${d.customOrders}\n\n` +
+        `*3. SUPPORT CONTACT*\n` +
+        `• WhatsApp: ${d.contact.whatsapp}\n` +
+        `• Instagram: ${d.contact.instagram}\n` +
+        `• Email: ${d.contact.email}\n` +
+        `• Hours: ${d.contact.hours}\n`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 4000);
+      });
+    }
+
+    function downloadJSON() {
+      const data = getFormData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'rass-store-client-brief.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

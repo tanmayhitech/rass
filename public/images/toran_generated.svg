@@ -1,0 +1,256 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -10 1440 130" fill="none" preserveAspectRatio="none" className="w-full h-auto">
+  <defs>
+    <!-- Muted Sage Green Gradient with soft depth -->
+    <linearGradient id="sageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8EA284"/>
+      <stop offset="50%" stop-color="#7A8E71"/>
+      <stop offset="100%" stop-color="#6B7E62"/>
+    </linearGradient>
+
+    <!-- Dusty Mauve Jewel Gradient -->
+    <linearGradient id="mauveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9D7598"/>
+      <stop offset="40%" stop-color="#886183"/>
+      <stop offset="100%" stop-color="#6F4A6A"/>
+    </linearGradient>
+
+    <!-- Antique Gold Wire Filigree -->
+    <linearGradient id="goldFiligree" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C8AF82"/>
+      <stop offset="50%" stop-color="#E3CE9F"/>
+      <stop offset="100%" stop-color="#BA9E6E"/>
+    </linearGradient>
+
+    <!-- 1. SAGE GREEN OGEE DIAMOND PLAQUE -->
+    <g id="green-plaque">
+      <!-- Main curved ogee diamond body -->
+      <path d="M 0 -13 C 9 -13 22 -6 22 0 C 22 7 9 14 0 19 C -9 14 -22 7 -22 0 C -22 -6 -9 -13 0 -13 Z" 
+            fill="url(#sageGrad)" stroke="url(#goldFiligree)" stroke-width="1"/>
+      <!-- Inner filigree contour -->
+      <path d="M 0 -9 C 6 -9 16 -4 16 0 C 16 5 6 10 0 14 C -6 10 -16 5 -16 0 C -16 -4 -6 -9 0 -9 Z" 
+            fill="none" stroke="url(#goldFiligree)" stroke-width="0.6" stroke-opacity="0.7"/>
+      <!-- Top and bottom anchor beads -->
+      <circle cx="0" cy="-13" r="1.5" fill="#BA9E6E"/>
+      <circle cx="0" cy="19" r="1.5" fill="#BA9E6E"/>
+    </g>
+
+    <!-- 2. MAUVE FLUTED LANTERN PENDANT (Medium) -->
+    <g id="mauve-lantern">
+      <!-- Suspension cord and top gold bead -->
+      <line x1="0" y1="0" x2="0" y2="9" stroke="#7A8E71" stroke-width="1.5"/>
+      <circle cx="0" cy="9" r="1.8" fill="#BA9E6E"/>
+      <!-- Lantern collar -->
+      <ellipse cx="0" cy="11" rx="3.5" ry="1.5" fill="#886183" stroke="#BA9E6E" stroke-width="0.6"/>
+      
+      <!-- Main Onion Dome / Bell Body -->
+      <path d="M 0 12 C -11 12 -15 17 -15 22 C -15 28 -7 34 0 38 C 7 34 15 28 15 22 C 15 17 11 12 0 12 Z" 
+            fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="0.9"/>
+      
+      <!-- Vertical curved fluting ribs -->
+      <path d="M 0 12 C -5 17 -7 28 0 38" fill="none" stroke="url(#goldFiligree)" stroke-width="0.7" stroke-opacity="0.85"/>
+      <path d="M 0 12 C 5 17 7 28 0 38" fill="none" stroke="url(#goldFiligree)" stroke-width="0.7" stroke-opacity="0.85"/>
+      <path d="M 0 12 C -10 18 -11 26 0 38" fill="none" stroke="url(#goldFiligree)" stroke-width="0.6" stroke-opacity="0.7"/>
+      <path d="M 0 12 C 10 18 11 26 0 38" fill="none" stroke="url(#goldFiligree)" stroke-width="0.6" stroke-opacity="0.7"/>
+      <line x1="0" y1="12" x2="0" y2="38" stroke="url(#goldFiligree)" stroke-width="0.7" stroke-opacity="0.85"/>
+
+      <!-- Bottom finial droplet -->
+      <circle cx="0" cy="40" r="1.6" fill="#BA9E6E"/>
+      <path d="M 0 41.5 C -1.5 41.5 -2.2 44.5 0 49 C 2.2 44.5 1.5 41.5 0 41.5 Z" 
+            fill="#886183" stroke="#BA9E6E" stroke-width="0.6"/>
+    </g>
+
+    <!-- 3. LARGE TERMINAL DROP (Left and Right Ends) -->
+    <g id="terminal-lantern-lg">
+      <!-- Main hanging stem -->
+      <line x1="0" y1="0" x2="0" y2="36" stroke="#886183" stroke-width="2.6"/>
+      <circle cx="0" cy="20" r="1.8" fill="#BA9E6E"/>
+      <!-- Lower collar bead -->
+      <circle cx="0" cy="37" r="2.8" fill="#BA9E6E"/>
+      <path d="M -5 39 C -3 43 3 43 5 39 Z" fill="#7A8E71"/>
+
+      <!-- Large fluted bell dome -->
+      <path d="M 0 42 C -15 42 -20 48 -20 55 C -20 64 -9 72 0 78 C 9 72 20 64 20 55 C 20 48 15 42 0 42 Z" 
+            fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="1.1"/>
+      <!-- Fluting ribs -->
+      <path d="M 0 42 C -7 50 -9 64 0 78" fill="none" stroke="url(#goldFiligree)" stroke-width="0.8" stroke-opacity="0.85"/>
+      <path d="M 0 42 C 7 50 9 64 0 78" fill="none" stroke="url(#goldFiligree)" stroke-width="0.8" stroke-opacity="0.85"/>
+      <path d="M 0 42 C -14 51 -15 62 0 78" fill="none" stroke="url(#goldFiligree)" stroke-width="0.7" stroke-opacity="0.7"/>
+      <path d="M 0 42 C 14 51 15 62 0 78" fill="none" stroke="url(#goldFiligree)" stroke-width="0.7" stroke-opacity="0.7"/>
+      <line x1="0" y1="42" x2="0" y2="78" stroke="url(#goldFiligree)" stroke-width="0.8" stroke-opacity="0.85"/>
+
+      <!-- Lower terminal drop -->
+      <circle cx="0" cy="81" r="2.2" fill="#BA9E6E"/>
+      <path d="M 0 83 C -2 83 -3 87 0 92 C 3 87 2 83 0 83 Z" 
+            fill="#886183" stroke="#BA9E6E" stroke-width="0.7"/>
+    </g>
+
+    <!-- 4. SMALL SAGE BEAD / ACCENT DROP -->
+    <g id="bead-accent">
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#7A8E71" stroke-width="1.2"/>
+      <circle cx="0" cy="9" r="1.5" fill="#BA9E6E"/>
+      <circle cx="0" cy="14" r="3" fill="url(#mauveGrad)" stroke="#BA9E6E" stroke-width="0.6"/>
+      <circle cx="0" cy="18" r="1.2" fill="#BA9E6E"/>
+    </g>
+  </defs>
+
+  <!-- ================= CONTINUOUS DRAPING ROPES ================= -->
+  <!-- Upper Continuous Vine Rope (Thicker, runs from far left to center to far right) -->
+  <path d="M -10 14 Q 360 48 720 38 Q 1080 48 1450 14" 
+        stroke="#7A8E71" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <!-- Upper Highlight Thread -->
+  <path d="M -10 13 Q 360 47 720 37 Q 1080 47 1450 13" 
+        stroke="#BA9E6E" stroke-width="0.6" stroke-opacity="0.6" fill="none"/>
+
+  <!-- Lower Scalloped Swags (Dipping between each plaque and meeting under each drop) -->
+  <!-- Left Side Swags -->
+  <path d="M 35 22 Q 80 38 120 28" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 120 28 Q 155 42 190 32" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 190 32 Q 230 48 270 34" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 270 34 Q 320 50 370 38" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 370 38 Q 430 54 490 40" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 490 40 Q 550 54 610 42" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 610 42 Q 650 50 685 40" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+
+  <!-- Right Side Swags (Mirrored) -->
+  <path d="M 755 40 Q 790 50 830 42" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 830 42 Q 890 54 950 40" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 950 40 Q 1010 54 1070 38" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 1070 38 Q 1120 50 1170 34" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 1170 34 Q 1210 48 1250 32" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 1250 32 Q 1285 42 1320 28" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+  <path d="M 1320 28 Q 1360 38 1405 22" stroke="#8EA284" stroke-width="1.4" fill="none"/>
+
+  <!-- ================= RHYTHMIC MOTIFS: LEFT WING ================= -->
+  <!-- Far Left Terminal Drop (X=35) -->
+  <use href="#green-plaque" x="35" y="22" transform="scale(0.85)"/>
+  <use href="#terminal-lantern-lg" x="35" y="22"/>
+
+  <!-- Mauve Lantern (X=120) -->
+  <use href="#mauve-lantern" x="120" y="28" transform="scale(0.9)"/>
+
+  <!-- Green Diamond Plaque (X=190) -->
+  <use href="#green-plaque" x="190" y="32"/>
+
+  <!-- Mauve Lantern (X=270) -->
+  <use href="#mauve-lantern" x="270" y="34" transform="scale(0.95)"/>
+
+  <!-- Small Mauve Bead Accent (X=320) -->
+  <use href="#bead-accent" x="320" y="43"/>
+
+  <!-- Green Diamond Plaque (X=370) -->
+  <use href="#green-plaque" x="370" y="38"/>
+
+  <!-- Mauve Lantern (X=440) -->
+  <use href="#mauve-lantern" x="440" y="41"/>
+
+  <!-- Green Diamond Plaque (X=500) -->
+  <use href="#green-plaque" x="500" y="40"/>
+
+  <!-- Mauve Lantern (X=570) -->
+  <use href="#mauve-lantern" x="570" y="42"/>
+
+  <!-- Green Diamond Plaque (X=640) -->
+  <use href="#green-plaque" x="640" y="41"/>
+
+  <!-- Small Bead Accent Near Center (X=685) -->
+  <use href="#bead-accent" x="685" y="40"/>
+
+  <!-- ================= RHYTHMIC MOTIFS: RIGHT WING (EXACT MIRROR) ================= -->
+  <!-- Small Bead Accent Near Center (X=755) -->
+  <use href="#bead-accent" x="755" y="40"/>
+
+  <!-- Green Diamond Plaque (X=800) -->
+  <use href="#green-plaque" x="800" y="41"/>
+
+  <!-- Mauve Lantern (X=870) -->
+  <use href="#mauve-lantern" x="870" y="42"/>
+
+  <!-- Green Diamond Plaque (X=940) -->
+  <use href="#green-plaque" x="940" y="40"/>
+
+  <!-- Mauve Lantern (X=1000) -->
+  <use href="#mauve-lantern" x="1000" y="41"/>
+
+  <!-- Green Diamond Plaque (X=1070) -->
+  <use href="#green-plaque" x="1070" y="38"/>
+
+  <!-- Small Mauve Bead Accent (X=1120) -->
+  <use href="#bead-accent" x="1120" y="43"/>
+
+  <!-- Mauve Lantern (X=1170) -->
+  <use href="#mauve-lantern" x="1170" y="34" transform="scale(0.95)"/>
+
+  <!-- Green Diamond Plaque (X=1250) -->
+  <use href="#green-plaque" x="1250" y="32"/>
+
+  <!-- Mauve Lantern (X=1320) -->
+  <use href="#mauve-lantern" x="1320" y="28" transform="scale(0.9)"/>
+
+  <!-- Far Right Terminal Drop (X=1405) -->
+  <use href="#green-plaque" x="1405" y="22" transform="scale(0.85)"/>
+  <use href="#terminal-lantern-lg" x="1405" y="22"/>
+
+  <!-- ================= CENTRAL LOTUS BLOOM & CAGE PENDANT (X=720) ================= -->
+  <g id="centerpiece-lotus" transform="translate(720, 38)">
+    <!-- Center Lotus Base Leaves (Calyx) -->
+    <path d="M -34 6 C -20 12 -8 14 0 14 C 8 14 20 12 34 6 C 24 16 8 20 0 20 C -8 20 -24 16 -34 6 Z" 
+          fill="url(#sageGrad)" stroke="url(#goldFiligree)" stroke-width="0.8"/>
+
+    <!-- Lower Spreading Petals -->
+    <path d="M -8 2 C -28 4 -42 -4 -38 -12 C -28 -6 -14 0 -8 2 Z" 
+          fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="0.8"/>
+    <path d="M 8 2 C 28 4 42 -4 38 -12 C 28 -6 14 0 8 2 Z" 
+          fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="0.8"/>
+
+    <!-- Outer-Mid Layer Petals -->
+    <path d="M -6 0 C -24 -6 -32 -18 -26 -26 C -18 -18 -6 -8 -6 0 Z" 
+          fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="0.8"/>
+    <path d="M 6 0 C 24 -6 32 -18 26 -26 C 18 -18 6 -8 6 0 Z" 
+          fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="0.8"/>
+
+    <!-- Intermediate Layer Petals -->
+    <path d="M -4 -2 C -18 -12 -20 -28 -12 -34 C -4 -26 0 -12 -4 -2 Z" 
+          fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="0.9"/>
+    <path d="M 4 -2 C 18 -12 20 -28 12 -34 C 4 -26 0 -12 4 -2 Z" 
+          fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="0.9"/>
+
+    <!-- Central Tall Crown Petal -->
+    <path d="M 0 0 C -12 -14 -10 -34 0 -44 C 10 -34 12 -14 0 0 Z" 
+          fill="url(#mauveGrad)" stroke="url(#goldFiligree)" stroke-width="1.1"/>
+    <!-- Center petal gold vein line -->
+    <line x1="0" y1="-6" x2="0" y2="-38" stroke="url(#goldFiligree)" stroke-width="0.8"/>
+
+    <!-- Gold jewel pearl nestled at base of petals -->
+    <circle cx="0" cy="6" r="2.6" fill="url(#goldFiligree)"/>
+    <circle cx="0" cy="14" r="2" fill="url(#goldFiligree)"/>
+
+    <!-- Openwork Temple Birdcage / Lantern Jewel -->
+    <g transform="translate(0, 18)">
+      <!-- Top collar -->
+      <line x1="-5" y1="0" x2="5" y2="0" stroke="#BA9E6E" stroke-width="1"/>
+      <!-- Outer curved cage wires -->
+      <path d="M 0 0 C -18 8 -22 24 0 38 C 22 24 18 8 0 0 Z" 
+            stroke="#886183" stroke-width="1.8" fill="none"/>
+      <!-- Gold wire outer overlay -->
+      <path d="M 0 0 C -18 8 -22 24 0 38 C 22 24 18 8 0 0 Z" 
+            stroke="url(#goldFiligree)" stroke-width="0.7" fill="none"/>
+
+      <!-- Inner curved vertical ribs -->
+      <path d="M 0 0 C -10 8 -12 24 0 38" stroke="#886183" stroke-width="1.2" fill="none"/>
+      <path d="M 0 0 C -10 8 -12 24 0 38" stroke="url(#goldFiligree)" stroke-width="0.6" fill="none"/>
+      <path d="M 0 0 C 10 8 12 24 0 38" stroke="#886183" stroke-width="1.2" fill="none"/>
+      <path d="M 0 0 C 10 8 12 24 0 38" stroke="url(#goldFiligree)" stroke-width="0.6" fill="none"/>
+      <line x1="0" y1="0" x2="0" y2="38" stroke="url(#goldFiligree)" stroke-width="1"/>
+
+      <!-- Suspended jewel bead inside birdcage -->
+      <circle cx="0" cy="18" r="3.5" fill="url(#goldFiligree)"/>
+      <circle cx="0" cy="18" r="1.8" fill="#FAF8F5" opacity="0.85"/>
+
+      <!-- Bottom finial droplet -->
+      <circle cx="0" cy="42" r="2" fill="#BA9E6E"/>
+      <path d="M 0 43.5 C -1.8 43.5 -2.5 47 0 52 C 2.5 47 1.8 43.5 0 43.5 Z" 
+            fill="#886183" stroke="#BA9E6E" stroke-width="0.7"/>
+      <circle cx="0" cy="53" r="1.2" fill="#BA9E6E"/>
+    </g>
+  </g>
+</svg>

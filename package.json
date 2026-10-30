@@ -1,0 +1,34 @@
+{
+  "name": "rass-by-riddhima",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "node -e \"require('esbuild').buildSync({ entryPoints: ['src/tests/backend-verification.ts'], bundle: true, platform: 'node', outfile: 'dist/test-runner.mjs', format: 'esm', external: ['canvas-confetti', '@supabase/supabase-js'] });\" && node dist/test-runner.mjs",
+    "test:db": "node -e \"require('esbuild').buildSync({ entryPoints: ['src/tests/database-and-auth-verification.ts'], bundle: true, platform: 'node', outfile: 'dist/db-test-runner.mjs', format: 'esm', external: ['@supabase/supabase-js'] });\" && node dist/db-test-runner.mjs",
+    "test:advanced": "node -e \"require('esbuild').buildSync({ entryPoints: ['src/tests/advanced-hardening-suite.ts'], bundle: true, platform: 'node', outfile: 'dist/advanced-test-runner.mjs', format: 'esm', external: ['@supabase/supabase-js', 'canvas-confetti', 'jspdf'] });\" && node dist/advanced-test-runner.mjs",
+    "test:media": "node -e \"require('esbuild').buildSync({ entryPoints: ['src/tests/home-media-verification.ts'], bundle: true, platform: 'node', outfile: 'dist/media-test-runner.mjs', format: 'esm' });\" && node dist/media-test-runner.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "canvas-confetti": "^1.9.3",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.2"
+  }
+}

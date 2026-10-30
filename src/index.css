@@ -1,0 +1,466 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-background: #FAF8F5;
+  --color-surface: #FFFFFF;
+  --color-sage: #C8D4C1;
+  --color-lavender: #E2D5E5;
+  --color-mauve: #A783A2;
+  --color-mauve-hover: #936E8F;
+  --color-antique-gold: #B49A6C;
+  --color-text: #292624;
+  --color-text-secondary: #77716F;
+  --color-border: #E7E0DA;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.015em;
+  }
+
+  .font-serif, .font-editorial, .font-playfair, .font-cormorant, .font-bodoni, .font-luxury-serif {
+    font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, Cambria, 'Times New Roman', serif !important;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF8F5;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2D5E5;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A783A2;
+}
+
+/* Organic curve for everyday moments arch */
+.everyday-arch {
+  border-radius: 180px 180px 16px 16px;
+}
+
+@media (max-width: 768px) {
+  .everyday-arch {
+    border-radius: 120px 120px 12px 12px;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideLeft {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slideLeft {
+  animation: slideLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* Luxury Gemstone & Metal Hover Lustre */
+.hover-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-sheen::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -80%;
+  width: 50%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.0) 20%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  transform: skewX(-25deg) translateX(-150%);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.95s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.group:hover .hover-sheen::after,
+.hover-sheen:hover::after {
+  opacity: 1;
+  transform: skewX(-25deg) translateX(550%);
+}
+
+/* Toran Ambient Gentle Drift */
+@keyframes toranSway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  33% {
+    transform: rotate(0.4deg);
+  }
+  66% {
+    transform: rotate(-0.4deg);
+  }
+}
+
+.animate-toran-sway {
+  transform-origin: 50% 0%;
+  animation: toranSway 10s ease-in-out infinite;
+}
+
+/* Independent Toran Jhumka & Chandelier Pendulum Physics */
+@keyframes jhumkaDangleLeft {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(2deg);
+  }
+  70% {
+    transform: rotate(-1.6deg);
+  }
+}
+
+@keyframes jhumkaDangleRight {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(-1.8deg);
+  }
+  75% {
+    transform: rotate(2.2deg);
+  }
+}
+
+@keyframes chandelierSway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(1.2deg);
+  }
+  80% {
+    transform: rotate(-1.2deg);
+  }
+}
+
+@keyframes toranSparkle {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(0.65) rotate(0deg);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.25) rotate(45deg);
+  }
+}
+
+.animate-jhumka-left {
+  transform-origin: 50% 0%;
+  animation: jhumkaDangleLeft 5.5s ease-in-out infinite;
+}
+
+.animate-jhumka-right {
+  transform-origin: 50% 0%;
+  animation: jhumkaDangleRight 6.2s ease-in-out infinite;
+}
+
+.animate-chandelier {
+  transform-origin: 50% 0%;
+  animation: chandelierSway 7.5s ease-in-out infinite;
+}
+
+.animate-toran-glint {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: toranSparkle 3.5s ease-in-out infinite;
+}
+
+/* Badge Bounce / Pop on Update */
+@keyframes badgePop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+  75% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Seamless Infinite Announcement Marquee */
+@keyframes marqueeScroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marqueeScroll 32s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (max-width: 640px) {
+  .animate-marquee {
+    animation-duration: 24s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+.animate-badge-pop {
+  animation: badgePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Wishlist Heart Elastic Pulse */
+@keyframes heartSnap {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.32);
+  }
+  75% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-heart-snap {
+  animation: heartSnap 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Hide scrollbar for Chrome, Safari, and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Hide scrollbar for IE, Edge, and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* 3D 360 Spin Animation for Rass Logo */
+@keyframes logoSpin360 {
+  0% {
+    transform: perspective(1200px) rotateY(0deg) scale(0.9);
+    filter: drop-shadow(0 4px 10px rgba(41, 38, 36, 0.06));
+  }
+  50% {
+    transform: perspective(1200px) rotateY(180deg) scale(1.06);
+    filter: drop-shadow(0 16px 32px rgba(167, 131, 162, 0.25));
+  }
+  100% {
+    transform: perspective(1200px) rotateY(360deg) scale(1);
+    filter: drop-shadow(0 4px 14px rgba(41, 38, 36, 0.08));
+  }
+}
+
+.animate-spin-360 {
+  animation: logoSpin360 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-style: preserve-3d;
+}
+
+/* Radiant Metallic Shine Sweep */
+@keyframes shineSweepGleam {
+  0% {
+    transform: translateX(-160%) skewX(-25deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(260%) skewX(-25deg);
+    opacity: 0;
+  }
+}
+
+.animate-shine-gleam {
+  animation: shineSweepGleam 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+}
+
+/* Glint Sparkle Star */
+@keyframes glintStar {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.4) rotate(90deg);
+  }
+}
+
+.animate-glint-star {
+  animation: glintStar 0.6s ease-in-out 0.9s forwards;
+}
+
+
+
+
+/* ==========================================================================
+   PRINT MEDIA STYLES (INVOICES & COURIER SHIPPING SLIPS)
+   ========================================================================== */
+@media print {
+  /* Reset document and viewport clipping for printing */
+  html, body, #root {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    background: #ffffff !important;
+    color: #292624 !important;
+  }
+
+  /* Hide everything on page by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make invoice and courier slip printable */
+  .printable-invoice,
+  .printable-invoice *,
+  .printable-courier-slip,
+  .printable-courier-slip * {
+    visibility: visible !important;
+  }
+
+  /* Strip all modal overlays, backdrops, and fixed constraints */
+  .fixed,
+  .backdrop-blur-xs,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .bg-black\/60,
+  .bg-black\/80 {
+    position: static !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
+  .max-h-\[90vh\],
+  .max-h-\[85vh\],
+  .h-screen,
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Position invoice as clean full-width paper document */
+  .printable-invoice,
+  .printable-courier-slip {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm 12mm !important;
+    background: #ffffff !important;
+    color: #292624 !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+
+  /* Preserve table borders and contrast */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border-color: #E7E0DA !important;
+  }
+
+  /* Preserve colors and fonts in browser print engine */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+}

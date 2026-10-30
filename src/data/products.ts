@@ -1,0 +1,206 @@
+import { Product } from '../types';
+
+export const PRODUCTS: Product[] = [
+  {
+    id: 'rass-ring-01',
+    name: 'Gulshan Emerald & Seed Pearl Cocktail Ring',
+    category: 'rings',
+    categoryDisplay: 'Rings',
+    price: 14500,
+    originalPrice: 16500,
+    image: '/images/cat_rings.png',
+    cleanImage: '/images/clean_cat_rings.png',
+    description: 'An architectural heirloom ring sculpted in 18k gold vermeil, featuring an untreated Colombian emerald cabochon encircled by delicate freshwater seed pearls and hand-pierced floral filigree.',
+    details: [
+      'Handcrafted in 18k Yellow Gold Vermeil over recycled sterling silver',
+      'Natural Zambian Emerald Cabochon (1.8 carats)',
+      'Hand-strung grade AAA freshwater seed pearls',
+      'Adjustable band mechanism for effortless comfort',
+      'Hallmarked with 925 authenticity stamp'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Zambian Emerald & Freshwater Seed Pearls',
+    inStock: true,
+    isBestseller: true,
+    isNew: false,
+    dimensions: '22mm diameter crest',
+    weight: '8.4g'
+  },
+  {
+    id: 'rass-earring-01',
+    name: 'Chandani Double-Tier Jhumka Chandelier',
+    category: 'earrings',
+    categoryDisplay: 'Earrings',
+    price: 22800,
+    originalPrice: 25000,
+    image: '/images/cat_earrings.png',
+    cleanImage: '/images/clean_cat_earrings.png',
+    description: 'Statuesque chandelier earrings blending Mughal floral stud work with two cascading bell tiers, trimmed with micro-faceted lavender amethyst and sage jade beads.',
+    details: [
+      'Twin architectural bell domes with open-worked filigree',
+      'Hand-knotted cluster fringe in pastel amethyst and mint quartz',
+      'Secure push-back closure with wide support clutch',
+      'Lightweight hollow-core construction for day-to-night ease'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Lavender Amethyst, Mint Quartz & Cultured Pearls',
+    inStock: true,
+    isBestseller: true,
+    isNew: true,
+    dimensions: '68mm length × 26mm width',
+    weight: '16.2g (pair)'
+  },
+  {
+    id: 'rass-jhumka-01',
+    name: 'Mayur Heritage Dome Jhumka',
+    category: 'jhumka',
+    categoryDisplay: 'Jhumka',
+    price: 18200,
+    originalPrice: 20000,
+    image: '/images/cat_jhumka.png',
+    cleanImage: '/images/clean_cat_jhumka.png',
+    description: 'A timeless silhouette featuring our signature bell contour, adorned with bezel-set deep forest emerald and a cascading perimeter of warm golden pearls.',
+    details: [
+      'Intricate repoussé floral banding around crown',
+      'Rich satin gold finish with hand-burnished highlights',
+      'Hypoallergenic titanium post with comfort disc backing',
+      'Comes with handcrafted suede presentation box'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Hydrothermal Emerald & Basra Pearl Drops',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '42mm drop length',
+    weight: '12.8g (pair)'
+  },
+  {
+    id: 'rass-kangan-01',
+    name: 'Rani Bagh Floral Stud & Jhumki Ensemble',
+    category: 'kangan-sets',
+    categoryDisplay: 'Kangan Sets',
+    price: 26500,
+    originalPrice: 29000,
+    image: '/images/cat_kangan_sets.png',
+    cleanImage: '/images/clean_cat_kangan_sets.png',
+    description: 'Designed as an ode to royal royal garden ceremonies. Featuring an ornate sunburst floral stud crowned with a deep green tourmaline and a tiered pastel bead fringe.',
+    details: [
+      'Modular 2-in-1 design: stud can be worn independently or with drop',
+      'Artisanal rawa work detailing on stud perimeter',
+      'Hand-wired cascade of micro seed pearls and briolettes',
+      'Signature Rass stamp of authenticity'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Green Tourmaline, Peridot & Rice Pearls',
+    inStock: true,
+    isBestseller: true,
+    isNew: false,
+    dimensions: '52mm overall length',
+    weight: '14.6g'
+  },
+  {
+    id: 'rass-kangna-01',
+    name: 'Virasat Pierced Lattice Kangna',
+    category: 'kangna',
+    categoryDisplay: 'Kangna',
+    price: 16900,
+    originalPrice: 19000,
+    image: '/images/cat_kangna_1.png',
+    cleanImage: '/images/clean_cat_kangna_1.png',
+    description: 'A structural masterpiece featuring hand-pierced jaali geometry, crowned with bezel-set emeralds and a border of micro pearls.',
+    details: [
+      'Hand-sawn pierced latticework by master karigars',
+      'Concealed hinge clasp with safety lock',
+      'Smooth interior contour engineered for all-day comfort',
+      'Available in sizes 2.4, 2.6 and 2.8'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Emeralds & Seed Pearls',
+    inStock: true,
+    isBestseller: false,
+    isNew: false,
+    dimensions: 'Width 18mm',
+    weight: '24.5g'
+  },
+  {
+    id: 'rass-necklace-01',
+    name: 'Rajkumari Cascading Jhumka Collar',
+    category: 'necklaces',
+    categoryDisplay: 'Necklaces',
+    price: 38000,
+    originalPrice: 42000,
+    image: '/images/cat_necklaces.png',
+    cleanImage: '/images/clean_cat_necklaces.png',
+    description: 'The defining statement of our collection. A regal rigid gold collar suspending seven handcrafted miniature jhumkas, each tipped with clusters of pastel jade and amethyst drops.',
+    details: [
+      'Ergonomically curved collar torque rests naturally on the collarbone',
+      'Seven individually balanced hanging jhumka pendants',
+      'Adjustable pure silk dori (cord) closure with gold tassel accents',
+      'Handcrafted over 45 artisan hours'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Pastel Jade, Amethyst & Cultured Seed Pearls',
+    inStock: true,
+    isBestseller: true,
+    isNew: true,
+    dimensions: '14-inch torque + 6-inch adjustable silk cord',
+    weight: '48.0g'
+  },
+  {
+    id: 'rass-bracelet-01',
+    name: 'Manjari Multi-Strand Gemstone Cuff',
+    category: 'bracelets',
+    categoryDisplay: 'Bracelets',
+    price: 19800,
+    originalPrice: 22000,
+    image: '/images/cat_bracelets.png',
+    cleanImage: '/images/clean_cat_bracelets.png',
+    description: 'A harmonious composition of stacked natural stones: faceted emeralds, soft amethyst, and lustrous pearls woven together with gold spacer bars.',
+    details: [
+      'Five continuous rows of hand-selected genuine gemstones',
+      'Flexible woven memory core ensures a tailored fit on any wrist',
+      'Magnetic box clasp with dual safety latch',
+      'Resistant to tarnishing with protective micro-coating'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Emeralds, Lilac Amethyst & Freshwater Pearls',
+    inStock: true,
+    isBestseller: true,
+    isNew: false,
+    dimensions: 'Width 24mm, Inner circumference 6.5 inches',
+    weight: '28.2g'
+  },
+  {
+    id: 'rass-kangna-02',
+    name: 'Noor Beaded Dome Miniature Kangna',
+    category: 'kangna',
+    categoryDisplay: 'Kangna',
+    price: 17400,
+    originalPrice: 19500,
+    image: '/images/cat_kangna_2.png',
+    cleanImage: '/images/clean_cat_kangna_2.png',
+    description: 'A delicate expression of traditional metal spinning, featuring miniature dome clusters accented with soft lavender and sage enamel highlights.',
+    details: [
+      'Fine micro-prongs holding pastel stone rondelles',
+      'Smooth satin gold interior band',
+      'Stackable with our Virasat Lattice Kangna or worn solo'
+    ],
+    metal: '18k Gold Vermeil',
+    gemstones: 'Lavender Rondelles & Seed Pearls',
+    inStock: true,
+    isBestseller: false,
+    isNew: false,
+    dimensions: 'Width 14mm',
+    weight: '18.6g'
+  }
+];
+
+export const CATEGORIES_CONFIG = [
+  { id: 'rings', name: 'RINGS', count: 12, path: '/shop/rings' },
+  { id: 'earrings', name: 'EARRINGS', count: 18, path: '/shop/earrings' },
+  { id: 'jhumka', name: 'JHUMKA', count: 14, path: '/shop/jhumka' },
+  { id: 'kangan-sets', name: 'KANGAN SETS', count: 8, path: '/shop/kangan-sets' },
+  { id: 'kangna', name: 'KANGNA', count: 11, path: '/shop/kangna' },
+  { id: 'necklaces', name: 'NECKLACES', count: 9, path: '/shop/necklaces' },
+  { id: 'bracelets', name: 'BRACELETS', count: 15, path: '/shop/bracelets' },
+];
