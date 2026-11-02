@@ -51,22 +51,22 @@ export const EditorialCraftsmanship: React.FC<EditorialCraftsmanshipProps> = ({ 
           <div className="lg:col-span-5 lg:pr-4 pt-4 sm:pt-8 lg:pt-10">
             {/* Eyebrow with decorative line */}
             <div className="flex items-center space-x-2.5 sm:space-x-3 mb-3.5 sm:mb-5">
-              <span className="font-sans font-medium text-[10.5px] sm:text-[12px] tracking-[0.22em] sm:tracking-[0.25em] text-[#77716F] uppercase">
-                OUR CRAFTSMANSHIP
+              <span className="font-sans font-semibold text-[10.5px] sm:text-[12px] tracking-[0.22em] sm:tracking-[0.25em] text-[#A783A2] uppercase">
+                MASTER ARTISAN CLUSTERS
               </span>
-              <div className="w-10 sm:w-12 h-[1px] bg-[#292624]/20" />
+              <div className="w-10 sm:w-12 h-[1px] bg-[#A783A2]/30" />
             </div>
 
             {/* Editorial Heading (Cormorant Garamond) */}
-            <h2 className="font-editorial text-[32px] sm:text-[46px] lg:text-[54px] leading-[1.08] sm:leading-[1.06] tracking-[-0.01em] text-[#292624] font-normal mb-3.5 sm:mb-5">
-              Rooted in<br />
-              tradition, made<br />
-              for today.
+            <h2 className="font-editorial text-[30px] sm:text-[44px] lg:text-[52px] leading-[1.08] sm:leading-[1.06] tracking-[-0.01em] text-[#292624] font-normal mb-3.5 sm:mb-5">
+              Where culture<br />
+              meets contemporary<br />
+              expression.
             </h2>
 
             {/* Narrative Body Copy */}
-            <p className="font-sans text-[14px] sm:text-[15.5px] leading-[1.65] text-[#77716F] max-w-md mb-6 sm:mb-8">
-              Each piece is thoughtfully crafted by skilled hands, blending age-old artistry with modern sensibilities.
+            <p className="font-sans text-[13.5px] sm:text-[15px] leading-[1.65] text-[#77716F] max-w-md mb-6 sm:mb-8">
+              Curated directly from generational craftsmanship clusters across Jaipur, Rajkot, and Bengal—blending the timeless charm of Indian tradition with modern aesthetics and everyday wearability.
             </p>
 
             {/* Pill CTA Button */}

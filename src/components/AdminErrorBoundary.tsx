@@ -61,7 +61,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
             </div>
 
             <div>
-              <h2 className="text-base font-bold text-[#292624]">Atelier Console Recovery</h2>
+              <h2 className="text-base font-bold text-[#292624]">Admin Console Recovery</h2>
               <p className="text-xs text-[#77716F] mt-1.5 leading-relaxed">
                 The operations console encountered an unexpected rendering interrupt. You can reload the portal or reset the local cache.
               </p>
@@ -81,7 +81,7 @@ export class AdminErrorBoundary extends Component<Props, State> {
                 className="w-full inline-flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-semibold cursor-pointer transition-colors"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-[#B49A6C]" />
-                <span>Reload Atelier Portal</span>
+                <span>Reload Admin Portal</span>
               </button>
 
               <button

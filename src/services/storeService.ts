@@ -19,30 +19,6 @@ const STORAGE_KEYS = {
 // Initial Variants generated from PRODUCTS
 const INITIAL_VARIANTS: ProductVariant[] = [
   {
-    id: 'var-ring-01-std',
-    productId: 'rass-ring-01',
-    sku: 'RASS-RNG-01-STD',
-    variantName: 'Standard Adjustable',
-    optionType: 'Size',
-    optionValue: 'Adjustable',
-    isActive: true,
-    stockQuantity: 12,
-    reservedQuantity: 0,
-    lowStockThreshold: 3,
-  },
-  {
-    id: 'var-earring-01-std',
-    productId: 'rass-earring-01',
-    sku: 'RASS-EAR-01-STD',
-    variantName: 'Standard Pair',
-    optionType: 'Size',
-    optionValue: 'Standard',
-    isActive: true,
-    stockQuantity: 8,
-    reservedQuantity: 0,
-    lowStockThreshold: 2,
-  },
-  {
     id: 'var-jhumka-01-std',
     productId: 'rass-jhumka-01',
     sku: 'RASS-JHM-01-STD',
@@ -50,93 +26,9 @@ const INITIAL_VARIANTS: ProductVariant[] = [
     optionType: 'Size',
     optionValue: 'Standard',
     isActive: true,
-    stockQuantity: 15,
+    stockQuantity: 25,
     reservedQuantity: 0,
     lowStockThreshold: 4,
-  },
-  {
-    id: 'var-kangan-01-std',
-    productId: 'rass-kangan-01',
-    sku: 'RASS-KST-01-STD',
-    variantName: 'Standard Set',
-    optionType: 'Size',
-    optionValue: 'Standard',
-    isActive: true,
-    stockQuantity: 6,
-    reservedQuantity: 0,
-    lowStockThreshold: 2,
-  },
-  {
-    id: 'var-kangna-01-24',
-    productId: 'rass-kangna-01',
-    sku: 'RASS-KNG-01-24',
-    variantName: 'Size 2.4',
-    optionType: 'Size',
-    optionValue: '2.4',
-    isActive: true,
-    stockQuantity: 4,
-    reservedQuantity: 0,
-    lowStockThreshold: 2,
-  },
-  {
-    id: 'var-kangna-01-26',
-    productId: 'rass-kangna-01',
-    sku: 'RASS-KNG-01-26',
-    variantName: 'Size 2.6',
-    optionType: 'Size',
-    optionValue: '2.6',
-    isActive: true,
-    stockQuantity: 10,
-    reservedQuantity: 0,
-    lowStockThreshold: 3,
-  },
-  {
-    id: 'var-kangna-01-28',
-    productId: 'rass-kangna-01',
-    sku: 'RASS-KNG-01-28',
-    variantName: 'Size 2.8',
-    optionType: 'Size',
-    optionValue: '2.8',
-    isActive: true,
-    stockQuantity: 5,
-    reservedQuantity: 0,
-    lowStockThreshold: 2,
-  },
-  {
-    id: 'var-neck-01-std',
-    productId: 'rass-necklace-01',
-    sku: 'RASS-NCK-01-STD',
-    variantName: 'Standard Collar',
-    optionType: 'Size',
-    optionValue: 'Standard',
-    isActive: true,
-    stockQuantity: 2, // Low stock demo!
-    reservedQuantity: 0,
-    lowStockThreshold: 3,
-  },
-  {
-    id: 'var-brac-01-std',
-    productId: 'rass-bracelet-01',
-    sku: 'RASS-BRC-01-STD',
-    variantName: 'Standard 6.5"',
-    optionType: 'Size',
-    optionValue: 'Standard',
-    isActive: true,
-    stockQuantity: 9,
-    reservedQuantity: 0,
-    lowStockThreshold: 3,
-  },
-  {
-    id: 'var-kangna-02-26',
-    productId: 'rass-kangna-02',
-    sku: 'RASS-KNG-02-26',
-    variantName: 'Size 2.6',
-    optionType: 'Size',
-    optionValue: '2.6',
-    isActive: true,
-    stockQuantity: 7,
-    reservedQuantity: 0,
-    lowStockThreshold: 2,
   },
 ];
 
@@ -192,9 +84,33 @@ class StoreService {
       const storedVariants = localStorage.getItem(STORAGE_KEYS.VARIANTS);
       const storedMovements = localStorage.getItem(STORAGE_KEYS.MOVEMENTS);
 
-      this.products = storedProducts ? JSON.parse(storedProducts) : INITIAL_PRODUCTS;
-      this.variants = storedVariants ? JSON.parse(storedVariants) : INITIAL_VARIANTS;
+      if (storedProducts) {
+        const parsed = JSON.parse(storedProducts) as Product[];
+        // Filter out any stale products not in the current canonical PRODUCTS catalog
+        const valid = parsed.filter((p) => PRODUCTS.some((prod) => prod.id === p.id));
+        if (valid.length > 0) {
+          this.products = valid.map((p) => {
+            const canonical = PRODUCTS.find((prod) => prod.id === p.id);
+            return canonical ? { ...p, price: canonical.price, originalPrice: canonical.originalPrice } : p;
+          });
+        } else {
+          this.products = INITIAL_PRODUCTS;
+        }
+      } else {
+        this.products = INITIAL_PRODUCTS;
+      }
+
+      if (storedVariants) {
+        const parsedV = JSON.parse(storedVariants) as ProductVariant[];
+        const validV = parsedV.filter((v) => PRODUCTS.some((p) => p.id === v.productId));
+        this.variants = validV.length > 0 ? validV : INITIAL_VARIANTS;
+      } else {
+        this.variants = INITIAL_VARIANTS;
+      }
+
       this.movements = storedMovements ? JSON.parse(storedMovements) : INITIAL_MOVEMENTS;
+      // Immediately write back sanitized catalog to localStorage
+      this.saveState();
     } catch (e) {
       this.products = INITIAL_PRODUCTS;
       this.variants = INITIAL_VARIANTS;

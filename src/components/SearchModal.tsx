@@ -32,8 +32,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({
       );
 
   const quickTags: { label: string; cat: ProductCategory }[] = [
-    { label: 'Rings', cat: 'rings' },
     { label: 'Jhumka', cat: 'jhumka' },
+    { label: 'Tribal', cat: 'tribal' },
+    { label: 'Rings', cat: 'rings' },
+    { label: 'Western', cat: 'western' },
+    { label: 'Kadas', cat: 'kadas' },
+    { label: 'Earpins & Bugadi', cat: 'accessories' },
+    { label: 'Toran', cat: 'toran' },
     { label: 'Necklaces', cat: 'necklaces' },
     { label: 'Earrings', cat: 'earrings' },
     { label: 'Kangan Sets', cat: 'kangan-sets' },
@@ -96,7 +101,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto">
             {query.trim() === '' ? (
               <div className="py-8 text-center text-xs text-[#77716F]">
-                Type a piece name, gemstone, or category to discover heirlooms.
+                Type a piece name, gemstone, or category to discover creations.
               </div>
             ) : filtered.length === 0 ? (
               <div className="py-8 text-center">

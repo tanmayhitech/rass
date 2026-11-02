@@ -69,8 +69,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   ];
 
   const categories: { label: string; value: ProductCategory }[] = [
-    { label: 'Rings', value: 'rings' },
     { label: 'Jhumka', value: 'jhumka' },
+    { label: 'Tribal', value: 'tribal' },
+    { label: 'Rings', value: 'rings' },
+    { label: 'Western', value: 'western' },
+    { label: 'Kadas', value: 'kadas' },
+    { label: 'Earpins & Bugadi', value: 'accessories' },
+    { label: 'Toran', value: 'toran' },
     { label: 'Necklaces', value: 'necklaces' },
     { label: 'Earrings', value: 'earrings' },
     { label: 'Kangan Sets', value: 'kangan-sets' },
@@ -175,7 +180,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             <button
               onClick={onOpenSearch}
               className="p-1.5 sm:p-2 md:p-2.5 min-w-[38px] sm:min-w-[44px] min-h-[38px] sm:min-h-[44px] flex items-center justify-center text-[#292725] hover:text-[#A18AA5] hover:bg-[#FAF8F3] rounded-full transition-colors duration-200 focus:outline-none outline-none border-none ring-0 cursor-pointer"
-              aria-label="Search handcrafted heirlooms"
+              aria-label="Search handcrafted jewellery"
               title="Search"
             >
               <Search className="w-5 h-5 stroke-[1.65]" />

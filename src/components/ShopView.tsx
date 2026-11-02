@@ -13,7 +13,6 @@ import {
   Rows
 } from 'lucide-react';
 import { Product, ProductCategory } from '../types';
-import { SectionDivider } from './SectionDivider';
 import { ProductCard } from './ProductCard';
 
 interface ShopViewProps {
@@ -66,10 +65,15 @@ export const ShopView: React.FC<ShopViewProps> = ({
 
   // Categories metadata
   const categories: { id: ProductCategory | 'all'; label: string }[] = [
-    { id: 'all', label: 'All Heirlooms' },
-    { id: 'rings', label: 'Rings' },
-    { id: 'earrings', label: 'Earrings' },
+    { id: 'all', label: 'All Collections' },
     { id: 'jhumka', label: 'Jhumka' },
+    { id: 'tribal', label: 'Tribal Jewellery' },
+    { id: 'rings', label: 'Rings' },
+    { id: 'western', label: 'Western Jewellery' },
+    { id: 'kadas', label: 'Kadas' },
+    { id: 'accessories', label: 'Earpins & Bugadi' },
+    { id: 'toran', label: 'Toran' },
+    { id: 'earrings', label: 'Earrings' },
     { id: 'necklaces', label: 'Necklaces' },
     { id: 'kangan-sets', label: 'Kangan Sets' },
     { id: 'kangna', label: 'Kangna' },
@@ -99,7 +103,10 @@ export const ShopView: React.FC<ShopViewProps> = ({
     const counts: Record<string, number> = { all: products.length };
     categories.forEach((cat) => {
       if (cat.id !== 'all') {
-        counts[cat.id] = products.filter((p) => p.category === cat.id).length;
+        counts[cat.id] = products.filter((p) => 
+          p.category === cat.id || 
+          (['jhumka', 'earrings', 'tribal'].includes(cat.id) && ['jhumka', 'earrings', 'tribal'].includes(p.category))
+        ).length;
       }
     });
     return counts;
@@ -128,8 +135,12 @@ export const ShopView: React.FC<ShopViewProps> = ({
   // Filtered products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
-      if (selectedCategory !== 'all' && product.category !== selectedCategory) {
-        return false;
+      if (selectedCategory !== 'all') {
+        const matchesCategory = 
+          product.category === selectedCategory ||
+          (['jhumka', 'earrings', 'tribal'].includes(selectedCategory) &&
+            ['jhumka', 'earrings', 'tribal'].includes(product.category));
+        if (!matchesCategory) return false;
       }
       if (priceTier === 'under-18k' && product.price >= 18000) return false;
       if (priceTier === '18k-25k' && (product.price < 18000 || product.price > 25000)) return false;
@@ -356,63 +367,51 @@ export const ShopView: React.FC<ShopViewProps> = ({
   return (
     <div className="w-full max-w-[1360px] mx-auto px-3.5 sm:px-6 lg:px-10 pt-3 sm:pt-8 pb-10 sm:pb-16 animate-fadeIn">
       
-      {/* 1. COMPACT EDITORIAL HEADER */}
-      <div className="text-center max-w-xl mx-auto mb-3 sm:mb-8">
-        {/* Subtle Breadcrumb */}
-        <div className="flex items-center justify-center gap-2 text-[10px] sm:text-xs text-[#8C827A] uppercase tracking-[0.16em] mb-1 sm:mb-1.5 font-medium">
+      {/* 1. SLEEK MINIMAL EDITORIAL HEADER */}
+      <div className="text-center max-w-xl mx-auto mb-4 sm:mb-7">
+        {/* Subtle Minimal Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="flex items-center justify-center gap-2 text-[10.5px] sm:text-xs text-[#8C827A] tracking-[0.16em] uppercase mb-2 font-medium">
           <button 
             onClick={onBackToHome}
-            className="hover:text-[#A783A2] transition-colors flex items-center gap-1 group"
+            className="hover:text-[#292624] transition-colors"
           >
-            <ArrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-0.5" />
-            <span>Home</span>
+            Home
           </button>
-          <span className="text-[#A783A2] text-[10px]">✦</span>
-          <span className="text-[#292624] font-semibold">
+          <span className="text-[#C8BFB8] font-light">/</span>
+          <span className="text-[#292624] font-medium">
             {selectedCategory === 'all' ? 'Catalogue' : categories.find(c => c.id === selectedCategory)?.label}
           </span>
-        </div>
+        </nav>
 
-        {/* Title */}
-        <h1 className="font-playfair text-[30px] sm:text-[44px] lg:text-[48px] font-medium text-[#292624] tracking-[-0.015em] leading-[1.12] mb-1.5 sm:mb-2">
+        {/* Title - Clean, Upright, Modern Luxury Editorial Serif */}
+        <h1 className="font-cormorant font-normal text-[30px] sm:text-[40px] lg:text-[46px] text-[#292624] tracking-[0.02em] leading-[1.15] mb-2 sm:mb-2.5">
           {selectedCategory === 'all' 
-            ? 'All Heirlooms' 
+            ? 'Curated Collections' 
             : categories.find(c => c.id === selectedCategory)?.label}
         </h1>
 
         {/* Subtitle */}
-        <p className="font-sans text-[12.5px] sm:text-[14px] text-[#77716F] max-w-lg mx-auto leading-relaxed px-2 font-normal">
+        <p className="font-sans text-[12px] sm:text-[13.5px] text-[#77716F] max-w-md mx-auto leading-relaxed px-2 font-normal">
           Sculpted by master goldsmiths in 18k gold vermeil, natural untreated gemstones, and Basra seed pearls.
         </p>
-
-        {/* Lotus Divider */}
-        <div className="mt-2.5 sm:mt-3 flex justify-center">
-          <SectionDivider />
-        </div>
       </div>
 
-      {/* 2. MOBILE HORIZONTAL CATEGORY CHIPS (NO-SCROLLBAR FIX) */}
+      {/* 2. MOBILE HORIZONTAL CATEGORY CHIPS - MINIMAL & SLEEK */}
       <div className="lg:hidden mb-3">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar -mx-3.5 px-3.5 sm:-mx-6 sm:px-6 select-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar -mx-3.5 px-3.5 sm:-mx-6 sm:px-6 select-none">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.id;
-            const count = categoryCounts[cat.id] || 0;
             return (
               <button
                 key={cat.id}
                 onClick={() => onCategoryChange(cat.id)}
-                className={`shrink-0 px-3.5 py-1.5 rounded-full text-[12px] tracking-wide transition-all flex items-center gap-1.5 ${
+                className={`shrink-0 px-3.5 py-1.5 rounded-full text-[11.5px] tracking-wider transition-all select-none ${
                   isActive
-                    ? 'bg-[#A783A2] text-white shadow-xs font-semibold'
-                    : 'bg-white text-[#5C5856] border border-[#E7E0DA] hover:border-[#A783A2]'
+                    ? 'bg-[#A783A2] text-white font-medium shadow-xs'
+                    : 'bg-white text-[#6B6562] border border-[#E7E0DA] hover:text-[#292624] hover:border-[#A783A2]/60'
                 }`}
               >
                 <span>{cat.label}</span>
-                <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full ${
-                  isActive ? 'bg-white/20 text-white font-bold' : 'bg-[#F2ECE6] text-[#8C827A]'
-                }`}>
-                  {count}
-                </span>
               </button>
             );
           })}
@@ -519,7 +518,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
           {/* DESKTOP TOOLBAR */}
           <div className="hidden lg:flex items-center justify-between gap-3 mb-5 pb-3 border-b border-[#E7E0DA]">
             <span className="text-xs text-[#77716F]">
-              Showing <strong className="text-[#292624]">{sortedProducts.length}</strong> of {products.length} Heirloom Designs
+              Showing <strong className="text-[#292624]">{sortedProducts.length}</strong> of {products.length} Artisanal Designs
             </span>
 
             <div className="flex items-center space-x-2 text-xs text-[#77716F]">
@@ -542,7 +541,9 @@ export const ShopView: React.FC<ShopViewProps> = ({
 
           {/* ACTIVE FILTER CHIPS */}
           {activeFiltersCount > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-4">
+            <div className={`flex-wrap items-center gap-1.5 sm:gap-2 mb-4 ${
+              activeFiltersCount === 1 && selectedCategory !== 'all' ? 'hidden sm:flex' : 'flex'
+            }`}>
               <span className="text-[10px] sm:text-[11px] text-[#8C827A] uppercase tracking-wider font-semibold mr-1">
                 Active:
               </span>
@@ -638,7 +639,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
                 No designs match your criteria
               </h3>
               <p className="text-xs text-[#77716F] mb-5 leading-relaxed">
-                Try widening your price range or clearing selected gemstones to view more handcrafted heirloom pieces.
+                Try widening your price range or clearing selected gemstones to view more handcrafted jewellery pieces.
               </p>
               <button
                 onClick={handleResetFilters}

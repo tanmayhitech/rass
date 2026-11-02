@@ -36,9 +36,61 @@
     letter-spacing: -0.015em;
   }
 
-  .font-serif, .font-editorial, .font-playfair, .font-cormorant, .font-bodoni, .font-luxury-serif {
+  .font-serif, .font-editorial, .font-luxury-serif {
+    font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif !important;
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  .font-playfair {
     font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, Cambria, 'Times New Roman', serif !important;
-    letter-spacing: -0.01em;
+  }
+
+  .font-prata {
+    font-family: 'Prata', 'Playfair Display', Georgia, serif !important;
+  }
+
+  .font-marcellus {
+    font-family: 'Marcellus', 'Cinzel', Georgia, serif !important;
+  }
+
+  .font-italiana {
+    font-family: 'Italiana', 'Cinzel', Georgia, serif !important;
+  }
+
+  /* Dramatic High-Fashion Editorial Typography (Italiana / Cinzel Decorative / Rozha One) */
+  .font-dramatic {
+    font-family: 'Cinzel Decorative', 'Italiana', 'Cinzel', 'Playfair Display', serif !important;
+  }
+
+  .font-cinzel-decorative {
+    font-family: 'Cinzel Decorative', 'Cinzel', serif !important;
+  }
+
+  .font-dramatic-hindi {
+    font-family: 'Rozha One', 'Noto Serif Devanagari', 'Nirmala UI', serif !important;
+  }
+
+  /* Classical Roman Jewellery Titling Serif (Cinzel) - Majestic, Crisp, Stately */
+  .font-cinzel {
+    font-family: 'Cinzel', 'Cormorant Garamond', 'Marcellus', Georgia, serif !important;
+  }
+
+  /* Haute Horlogerie French Serif (Cormorant Garamond) */
+  .font-cormorant {
+    font-family: 'Cormorant Garamond', 'Cinzel', Georgia, serif !important;
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* High-Fashion Didone Serif (Bodoni Moda) for Gallery Moodboard & Brand Accents */
+  .font-bodoni {
+    font-family: 'Bodoni Moda', 'Cinzel', 'Cormorant Garamond', serif !important;
+  }
+
+  /* Modern Balanced Devanagari (Poppins / Noto Sans Devanagari) for Hindi Titles */
+  .font-devanagari {
+    font-family: 'Poppins', 'Noto Sans Devanagari', 'Nirmala UI', sans-serif !important;
   }
 }
 

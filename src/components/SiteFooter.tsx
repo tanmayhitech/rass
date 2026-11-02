@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Instagram, Facebook, MessageCircle, ChevronDown } from 'lucide-react';
+import { Instagram, Facebook, MessageCircle, ChevronDown, Mail } from 'lucide-react';
 import { ActivePage, ProductCategory, InfoSection } from '../types';
 
 interface SiteFooterProps {
@@ -75,50 +75,33 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
                 </button>
               </div>
 
-              <p className="font-sans text-[13px] sm:text-[14px] font-medium text-[#5C5855] leading-[1.6] max-w-[280px] mb-5 sm:mb-6">
-                Premium oxidized & fashion jewelry. Curated pieces for the Modern Muse. Based in Hyderabad, shipping Pan-India.
+              <p className="font-sans text-[13px] sm:text-[14px] font-medium text-[#5C5855] leading-[1.6] max-w-[300px] mb-2.5">
+                RASS — An expression of culture, crafted with love. Bringing together traditional Indian craftsmanship, contemporary designs and everyday wearability.
               </p>
+              <span className="text-[11.5px] font-sans font-medium text-[#A783A2] block mb-5 sm:mb-6">
+                Headquartered in Hyderabad • Shipping Pan-India
+              </span>
             </div>
 
-            {/* Social Icons: Solid Mauve Circles (matching reference) */}
+            {/* Social Icons: Solid Mauve Circles (Verified Brand Channels) */}
             <div className="flex items-center space-x-3 pt-1">
               <a
                 href="https://instagram.com/rassbyridhima"
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-full bg-[#A783A2] hover:bg-[#936E8F] text-white flex items-center justify-center transition-all duration-300 shadow-xs hover:scale-105 active:scale-95"
-                aria-label="Follow Rass by Ridhima on Instagram"
+                aria-label="Follow Rass by Ridhima on Instagram (@rassbyridhima)"
+                title="Instagram: @rassbyridhima"
               >
                 <Instagram className="w-4 h-4 stroke-[2]" />
               </a>
               <a
-                href="https://pinterest.com"
-                target="_blank"
-                rel="noreferrer"
+                href="mailto:Rassbyridhima@gmail.com"
                 className="w-8 h-8 rounded-full bg-[#A783A2] hover:bg-[#936E8F] text-white flex items-center justify-center transition-all duration-300 shadow-xs hover:scale-105 active:scale-95"
-                aria-label="Follow Rass by Ridhima on Pinterest"
+                aria-label="Email Rass client concierge: Rassbyridhima@gmail.com"
+                title="Email: Rassbyridhima@gmail.com"
               >
-                <svg className="w-3.5 h-3.5 fill-white" viewBox="0 0 24 24">
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.291 1.199-.334 1.365-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.546.535 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z" />
-                </svg>
-              </a>
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-[#A783A2] hover:bg-[#936E8F] text-white flex items-center justify-center transition-all duration-300 shadow-xs hover:scale-105 active:scale-95"
-                aria-label="Connect with Rass on Facebook"
-              >
-                <Facebook className="w-4 h-4 fill-white stroke-none" />
-              </a>
-              <a
-                href="https://wa.me/919819733572"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-full bg-[#A783A2] hover:bg-[#936E8F] text-white flex items-center justify-center transition-all duration-300 shadow-xs hover:scale-105 active:scale-95"
-                aria-label="Chat on WhatsApp concierge"
-              >
-                <MessageCircle className="w-4 h-4 stroke-[2]" />
+                <Mail className="w-4 h-4 stroke-[2]" />
               </a>
             </div>
           </div>

@@ -95,12 +95,13 @@ export const WelcomeOfferModal: React.FC<WelcomeOfferModalProps> = ({
             <span>WELCOME PRIVILEGE • FIRST VISIT</span>
           </div>
 
-          {/* Headline */}
+          {/* Headline with Good Luxury Serif Font */}
           <h2
             id="welcome-offer-title"
-            className="font-luxury-serif text-[28px] sm:text-[36px] font-normal text-[#292624] tracking-tight leading-[1.18] mb-2"
+            className="text-[28px] sm:text-[36px] font-normal text-[#292624] tracking-tight leading-[1.2] mb-2"
+            style={{ fontFamily: '"Cormorant Garamond", "Playfair Display", Georgia, serif' }}
           >
-            A Little Magic for Your<br />First Rass Piece
+            A Little Magic for Your<br /><span className="italic font-medium">First Rass Creation</span>
           </h2>
 
           <p className="font-sans text-[13px] sm:text-[14px] text-[#77716F] leading-relaxed max-w-sm mx-auto mb-5">

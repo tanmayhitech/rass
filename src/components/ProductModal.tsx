@@ -309,16 +309,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             {/* 8. Trust Badges Banner */}
             <div className="grid grid-cols-3 gap-2 py-3.5 border-t border-b border-[#E7E0DA] text-[10.5px] text-[#77716F] mb-4">
               <div className="flex flex-col items-center text-center space-y-1">
-                <ShieldCheck className="w-4 h-4 text-[#B49A6C]" />
-                <span className="font-medium">Certified 18k Vermeil</span>
+                <ShieldCheck className="w-4 h-4 text-[#A783A2]" />
+                <span className="font-medium">100% Hypoallergenic</span>
               </div>
               <div className="flex flex-col items-center text-center space-y-1">
-                <Truck className="w-4 h-4 text-[#B49A6C]" />
-                <span className="font-medium">Free Insured Delivery</span>
+                <Truck className="w-4 h-4 text-[#A783A2]" />
+                <span className="font-medium">Free Ship Above ₹3999</span>
               </div>
               <div className="flex flex-col items-center text-center space-y-1">
-                <RefreshCw className="w-4 h-4 text-[#B49A6C]" />
-                <span className="font-medium">7-Day Easy Returns</span>
+                <RefreshCw className="w-4 h-4 text-[#A783A2]" />
+                <span className="font-medium">48h Exchange Policy</span>
               </div>
             </div>
 
@@ -330,13 +330,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   onClick={() => toggleAccordion('specs')}
                   className="w-full py-2.5 flex items-center justify-between text-left font-semibold text-[#292624] hover:text-[#A783A2] transition-colors"
                 >
-                  <span className="uppercase tracking-wider text-[11px]">Specifications & Dimensions</span>
+                  <span className="uppercase tracking-wider text-[11px]">Specifications & Materials</span>
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeAccordion === 'specs' ? 'rotate-180' : ''}`} />
                 </button>
                 {activeAccordion === 'specs' && (
                   <div className="pb-3 text-[12.5px] text-[#77716F] space-y-1 animate-fadeIn">
-                    <p><strong className="text-[#292624]">Metal:</strong> {product.metal}</p>
-                    <p><strong className="text-[#292624]">Gemstones:</strong> {product.gemstones}</p>
+                    <p><strong className="text-[#292624]">Base Metal:</strong> Solid Brass with 18k/24k Micro Gold Polish & Anti-Tarnish E-Coating / Anti-Tarnish Stainless Steel</p>
+                    <p><strong className="text-[#292624]">Skin Safety:</strong> 100% Skin-safe & Hypoallergenic (Lead & Nickel Free)</p>
+                    <p><strong className="text-[#292624]">Craftsmanship:</strong> Curated from master craftsmanship clusters (Jaipur / Rajkot / Bengal)</p>
                     {product.dimensions && <p><strong className="text-[#292624]">Dimensions:</strong> {product.dimensions}</p>}
                     {product.weight && <p><strong className="text-[#292624]">Net Weight:</strong> {product.weight}</p>}
                     <ul className="list-disc list-inside mt-2 space-y-0.5">
@@ -354,14 +355,18 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   onClick={() => toggleAccordion('care')}
                   className="w-full py-2.5 flex items-center justify-between text-left font-semibold text-[#292624] hover:text-[#A783A2] transition-colors"
                 >
-                  <span className="uppercase tracking-wider text-[11px]">Jewellery Care Guide</span>
+                  <span className="uppercase tracking-wider text-[11px]">A Little Love & Care ♡</span>
                   <ChevronDown className={`w-3.5 h-3.5 transition-transform ${activeAccordion === 'care' ? 'rotate-180' : ''}`} />
                 </button>
                 {activeAccordion === 'care' && (
-                  <div className="pb-3 text-[12.5px] text-[#77716F] space-y-1 animate-fadeIn">
-                    <p>Store individually in the provided Rass anti-tarnish suede pouch.</p>
-                    <p>Avoid contact with perfumes, hairsprays, and chlorinated swimming pools.</p>
-                    <p>Buff gently with a soft microfibre cloth after each wear to preserve lustre.</p>
+                  <div className="pb-3 text-[12.5px] text-[#77716F] space-y-1.5 animate-fadeIn">
+                    <p className="text-[#292624] font-medium">Your jewellery is special, and with a little care, you can keep it beautiful for longer:</p>
+                    <p>✨ Keep away from water, perfumes and lotions.</p>
+                    <p>✨ Store each piece separately in a jewellery pouch or airtight box to prevent scratches and tangling.</p>
+                    <p>✨ Keep away from direct sunlight, moisture and humidity.</p>
+                    <p>✨ Clean gently with a soft, dry cloth after every use.</p>
+                    <p>✨ Handle delicate pieces with love and care.</p>
+                    <p className="italic text-[#8B5E86] pt-1">“A little reminder: Jewellery is made to make you shine. Treat every piece with love, and it will remain a beautiful part of your story. With love, Team Rass by Ridhima ♡”</p>
                   </div>
                 )}
               </div>

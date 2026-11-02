@@ -103,7 +103,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const defaultDiscount = subtotal > 30000 ? Math.round(subtotal * 0.1) : 0;
   const discount = appliedCouponCode ? couponDiscount : defaultDiscount;
-  const shipping = subtotal >= 2999 ? 0 : 250;
+  const shipping = subtotal >= 3999 ? 0 : 250;
   const total = Math.max(0, subtotal - discount + shipping);
   const totalItemsCount = items.reduce((s, i) => s + i.quantity, 0);
 
@@ -111,10 +111,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
+  const processFinalOrder = async (razorpayPaymentId?: string, razorpayOrderId?: string) => {
     try {
       const newOrder = await orderService.createOrder({
         customerName: formData.name,
@@ -133,8 +130,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         total,
         paymentMethod: 'Razorpay Secure (UPI, Cards, NetBanking)',
         appliedCoupon: appliedCouponCode || undefined,
-        razorpayOrderId: `order_live_${Math.random().toString(36).slice(2, 10)}`,
-        razorpayPaymentId: `pay_live_${Math.random().toString(36).slice(2, 10)}`,
+        razorpayOrderId: razorpayOrderId || `order_test_${Math.random().toString(36).slice(2, 10)}`,
+        razorpayPaymentId: razorpayPaymentId || `pay_test_${Math.random().toString(36).slice(2, 10)}`,
       });
 
       if (appliedCouponCode && couponService.getCouponByCode(appliedCouponCode)) {
@@ -160,6 +157,59 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       alert(`Order creation error: ${err.message}`);
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+
+    // Launch official Razorpay Checkout popup when key and SDK are available
+    if (typeof (window as any).Razorpay !== 'undefined' && razorpayKey && razorpayKey.startsWith('rzp_')) {
+      const options = {
+        key: razorpayKey,
+        amount: Math.round(total * 100), // amount in paise
+        currency: 'INR',
+        name: 'Rass by Riddhima',
+        description: 'Luxury Handcrafted Demi-Fine Jewellery',
+        image: '/favicon.svg',
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        notes: {
+          address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+        },
+        theme: {
+          color: '#A783A2',
+        },
+        handler: function (response: any) {
+          processFinalOrder(response.razorpay_payment_id, response.razorpay_order_id);
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+          },
+        },
+      };
+
+      try {
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (response: any) {
+          alert(`Payment failed: ${response.error?.description || 'Transaction unsuccessful'}`);
+          setIsSubmitting(false);
+        });
+        rzp.open();
+        return;
+      } catch (err) {
+        console.warn('Failed to open Razorpay modal, falling back to simulated order:', err);
+      }
+    }
+
+    // Fallback if offline or SDK unavailable
+    await processFinalOrder();
   };
 
   return (

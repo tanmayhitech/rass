@@ -21,7 +21,7 @@ class EmailService {
   private defaultSender: string = 
     import.meta.env.VITE_RESEND_FROM_EMAIL || 
     'Rass by Riddhima <onboarding@resend.dev>';
-  private supportEmail: string = 'contact@rassbyriddhima.com';
+  private supportEmail: string = 'Rassbyridhima@gmail.com';
   private sandboxOwnerEmail: string = 'rassbyridhima1@gmail.com';
 
   /**
@@ -329,7 +329,7 @@ class EmailService {
   }
 
   // =========================================================================
-  // 6. CONTACT / INQUIRY ACKNOWLEDGMENT
+  // 6. CONTACT / INQUIRY ACKNOWLEDGMENT & SUPPORT DISPATCH
   // =========================================================================
 
   public async sendInquiryNotificationEmail(params: {
@@ -339,7 +339,62 @@ class EmailService {
     subject?: string;
     message: string;
   }): Promise<EmailSendResult> {
-    const html = this.wrapTemplate(`
+    // 1. Send alert notification to Support / Owner
+    const adminAlertHtml = this.wrapTemplate(`
+      <div style="text-align: center; margin-bottom: 22px;">
+        <span style="display: inline-block; background-color: #FAF5F9; color: #8E6789; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; border: 1px solid #E2D5E5;">
+          NEW CUSTOMER INQUIRY
+        </span>
+      </div>
+
+      <h2 style="font-family: Georgia, serif; font-size: 22px; font-weight: 500; color: #22201E; margin: 0 0 14px 0; text-align: center;">
+        New Message from ${this.escapeHtml(params.name)}
+      </h2>
+
+      <div style="background-color: #FAF9F6; border: 1px solid #ECE7DE; border-radius: 12px; padding: 20px 22px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+          <tr>
+            <td style="padding: 6px 0; color: #77716F; width: 110px;"><strong>Client Name:</strong></td>
+            <td style="padding: 6px 0; color: #22201E; font-weight: 600;">${this.escapeHtml(params.name)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #77716F;"><strong>Client Email:</strong></td>
+            <td style="padding: 6px 0; color: #22201E;"><a href="mailto:${this.escapeHtml(params.email)}" style="color: #A783A2; text-decoration: none;">${this.escapeHtml(params.email)}</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #77716F;"><strong>Phone:</strong></td>
+            <td style="padding: 6px 0; color: #22201E;">${this.escapeHtml(params.phone || 'Not provided')}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #77716F;"><strong>Subject:</strong></td>
+            <td style="padding: 6px 0; color: #22201E; font-weight: 600;">${this.escapeHtml(params.subject || 'General Inquiry')}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #ECE7DE;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #8A847C; font-weight: 600; margin-bottom: 8px;">Message:</div>
+          <p style="margin: 0; font-size: 14px; color: #292624; line-height: 1.6; white-space: pre-wrap; background: #FFFFFF; padding: 14px; border-radius: 8px; border: 1px solid #E7E0DA;">${this.escapeHtml(params.message)}</p>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="mailto:${this.escapeHtml(params.email)}?subject=Re: ${encodeURIComponent(params.subject || 'Inquiry')} — Rass by Riddhima" style="display: inline-block; background-color: #292624; color: #FFFFFF; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; padding: 12px 28px; border-radius: 9999px; text-decoration: none;">
+          Reply Directly to ${this.escapeHtml(params.name)}
+        </a>
+      </div>
+    `);
+
+    // Fire alert to support / owner
+    this.sendEmail({
+      to: this.supportEmail,
+      subject: `🔔 New Customer Inquiry: ${params.subject || 'General Inquiry'} from ${params.name}`,
+      html: adminAlertHtml,
+    }).catch(err => {
+      console.warn('[EmailService] Failed to send admin inquiry notification:', err);
+    });
+
+    // 2. Send acknowledgment to the customer
+    const customerAckHtml = this.wrapTemplate(`
       <div style="text-align: center; margin-bottom: 22px;">
         <span style="display: inline-block; background-color: #FAF4EA; color: #8C6D34; font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px;">
           MESSAGE RECEIVED
@@ -350,7 +405,7 @@ class EmailService {
         We Received Your Message
       </h2>
       <p style="font-size: 14px; line-height: 1.65; color: #55504A; margin: 0 0 20px 0;">
-        Hi ${this.escapeHtml(params.name)}, thank you for contacting us. A member of our team will review your inquiry and get back to you within 24 hours.
+        Hi ${this.escapeHtml(params.name)}, thank you for contacting us. A member of our team will review your inquiry and get back to you within 24 working hours.
       </p>
 
       <div style="background-color: #FAF9F6; border: 1px solid #ECE7DE; border-radius: 8px; padding: 18px 20px; margin: 20px 0;">
@@ -362,7 +417,7 @@ class EmailService {
     return this.sendEmail({
       to: params.email,
       subject: `We received your message — Rass by Riddhima`,
-      html,
+      html: customerAckHtml,
     });
   }
 

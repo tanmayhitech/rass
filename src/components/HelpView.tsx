@@ -21,6 +21,8 @@ import {
   Video
 } from 'lucide-react';
 import { SectionDivider } from './SectionDivider';
+import { emailService } from '../services/emailService';
+import { inquiryService } from '../services/inquiryService';
 
 export type HelpTab = 'shipping' | 'returns' | 'faqs' | 'payment' | 'terms';
 
@@ -56,6 +58,27 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
     e.preventDefault();
     if (!contactForm.name || !contactForm.email || !contactForm.message) return;
     setIsSubmitted(true);
+
+    const submission = { ...contactForm };
+    inquiryService.saveInquiry({
+      name: submission.name,
+      email: submission.email,
+      phone: submission.phone,
+      subject: submission.subject,
+      message: submission.message,
+      source: 'help_view'
+    });
+
+    emailService.sendInquiryNotificationEmail({
+      name: submission.name,
+      email: submission.email,
+      phone: submission.phone,
+      subject: submission.subject,
+      message: submission.message,
+    }).catch((err) => {
+      console.warn('[HelpView] Failed to dispatch inquiry notification via Resend:', err);
+    });
+
     setTimeout(() => {
       setContactForm({
         name: '',
@@ -71,33 +94,33 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
   const faqs = [
     {
       category: 'shipping',
-      q: 'How long will it take to deliver my order?',
-      a: 'All orders are processed from our Hyderabad atelier within 24 to 48 business hours. Standard Pan-India delivery takes approximately 5 to 7 business days via reliable express logistics. Live tracking updates are sent to your WhatsApp and email upon dispatch.'
+      q: 'How long will it take to dispatch and deliver my order?',
+      a: 'All orders are dispatched from Hyderabad within 24 to 48 business hours (2 to 4 business days). Standard Pan-India delivery takes approximately 5 to 7 business days with live tracking updates. We ship Pan-India only for now.'
     },
     {
       category: 'exchange',
       q: 'What is your return and exchange policy?',
-      a: 'We offer an Exchange-Only policy for sizing issues or defects within 48 hours of delivery (no cash refunds). A mandatory continuous 360° unboxing video showing the opening of the sealed parcel is required. The customer covers nominal reverse shipping (approx. ₹100–₹150).'
+      a: 'We offer an Exchange / Store Credit Only policy within 48 hours of delivery (no cash refunds). A continuous 360° unboxing video showing the opening of the sealed outer box is MANDATORY for damage/missing claims. Pierced earrings are strictly non-exchangeable for hygiene reasons.'
     },
     {
       category: 'shipping',
       q: 'Is Cash on Delivery (COD) available?',
-      a: 'To prevent high RTO return rates and transit damage for delicate handcrafted demi-fine jewelry, all orders are Prepaid Only. We accept all UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, and NetBanking through secure Razorpay.'
+      a: 'Prepaid Only (UPI, GPay, PhonePe, Cards, NetBanking via Razorpay) — recommended to avoid RTO transit damage and protect delicate handcrafted ornaments. COD is unavailable.'
     },
     {
       category: 'care',
-      q: 'Are Rass pieces anti-tarnish and water resistant?',
-      a: 'Yes. Every creation is crafted on a premium brass base with silver/gold micro-polish and sealed with an anti-tarnish protective coating. To preserve their shine, keep pieces away from water, soaps, perfumes, and chemical sprays, and store in airtight zip-locks (not velvet boxes).'
+      q: 'What materials are used and are they anti-tarnish & skin-safe?',
+      a: 'Our pieces are handcrafted by generational artisans (karigars), designed in-house, and curated from master clusters across Jaipur, Rajkot, and Bengal. We use solid brass with 18k/24k micro gold polish and anti-tarnish e-coating, 925 sterling silver (hallmarked), 18k gold vermeil, and everyday waterproof stainless steel. 100% skin-safe & hypoallergenic (nickel-free and lead-free).'
     },
     {
       category: 'care',
-      q: 'Do you accept custom sizing or custom orders?',
-      a: 'To maintain artisanal perfection and prompt delivery, only our official website catalogue pieces are available. We do not accept custom orders or custom sizing, but our WhatsApp Concierge (+91 98197 33572) is happy to assist with standard sizing recommendations.'
+      q: 'How should I care for my Rass jewellery?',
+      a: 'Keep away from water, perfumes and lotions. Store each piece separately in a jewellery pouch or airtight box to prevent scratches and tangling. Keep away from direct sunlight, moisture and humidity. Clean gently with a soft, dry cloth after every use. Handle delicate pieces with love and care.'
     },
     {
       category: 'shipping',
-      q: 'What are the shipping charges?',
-      a: 'Shipping is completely FREE on orders above ₹2,999. For orders below ₹2,999, flat standard shipping is ₹250, and urgent/express priority shipping is ₹350.'
+      q: 'What are the shipping charges and free shipping threshold?',
+      a: 'Free shipping above ₹3,999 (below that ₹250 for orders). Shipping Pan-India only for now.'
     }
   ];
 
@@ -167,25 +190,20 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
       <div className="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-8 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           
-          {/* Channel 1: WhatsApp */}
-          <a
-            href="https://wa.me/919819733572?text=Hello%20Rass,%20I%20have%20an%20inquiry%20regarding%20my%20order"
-            target="_blank"
-            rel="noreferrer"
-            className="p-5 sm:p-6 bg-white rounded-2xl border border-[#E7E0DA] hover:border-[#A783A2] transition-all shadow-2xs hover:shadow-md flex items-center space-x-4 group cursor-pointer relative overflow-hidden"
-          >
-            <div className="w-12 h-12 rounded-full bg-[#FAF5F9] border border-[#E7E0DA] flex items-center justify-center text-[#A783A2] group-hover:bg-[#A783A2] group-hover:text-white transition-colors shrink-0">
+          {/* Channel 1: WhatsApp Support */}
+          <div className="p-5 sm:p-6 bg-white rounded-2xl border border-[#E7E0DA] flex items-center space-x-4 shadow-2xs">
+            <div className="w-12 h-12 rounded-full bg-[#FAF5F9] border border-[#E7E0DA] flex items-center justify-center text-[#A783A2] shrink-0">
               <MessageCircle className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[10px] uppercase tracking-wider text-[#A783A2] font-semibold">Fastest Response</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] uppercase tracking-wider text-[#A783A2] font-semibold">WhatsApp Care</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
               </div>
-              <h3 className="font-playfair text-[16px] text-[#292624] font-medium">WhatsApp Concierge</h3>
-              <p className="text-[12px] text-[#77716F] mt-0.5">+91 98197 33572</p>
+              <h3 className="font-playfair text-[16px] text-[#292624] font-medium">WhatsApp Support</h3>
+              <p className="text-[12px] text-[#77716F] mt-0.5">Dedicated Line Updating</p>
             </div>
-          </a>
+          </div>
 
           {/* Channel 2: Instagram DM */}
           <a
@@ -198,7 +216,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
               <Instagram className="w-6 h-6 stroke-[1.8]" />
             </div>
             <div>
-              <span className="text-[10px] uppercase tracking-wider text-[#A783A2] font-semibold block mb-0.5">Social Atelier</span>
+              <span className="text-[10px] uppercase tracking-wider text-[#A783A2] font-semibold block mb-0.5">Instagram Support</span>
               <h3 className="font-playfair text-[16px] text-[#292624] font-medium">Direct Message</h3>
               <p className="text-[12px] text-[#77716F] mt-0.5">@rassbyridhima</p>
             </div>
@@ -206,7 +224,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
 
           {/* Channel 3: Email Concierge */}
           <a
-            href="mailto:care@rassbyridhima.com"
+            href="mailto:Rassbyridhima@gmail.com"
             className="p-5 sm:p-6 bg-white rounded-2xl border border-[#E7E0DA] hover:border-[#A783A2] transition-all shadow-2xs hover:shadow-md flex items-center space-x-4 group cursor-pointer"
           >
             <div className="w-12 h-12 rounded-full bg-[#FAF5F9] border border-[#E7E0DA] flex items-center justify-center text-[#A783A2] group-hover:bg-[#A783A2] group-hover:text-white transition-colors shrink-0">
@@ -215,7 +233,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
             <div>
               <span className="text-[10px] uppercase tracking-wider text-[#A783A2] font-semibold block mb-0.5">Official Mailbox</span>
               <h3 className="font-playfair text-[16px] text-[#292624] font-medium">Client Support</h3>
-              <p className="text-[12px] text-[#77716F] mt-0.5">care@rassbyridhima.com</p>
+              <p className="text-[12px] text-[#77716F] mt-0.5">Rassbyridhima@gmail.com</p>
             </div>
           </a>
 
@@ -311,20 +329,20 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-2">
               <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E7E0DA] space-y-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[#A783A2] block">Step 01 • Dispatch</span>
-                <p className="font-sans text-sm font-semibold text-[#292624]">Within 24–48 Business Hours</p>
-                <p className="text-xs text-[#77716F]">Dispatched directly from our Hyderabad atelier</p>
+                <p className="font-sans text-sm font-semibold text-[#292624]">Within 24–48 Hours / 2–4 Days</p>
+                <p className="text-xs text-[#77716F]">Dispatched directly from Hyderabad</p>
               </div>
 
               <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E7E0DA] space-y-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[#A783A2] block">Step 02 • Transit</span>
-                <p className="font-sans text-sm font-semibold text-[#292624]">5–7 Business Days</p>
-                <p className="text-xs text-[#77716F]">Pan-India air & surface express delivery</p>
+                <p className="font-sans text-sm font-semibold text-[#292624]">5–7 Days • Pan-India</p>
+                <p className="text-xs text-[#77716F]">Domestic Pan-India shipping only for now</p>
               </div>
 
               <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-[#E7E0DA] space-y-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[#A783A2] block">Step 03 • Rates</span>
-                <p className="font-sans text-sm font-semibold text-emerald-800">Free Above ₹2,999</p>
-                <p className="text-xs text-[#77716F]">Standard: ₹250 | Urgent / Express: ₹350</p>
+                <p className="font-sans text-sm font-semibold text-emerald-800">Free Above ₹3,999</p>
+                <p className="text-xs text-[#77716F]">Below ₹3,999: Flat ₹250 for orders</p>
               </div>
             </div>
 
@@ -333,7 +351,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
                 Every parcel is sealed in a heavy-duty tamper-proof security bag with dual authentication serials. The contents are 100% insured until signed for at your doorstep.
               </p>
               <p>
-                All orders are <strong>Prepaid Only</strong> via Razorpay (UPI, Cards, NetBanking). Cash on Delivery is strictly unavailable to prevent transit damage and high RTO return rates for delicate handcrafted ornaments.
+                All orders are <strong>Prepaid Only</strong> via Razorpay (UPI, GPay, PhonePe, Cards, NetBanking). Cash on Delivery is strictly unavailable to prevent transit damage and high RTO return rates for delicate handcrafted ornaments.
               </p>
             </div>
           </div>
@@ -345,10 +363,10 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
             <div className="border-b border-[#E7E0DA] pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div>
                 <span className="text-[10px] uppercase tracking-wider text-[#A783A2] font-semibold block mb-1">Exchange Policy</span>
-                <h2 className="font-playfair text-[24px] sm:text-[28px] text-[#292624] font-medium">48-Hour Exchange-Only Policy</h2>
+                <h2 className="font-playfair text-[24px] sm:text-[28px] text-[#292624] font-medium">48-Hour Exchange / Store Credit Policy</h2>
               </div>
               <span className="text-[11px] text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 font-medium">
-                Exchange Only • No Cash Refunds
+                Exchange / Store Credit Only • No Cash Refunds
               </span>
             </div>
 
@@ -361,7 +379,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
                 </div>
                 <h4 className="font-semibold text-sm text-[#292624]">Mandatory 360° Video</h4>
                 <p className="text-xs text-[#77716F] leading-relaxed">
-                  A clear, continuous unboxing video showing the outer sealed bag being opened is mandatory for all claims.
+                  A clear, continuous 360° unboxing video showing the opening of the sealed outer box is strictly mandatory.
                 </p>
               </div>
 
@@ -372,7 +390,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
                 </div>
                 <h4 className="font-semibold text-sm text-[#292624]">Report Within 48 Hours</h4>
                 <p className="text-xs text-[#77716F] leading-relaxed">
-                  Send a WhatsApp message to +91 98197 33572 with Order ID, reason, and the unboxing video within 48h of receipt.
+                  Email Rassbyridhima@gmail.com with your Order ID, reason, and continuous unboxing video within 48h of receipt.
                 </p>
               </div>
 
@@ -381,9 +399,9 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
                   <RotateCcw className="w-4 h-4" />
                   <span className="text-[10.5px] font-semibold uppercase tracking-wider">Step 3 • Replacement</span>
                 </div>
-                <h4 className="font-semibold text-sm text-[#292624]">Reverse Courier Transit</h4>
+                <h4 className="font-semibold text-sm text-[#292624]">Prompt Exchange</h4>
                 <p className="text-xs text-[#77716F] leading-relaxed">
-                  Customer covers nominal reverse shipping (approx. ₹100–₹150). Replacement dispatched once return parcel arrives.
+                  Customer covers nominal reverse shipping (approx. ₹100–₹150). Replacement or store credit dispatched on return receipt.
                 </p>
               </div>
             </div>
@@ -391,7 +409,7 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
             <div className="p-4 bg-[#FAF5F9] rounded-2xl border border-[#A783A2]/30 text-xs text-[#5C5855] leading-relaxed flex items-start gap-3">
               <AlertCircle className="w-4 h-4 text-[#A783A2] shrink-0 mt-0.5" />
               <span>
-                <strong>Important Note:</strong> Items must be in unworn, brand-new condition with original tags intact. We do not provide cash refunds; we offer direct replacements for sizing issues or transit defects.
+                <strong>Important Note:</strong> Items must be in unworn, brand-new condition with original tags intact. <strong>Pierced Earrings Hygiene Policy:</strong> Strictly non-exchangeable for hygiene reasons.
               </span>
             </div>
           </div>
@@ -496,15 +514,15 @@ export const HelpView: React.FC<HelpViewProps> = ({ onBackToHome, onExploreShop,
           
           <div className="text-center mb-6">
             <span className="text-[10.5px] font-semibold uppercase tracking-[0.2em] text-[#A783A2] block mb-1">Send an Inquiry</span>
-            <h3 className="font-playfair text-[22px] sm:text-[26px] text-[#292624] font-medium">Contact Atelier Support</h3>
-            <p className="text-xs text-[#77716F] mt-1">Our client care specialists respond within 24 business hours.</p>
+            <h3 className="font-playfair text-[22px] sm:text-[26px] text-[#292624] font-medium">Contact Customer Support</h3>
+            <p className="text-xs text-[#77716F] mt-1">Our customer care team responds within 24 business hours.</p>
           </div>
 
           {isSubmitted ? (
             <div className="p-6 bg-[#FAF5F9] rounded-2xl border border-[#A783A2]/30 text-center space-y-2 animate-fadeIn">
               <CheckCircle2 className="w-8 h-8 text-[#A783A2] mx-auto" />
               <h4 className="font-playfair text-lg text-[#292624] font-medium">Inquiry Received</h4>
-              <p className="text-xs text-[#77716F]">Thank you! A member of our concierge team will reach out shortly.</p>
+              <p className="text-xs text-[#77716F]">Thank you! A member of our team will reach out shortly.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

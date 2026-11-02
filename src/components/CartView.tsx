@@ -30,7 +30,7 @@ export const CartView: React.FC<CartViewProps> = ({
   const [discountPercent, setDiscountPercent] = useState(0);
   const [promoError, setPromoError] = useState('');
 
-  const FREE_SHIPPING_THRESHOLD = 2999;
+  const FREE_SHIPPING_THRESHOLD = 3999;
   const subtotal = items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const discount = Math.round(subtotal * (discountPercent / 100));
   const total = subtotal - discount;

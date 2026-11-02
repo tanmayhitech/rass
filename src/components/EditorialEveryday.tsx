@@ -68,21 +68,22 @@ export const EditorialEveryday: React.FC<EditorialEverydayProps> = ({ onExploreC
           <div className="lg:col-span-6 lg:pl-6 relative mt-4 lg:mt-0">
             {/* Eyebrow with horizontal line accent */}
             <div className="flex items-center space-x-2.5 sm:space-x-3 mb-3.5 sm:mb-5">
-              <span className="font-sans font-medium text-[10.5px] sm:text-[12px] tracking-[0.22em] sm:tracking-[0.25em] text-[#77716F] uppercase">
-                MADE FOR YOUR
+              <span className="font-sans font-semibold text-[10.5px] sm:text-[12px] tracking-[0.22em] sm:tracking-[0.25em] text-[#A783A2] uppercase">
+                THE FOUNDER'S PHILOSOPHY
               </span>
-              <div className="w-10 sm:w-12 h-[1px] bg-[#E7E0DA]" />
+              <div className="w-10 sm:w-12 h-[1px] bg-[#A783A2]/30" />
             </div>
 
             {/* Editorial Heading (Cormorant Garamond) */}
-            <h2 className="font-editorial text-[36px] sm:text-[52px] lg:text-[60px] leading-[1.08] sm:leading-[1.04] tracking-[-0.01em] text-[#292624] font-normal mb-3.5 sm:mb-5">
-              Everyday<br />
-              moments.
+            <h2 className="font-editorial text-[32px] sm:text-[46px] lg:text-[54px] leading-[1.08] sm:leading-[1.04] tracking-[-0.01em] text-[#292624] font-normal mb-3.5 sm:mb-5">
+              More than jewellery.<br />
+              An expression<br />
+              of you.
             </h2>
 
             {/* Narrative Body Copy */}
-            <p className="font-sans text-[14px] sm:text-[16px] leading-[1.6] text-[#77716F] max-w-md mb-6 sm:mb-8">
-              Jewellery that effortlessly fits into life's little celebrations.
+            <p className="font-sans text-[13.5px] sm:text-[15.5px] leading-[1.65] text-[#77716F] max-w-md mb-6 sm:mb-8">
+              Jewellery is an emotion and a celebration of individuality. Curated to make you feel beautiful, confident, and effortlessly elegant—carrying personality and beauty in life's everyday moments.
             </p>
 
             {/* Pill CTA Button */}
@@ -90,7 +91,7 @@ export const EditorialEveryday: React.FC<EditorialEverydayProps> = ({ onExploreC
               onClick={onExploreClick}
               className="inline-flex items-center space-x-2.5 px-6 sm:px-7 py-2.5 sm:py-3 rounded-full bg-[#A783A2] hover:bg-[#936E8F] text-white text-[11.5px] sm:text-[13px] font-medium tracking-[0.14em] uppercase transition-all duration-300 shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] group focus:outline-none focus:ring-2 focus:ring-[#A783A2] focus:ring-offset-2 cursor-pointer mb-2 lg:mb-0"
             >
-              <span>EXPLORE NOW</span>
+              <span>EXPLORE THE CURATIONS</span>
               <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover:translate-x-1.5" />
             </button>
           </div>

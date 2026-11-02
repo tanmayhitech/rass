@@ -45,6 +45,12 @@ const CURATED_BRAND_PRESETS = [
     url: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=900',
   },
   {
+    name: 'Pastel Tribal Silver Jhumka Earrings',
+    category: 'earrings',
+    aspect: '1:1.10',
+    url: '/images/Pastel Tribal Silver Jhumka Earrings.png',
+  },
+  {
     name: 'Emerald Cascade Chandeliers',
     category: 'earrings',
     aspect: '1:1.36',
@@ -1265,6 +1271,11 @@ export const AdminHomeMediaManager: React.FC<AdminHomeMediaManagerProps> = ({
                     <option value="kangna">Kangna</option>
                     <option value="necklaces">Necklaces</option>
                     <option value="bracelets">Bracelets</option>
+                    <option value="tribal">Tribal Jewellery</option>
+                    <option value="western">Western Jewellery</option>
+                    <option value="kadas">Kadas</option>
+                    <option value="accessories">Accessories</option>
+                    <option value="toran">Toran</option>
                   </select>
                 </div>
 

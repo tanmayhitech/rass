@@ -35,15 +35,15 @@ export const NewsletterSection: React.FC = () => {
   };
 
   return (
-    <section className="relative w-full mt-0 lg:-mt-24 z-20 select-none">
-      {/* 1. Organic Landscape Top Wave (Seamlessly Overlapping the Earrings Photo Baseline) */}
+    <section className="relative w-full mt-0 z-20 select-none">
+      {/* 1. Organic Landscape Top Wave */}
       <div className="w-full overflow-hidden leading-none pointer-events-none" aria-hidden="true">
         <svg 
           viewBox="0 0 1200 120" 
           preserveAspectRatio="none" 
-          className="w-full h-20 sm:h-24 lg:h-28 block"
+          className="w-full h-16 sm:h-20 lg:h-24 block"
         >
-          {/* Wave crests smoothly over photo plinth on left (y=30), dips into valley under button (y=100), rises gently on right (y=56) */}
+          {/* Wave crests smoothly across sections */}
           <path 
             d="M 0,62 C 80,44 150,30 240,30 C 380,30 490,100 640,100 C 780,100 890,56 1000,56 C 1070,56 1140,62 1200,66 L 1200,120 L 0,120 Z" 
             fill="#CAD2C5" 
@@ -52,21 +52,24 @@ export const NewsletterSection: React.FC = () => {
       </div>
 
       {/* 2. Main Newsletter Section Body */}
-      <div className="bg-[#CAD2C5] text-[#292624] pt-4 sm:pt-6 lg:pt-8 pb-12 sm:pb-16 lg:pb-20 relative">
+      <div className="bg-[#CAD2C5] text-[#292624] pt-2 sm:pt-4 lg:pt-6 pb-12 sm:pb-16 lg:pb-20 relative">
         <div className="max-w-[1320px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-center">
             
             {/* Left Column: Eyebrow and Headline */}
             <div className="lg:col-span-5">
-              <div className="flex items-center space-x-2.5 sm:space-x-3 mb-2.5 sm:mb-3">
-                <span className="font-sans font-medium text-[10.5px] sm:text-[12px] tracking-[0.22em] sm:tracking-[0.25em] text-[#292624]/75 uppercase">
-                  STAY IN TOUCH
+              <div className="flex items-center space-x-2.5 sm:space-x-3 mb-2 sm:mb-2.5">
+                <span className="font-sans font-semibold text-[10px] sm:text-[11.5px] tracking-[0.22em] sm:tracking-[0.25em] text-[#292624]/80 uppercase">
+                  RASS BY RIDHIMA • NEWSLETTER
                 </span>
                 <div className="w-8 sm:w-10 h-[1px] bg-[#292624]/20" />
               </div>
-              <h2 className="font-editorial text-[28px] sm:text-[42px] lg:text-[48px] leading-tight text-[#292624] font-normal">
-                Be the first to know.
+              <h2 className="font-editorial text-[26px] sm:text-[38px] lg:text-[44px] leading-tight text-[#292624] font-normal mb-1.5 sm:mb-2">
+                Where culture meets contemporary expression.
               </h2>
+              <p className="font-sans text-[12px] sm:text-[13.5px] text-[#292624]/75 max-w-sm leading-relaxed">
+                Be the first to discover new curations, the charm of Indian tradition, and pieces crafted to make every moment feel special.
+              </p>
             </div>
 
             {/* Center Column: Translucent Email Input Pill with Mauve Circular Button */}
@@ -74,7 +77,7 @@ export const NewsletterSection: React.FC = () => {
               {status === 'success' ? (
                 <div className="bg-[#FAF8F5]/95 rounded-full px-5 sm:px-6 py-3 sm:py-3.5 flex items-center space-x-2.5 sm:space-x-3 text-[#292624] shadow-sm animate-fadeIn">
                   <CheckCircle2 className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-[#A783A2]" />
-                  <span className="text-[13px] sm:text-sm font-medium">Thank you for joining our inner circle!</span>
+                  <span className="text-[13px] sm:text-sm font-medium">Thank you for subscribing!</span>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="relative flex items-center">
@@ -109,9 +112,9 @@ export const NewsletterSection: React.FC = () => {
             <div className="lg:col-span-3 lg:pl-4 flex items-center">
               <div className="border-l border-[#292624]/20 pl-4 sm:pl-5">
                 <p className="font-sans text-[12.5px] sm:text-[13.5px] leading-relaxed text-[#292624]/80">
-                  Exclusive drops,<br />
-                  early access and<br />
-                  special offers.
+                  Traditional craftsmanship,<br />
+                  contemporary designs &amp;<br />
+                  everyday wearability.
                 </p>
               </div>
             </div>

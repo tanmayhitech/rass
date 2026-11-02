@@ -188,12 +188,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Category default studio photography mappings
   const categoryDefaultImages: Record<ProductCategory, { image: string; cleanImage: string }> = {
     rings: { image: '/images/cat_rings.png', cleanImage: '/images/clean_cat_rings.png' },
-    earrings: { image: '/images/cat_earrings.png', cleanImage: '/images/clean_cat_earrings.png' },
+    earrings: { image: '/images/Pastel Tribal Silver Jhumka Earrings.png', cleanImage: '/images/Pastel Tribal Silver Jhumka Earrings.png' },
     jhumka: { image: '/images/cat_jhumka.png', cleanImage: '/images/clean_cat_jhumka.png' },
     'kangan-sets': { image: '/images/cat_kangan_sets.png', cleanImage: '/images/clean_cat_kangan_sets.png' },
     kangna: { image: '/images/cat_kangna_1.png', cleanImage: '/images/clean_cat_kangna_1.png' },
     necklaces: { image: '/images/cat_necklaces.png', cleanImage: '/images/clean_cat_necklaces.png' },
     bracelets: { image: '/images/cat_bracelets.png', cleanImage: '/images/clean_cat_bracelets.png' },
+    tribal: { image: '/images/cat_silver_choker.png', cleanImage: '/images/cat_silver_choker.png' },
+    western: { image: '/images/cat_western.png', cleanImage: '/images/cat_western.png' },
+    kadas: { image: '/images/card_bg_kadas.png', cleanImage: '/images/card_bg_kadas.png' },
+    accessories: { image: '/images/cat_earpins_bugadi.png', cleanImage: '/images/cat_earpins_bugadi.png' },
+    toran: { image: '/images/cat_toran.png', cleanImage: '/images/clean_cat_toran.png' },
   };
 
   const getInitialProductForm = () => ({
@@ -763,7 +768,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="px-3 py-2 rounded-lg bg-[#161413] border border-[#2D2926] text-xs text-[#9E9793] flex items-center justify-between">
             <div>
-              <span className="font-medium text-[#FAF8F5] block">Atelier Console</span>
+              <span className="font-medium text-[#FAF8F5] block">Store Console</span>
               <span className="text-[10px] text-[#B49A6C]">Live & Secure</span>
             </div>
             <button
@@ -781,7 +786,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </div>
 
       {/* ===================================================================== */}
-      {/* 1B. DESKTOP MINIMAL ATELIER SIDEBAR */}
+      {/* 1B. DESKTOP MINIMAL STORE SIDEBAR */}
       {/* ===================================================================== */}
       <aside className={`hidden md:flex bg-[#1F1D1B] text-[#E7E0DA] flex-col justify-between shrink-0 transition-all duration-200 z-30 select-none border-r border-[#2D2926] ${
         isSidebarCollapsed ? 'w-16' : 'w-60'
@@ -864,7 +869,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {!isSidebarCollapsed && (
             <div className="px-3 py-2 rounded-md bg-[#161413] border border-[#2D2926] text-[11px] text-[#9E9793] flex items-center justify-between">
               <div>
-                <span className="font-medium text-[#FAF8F5] block">Atelier Console</span>
+                <span className="font-medium text-[#FAF8F5] block">Store Console</span>
                 <span className="text-[10px] text-[#B49A6C]">Live & Secure</span>
               </div>
               <button
@@ -1004,12 +1009,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* ----------------------------------------------------------------- */}
           {/* ----------------------------------------------------------------- */}
           {/* ----------------------------------------------------------------- */}
-          {/* TAB: OVERVIEW — RASS ATELIER EXECUTIVE OPERATIONS PORTAL */}
+          {/* TAB: OVERVIEW — RASS STORE EXECUTIVE OPERATIONS PORTAL */}
           {/* ----------------------------------------------------------------- */}
           {activeTab === 'overview' && metrics && (
             <div className="space-y-6">
               
-              {/* 1. ATELIER EXECUTIVE BANNER WITH RASS WORDMARK LOGO & LIVE PULSE */}
+              {/* 1. STORE EXECUTIVE BANNER WITH RASS WORDMARK LOGO & LIVE PULSE */}
               <div className="bg-white rounded-xl border border-[#E7E0DA] shadow-subtle p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
                 {/* Subtle decorative motif sprig in background */}
                 <div className="absolute right-0 top-0 bottom-0 pointer-events-none opacity-[0.06] select-none overflow-hidden">
@@ -1031,7 +1036,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div>
                     <div className="flex items-center space-x-2">
                       <h1 className="text-sm sm:text-lg font-bold tracking-tight text-[#292624]">
-                        Atelier Commercial Pulse
+                        Store Commercial Pulse
                       </h1>
                       <span className="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EEF3EC] text-[#3B5432] border border-[#D3E0CE]">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#3B5432] animate-pulse"></span>
@@ -1240,7 +1245,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
               </div>
 
-              {/* 4. TWO-COLUMN ATELIER OPERATIONS CONTROL CENTER */}
+              {/* 4. TWO-COLUMN OPERATIONS CONTROL CENTER */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* LEFT COLUMN (2 of 3 spans): Recent Orders & Live Fulfillment Stream */}
@@ -1364,7 +1369,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN (1 of 3 spans): Atelier Highlights & Quick Controls */}
+                {/* RIGHT COLUMN (1 of 3 spans): Performance Highlights & Quick Controls */}
                 <div className="space-y-5">
                   
                   {/* 1. Best Seller Design Spotlight */}
@@ -2337,9 +2342,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     Rooted in Tradition, Made for Today • Demi-Fine Karigari
                   </p>
                   <p className="text-[11px] text-[#77716F] leading-relaxed">
-                    Atelier Studio: Hyderabad, Telangana — 500034, India<br />
+                    Studio: Hyderabad, Telangana — 500034, India<br />
                     Pan-India Insured Dispatch • www.rassbyriddhima.com<br />
-                    Official WhatsApp: +91 98197 33572 | Email: care@rassbyridhima.com<br />
+                    Official Support Email: Rassbyridhima@gmail.com<br />
                     Instagram: @rassbyridhima | Mon–Sat: 10:00 AM – 7:00 PM IST
                   </p>
                 </div>
@@ -2579,8 +2584,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   />
                   <div className="font-bold text-[#292624] text-[11px]">Rass by Ridhima</div>
                   <div className="text-[#77716F] text-[10px] leading-tight">
-                    Hyderabad Atelier, Telangana — 500034<br />
-                    WhatsApp: +91 98197 33572
+                    Hyderabad Studio, Telangana — 500034<br />
+                    Email: Rassbyridhima@gmail.com
                   </div>
                 </div>
 
@@ -2646,6 +2651,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         kangna: 'Kangna',
                         necklaces: 'Necklaces',
                         bracelets: 'Bracelets',
+                        tribal: 'Tribal Jewellery',
+                        western: 'Western Jewellery',
+                        kadas: 'Kadas',
+                        accessories: 'Earpins & Bugadi',
+                        toran: 'Toran',
                       };
                       const defaults = categoryDefaultImages[cat];
                       setNewProductForm(prev => ({
@@ -2979,7 +2989,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <option value="Shiprocket Express">Shiprocket Express</option>
                   <option value="Delhivery Surface">Delhivery Surface</option>
                   <option value="BlueDart Air Insured">BlueDart Air Insured</option>
-                  <option value="Atelier Personal Delivery">Atelier Personal Delivery</option>
+                  <option value="Direct Hand Delivery">Direct Hand Delivery</option>
                 </select>
               </div>
 

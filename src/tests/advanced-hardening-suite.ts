@@ -14,8 +14,8 @@ import { PDFService } from '../services/pdfService';
 import { AnalyticsService } from '../services/analyticsService';
 import { Order, CartItem } from '../types';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://qugrjbcjnddqceynynds.supabase.co';
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_AOECMefE4vYt-hiSnGIhAg_UeyWYKDQ';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://ukgjkmjhhxtaedxyhaeu.supabase.co';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_aQvzTF6diderDC1UqoMROQ_DXBGZaNg';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 

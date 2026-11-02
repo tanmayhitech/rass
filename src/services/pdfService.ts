@@ -19,7 +19,7 @@ export class PDFService {
     const contentWidth = pageWidth - margin * 2;
     let y = 14;
 
-    // --- 1. BRAND LOGO & ATELIER IDENTITY ---
+    // --- 1. BRAND LOGO & IDENTITY ---
     try {
       // 600x207 transparent wordmark ratio = 2.898 => width 44mm, height 15.18mm
       doc.addImage(RASS_LOGO_DATA_URL, 'PNG', margin, y, 44, 15.18);
@@ -31,7 +31,7 @@ export class PDFService {
       doc.text('RASS BY RIDDHIMA', margin, y + 8);
     }
 
-    // Atelier Subtitle & Location
+    // Brand Subtitle & Location
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(180, 154, 108); // #B49A6C Antique Gold
@@ -40,8 +40,8 @@ export class PDFService {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(119, 113, 111); // #77716F
-    doc.text('Atelier Studio: Hyderabad, Telangana — 500034 • Pan-India Express', margin, y + 24);
-    doc.text('WhatsApp: +91 98197 33572 • care@rassbyridhima.com • @rassbyridhima', margin, y + 28);
+    doc.text('Studio: Hyderabad, Telangana — 500034 • Pan-India Shipping', margin, y + 24);
+    doc.text('Email: Rassbyridhima@gmail.com • Instagram: @rassbyridhima', margin, y + 28);
 
     // --- 2. DOCUMENT METADATA (Top Right Badge) ---
     const invoiceNum = `INV-2026-${order.id.replace('RASS-ORD-', '')}`;
@@ -299,7 +299,7 @@ export class PDFService {
     doc.text('Grand Total Paid (INR):', totalsX, y);
     doc.text(`Rs. ${order.total.toLocaleString('en-IN')}`, pageWidth - margin - 4, y, { align: 'right' });
 
-    // --- 6. ATELIER CERTIFICATE & AUTHENTICITY DECLARATION ---
+    // --- 6. AUTHENTICITY DECLARATION & CARE NOTES ---
     y = 248;
     doc.setFillColor(250, 248, 245); // #FAF8F5 Warm Ivory
     doc.setDrawColor(231, 224, 218);
@@ -316,13 +316,13 @@ export class PDFService {
     doc.text('Handcrafted in Hyderabad with brass base & premium silver/gold micro-polish, semi-precious stones, freshwater pearls,', margin + 5, y + 11.5);
     doc.text('and anti-tarnish protective sealing. Exchange-only within 48h of delivery with mandatory 360 unboxing video.', margin + 5, y + 15.5);
     doc.text('Care: Keep away from water, soaps & perfumes. Store individually in airtight zip-locks. Clean with soft microfibre cloth.', margin + 5, y + 19.5);
-    doc.text('Client Support: care@rassbyridhima.com | Official WhatsApp: +91 98197 33572 | Hyderabad, India', margin + 5, y + 23.5);
+    doc.text('Client Support: Rassbyridhima@gmail.com | Hyderabad, India', margin + 5, y + 23.5);
 
     // Bottom Sign-off
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(7.5);
     doc.setTextColor(150, 142, 136);
-    doc.text('Thank you for patronizing our atelier • Handcrafted with love in India', pageWidth / 2, 287, { align: 'center' });
+    doc.text('Thank you for shopping with us • Handcrafted with love in India', pageWidth / 2, 287, { align: 'center' });
 
     return doc;
   }
@@ -356,7 +356,7 @@ export class PDFService {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
     doc.setTextColor(180, 154, 108);
-    doc.text('ATELIER SHIPPING MANIFEST & QUALITY CONTROL PROTOCOL', margin, y + 18);
+    doc.text('SHIPPING MANIFEST & QUALITY CONTROL PROTOCOL', margin, y + 18);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);

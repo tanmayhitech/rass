@@ -46,7 +46,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const FREE_SHIPPING_THRESHOLD = 2999;
+  const FREE_SHIPPING_THRESHOLD = 3999;
   const subtotal = items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const discount = discountAmount;
   const total = Math.max(0, subtotal - discount);

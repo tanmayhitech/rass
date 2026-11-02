@@ -42,7 +42,7 @@ const SparkleSymbol: React.FC<{ className?: string }> = ({ className = 'w-2.5 h-
 // High-end promotional items for the moving marquee ribbon
 const PROMO_ITEMS = [
   {
-    text: 'FREE SHIPPING ON ORDERS ABOVE ₹2999',
+    text: 'FREE SHIPPING ON ORDERS ABOVE ₹3999',
     icon: 'lotus',
     highlight: false,
   },
@@ -57,17 +57,17 @@ const PROMO_ITEMS = [
     highlight: false,
   },
   {
-    text: 'HANDCRAFTED HEIRLOOM JEWELLERY',
+    text: 'CURATED FROM MASTER ARTISAN CLUSTERS',
     icon: 'sparkle',
     highlight: false,
   },
   {
-    text: '100% ANTI-TARNISH & HYPOALLERGENIC',
+    text: '100% SKIN-SAFE & HYPOALLERGENIC',
     icon: 'lotus',
     highlight: false,
   },
   {
-    text: 'EST. HYDERABAD • PAN-INDIA DISPATCH',
+    text: 'EST. HYDERABAD • PAN-INDIA SHIPPING',
     icon: 'sparkle',
     highlight: false,
   },

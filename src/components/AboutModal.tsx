@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { InfoSection } from '../types';
 import { emailService } from '../services/emailService';
+import { inquiryService } from '../services/inquiryService';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -87,6 +88,15 @@ export const AboutModal: React.FC<AboutModalProps> = ({
     setContactSubmitted(true);
 
     const submission = { ...contactForm };
+    inquiryService.saveInquiry({
+      name: submission.name,
+      email: submission.email,
+      phone: submission.phone,
+      subject: submission.subject,
+      message: submission.message,
+      source: 'about_modal'
+    });
+
     emailService.sendInquiryNotificationEmail({
       name: submission.name,
       email: submission.email,
@@ -114,7 +124,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
     { id: 'care', label: 'Care Guide', shortLabel: 'Care', icon: <Sparkles className="w-4 h-4" />, group: 'about' },
     { id: 'sizing', label: 'Size Guide', shortLabel: 'Sizes', icon: <Ruler className="w-4 h-4" />, group: 'about' },
     { id: 'faqs', label: 'FAQs', shortLabel: 'FAQs', icon: <HelpCircle className="w-4 h-4" />, group: 'about' },
-    { id: 'contact', label: 'Contact & Atelier', shortLabel: 'Contact', icon: <Mail className="w-4 h-4" />, group: 'about' },
+    { id: 'contact', label: 'Contact Us', shortLabel: 'Contact', icon: <Mail className="w-4 h-4" />, group: 'about' },
     { id: 'shipping', label: 'Shipping Policy', shortLabel: 'Shipping', icon: <Truck className="w-4 h-4" />, group: 'help' },
     { id: 'returns', label: 'Return & Exchange', shortLabel: 'Returns', icon: <RotateCcw className="w-4 h-4" />, group: 'help' },
     { id: 'privacy', label: 'Privacy Policy', shortLabel: 'Privacy', icon: <ShieldCheck className="w-4 h-4" />, group: 'help' },
@@ -128,32 +138,32 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
   const faqs = [
     {
-      q: 'How long will it take to deliver my jewellery order?',
-      a: 'All orders are dispatched from our Hyderabad atelier within 24 to 48 business hours. Standard Pan-India delivery takes approximately 5 to 7 business days via reliable express logistics. Live tracking updates are shared via WhatsApp and email upon dispatch.'
+      q: 'How long will it take to dispatch and deliver my order?',
+      a: 'All orders are dispatched from Hyderabad within 24 to 48 business hours (2 to 4 business days). Standard Pan-India delivery takes approximately 5 to 7 business days with live tracking updates. We ship Pan-India only for now.'
     },
     {
-      q: 'What materials and craftsmanship does Rass use?',
-      a: 'Our jewellery is meticulously handcrafted on a premium brass base finished with micro-polished antique gold and silver, dual-tone oxidised silver, Kundan, Polki, Onyx, and freshwater pearls. Each piece is sealed with an anti-tarnish protective coating for enduring lustre.'
+      q: 'What materials, base metals, and plating does Rass use?',
+      a: 'Our pieces are handcrafted by generational artisans (karigars), designed in-house, and curated from master clusters across Jaipur, Rajkot, and Bengal. We use solid brass with 18k/24k micro gold polish with anti-tarnish e-coating, 925 sterling silver (hallmarked), 18k gold vermeil, and everyday waterproof stainless steel. 100% skin-safe & hypoallergenic (nickel-free and lead-free).'
     },
     {
-      q: 'Can I request custom sizing or bespoke pieces?',
-      a: 'To preserve artisanal precision and guarantee swift delivery, only our official website catalogue pieces are available. While custom sizing is not offered, our WhatsApp Concierge (+91 98197 33572) is happy to assist with standard sizing recommendations.'
+      q: 'What are your shipping charges and free shipping threshold?',
+      a: 'Free shipping on orders above ₹3,999. For orders below ₹3,999, flat standard courier shipping is ₹250. Pan-India shipping only for now.'
     },
     {
-      q: 'Are Rass creations anti-tarnish and water resistant?',
-      a: 'Yes, every creation features a protective anti-tarnish seal. To keep pieces looking brand-new, follow our 4 Golden Rules: avoid water, soaps, and perfumes; store individually in airtight zip-locks (not velvet boxes); and wipe gently with a microfibre cloth.'
+      q: 'Can I choose my size for rings and kadas?',
+      a: 'Rings are mostly adjustable / free-size comfort bands, standard Indian sizes (10 to 20), or a mix of both. Bangles and kadas are available in standard Indian sizes (2.4, 2.6, 2.8), openable screw/hinge mechanism (fits most wrists), and adjustable pull-cord/chain.'
     },
     {
-      q: 'What payment methods do you accept?',
-      a: 'We accept all major credit and debit cards (Visa, MasterCard, RuPay), UPI (Google Pay, PhonePe, Paytm), and Net Banking across all Indian banks through Razorpay. All orders are Prepaid Only (no COD) to avoid transit damage and high RTO rates.'
+      q: 'What are the key care rules for Rass jewellery?',
+      a: 'Keep away from water, perfumes and lotions. Store each piece separately in a jewellery pouch or airtight box to prevent scratches and tangling. Keep away from direct sunlight, moisture and humidity. Clean gently with a soft, dry cloth after every use. Handle delicate pieces with love and care.'
+    },
+    {
+      q: 'What payment options do you support? Is COD available?',
+      a: 'Prepaid Only (UPI, GPay, PhonePe, Cards, NetBanking via Razorpay) — to avoid RTO transit damage and protect delicate handcrafted ornaments. COD is unavailable.'
     },
     {
       q: 'What is your return and exchange policy?',
-      a: 'We offer an Exchange-Only policy for sizing issues or defects within 48 hours of delivery (no cash refunds). A mandatory continuous 360° unboxing video showing the opening of the sealed parcel is required. The customer covers nominal reverse shipping (approx. ₹100–₹150).'
-    },
-    {
-      q: 'How should I store my Rass jewellery?',
-      a: 'Store each piece individually in an airtight zip-lock bag or soft pouch in a cool, dry place. Do not store pieces in velvet boxes, as velvet can trap moisture and accelerate oxidation.'
+      a: 'Exchange / Store Credit Only within 48 hours of delivery (no cash refunds). A continuous 360° unboxing video showing the opening of the sealed outer box is MANDATORY for damage/missing claims. Pierced earrings are strictly non-exchangeable for hygiene reasons.'
     }
   ];
 
@@ -320,15 +330,13 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
             {/* Concierge Badge in Desktop Sidebar */}
             <div className="mt-6 p-3 bg-white/70 rounded-xl border border-[#E7E0DA]/80 text-center">
-              <span className="text-[11px] font-medium text-[#77716F] block">Need instant guidance?</span>
+              <span className="text-[11px] font-medium text-[#77716F] block">Need assistance?</span>
               <a 
-                href="https://wa.me/919819733572" 
-                target="_blank" 
-                rel="noopener noreferrer"
+                href="mailto:Rassbyridhima@gmail.com" 
                 className="text-[12px] font-semibold text-[#A783A2] hover:underline flex items-center justify-center space-x-1 mt-1"
               >
-                <Phone className="w-3 h-3" />
-                <span>WhatsApp Concierge</span>
+                <Mail className="w-3 h-3" />
+                <span>Rassbyridhima@gmail.com</span>
               </a>
             </div>
           </div>
@@ -353,19 +361,44 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               <div className="space-y-5 sm:space-y-6 animate-fadeIn">
                 <div className="border-b border-[#E7E0DA] pb-3 sm:pb-4">
                   <span className="font-sans font-medium text-[10px] sm:text-[10.5px] tracking-[0.25em] text-[#77716F] uppercase">
-                    HERITAGE & CRAFTSMANSHIP
+                    RASS BY RIDHIMA
                   </span>
                   <h2 className="font-editorial text-[25px] sm:text-[34px] lg:text-[38px] text-[#292624] font-normal leading-tight mt-1">
-                    Rooted in Tradition, Made for Today.
+                    The Brand Story &amp; Founder
                   </h2>
                 </div>
 
-                <div className="space-y-3.5 text-[13.5px] sm:text-[14px] text-[#5C5855] leading-relaxed">
+                <div className="space-y-3 text-[13.5px] sm:text-[14px] text-[#5C5855] leading-relaxed font-sans">
                   <p>
-                    Founded by Ridhima, <strong>Rass</strong> curates premium oxidized and fashion jewelry for the modern muse. Based in Hyderabad and shipping Pan-India, we craft and curate pieces that effortlessly fit into life's celebrations and everyday elegance.
+                    Rass was born out of my love for jewellery, fashion and the richness of Indian culture.
                   </p>
                   <p>
-                    Every design is thoughtfully selected and crafted—celebrating timeless artisanal aesthetics, anti-tarnish durability, and versatile modern styling.
+                    Inspired by the beauty of traditions, timeless artistry and the little details that make every piece special, I wanted to create a space where culture meets contemporary expression.
+                  </p>
+                  <p>
+                    To me, jewellery is more than just an accessory. It's an emotion, a form of self-expression and a beautiful way of celebrating individuality.
+                  </p>
+                  <p>
+                    Through Rass, I hope to bring together the charm of tradition and the beauty of modern aesthetics, creating pieces that tell a story and make every moment feel special.
+                  </p>
+                  <p className="font-medium text-[#292624]">
+                    A reflection of my passion, my creativity and my love for all things beautiful.
+                  </p>
+                  <p className="font-cormorant text-[18px] sm:text-[20px] text-[#8E6789] italic font-semibold pt-0.5">
+                    RASS — An expression of culture, crafted with love.
+                  </p>
+                </div>
+
+                {/* The Founder Note Box */}
+                <div className="p-4 sm:p-5 bg-[#FAF5F9] rounded-xl border border-[#A783A2]/25 space-y-2">
+                  <span className="font-sans font-bold text-[10px] tracking-[0.2em] text-[#A783A2] uppercase block">
+                    The Founder Note –
+                  </span>
+                  <p className="text-xs sm:text-[13px] text-[#5C5855] leading-relaxed">
+                    Rass by Ridhima was born out of Ridhima’s love for jewellery and her belief that the right piece can make a woman feel beautiful, confident and effortlessly elegant. She wanted to create a brand that brings together traditional Indian craftsmanship, contemporary designs and everyday wearability.
+                  </p>
+                  <p className="text-xs sm:text-[13px] text-[#5C5855] leading-relaxed">
+                    Her personal philosophy is simple: Jewellery is not just an accessory; it is an expression of who you are. It should make you feel confident, special and connected to your personal style. Through Rass by Ridhima, she hopes to make every woman feel that a little piece of jewellery can carry a lot of beauty, personality and emotion.
                   </p>
                 </div>
 
@@ -373,33 +406,33 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4 sm:my-6">
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] text-center space-y-1.5 sm:space-y-2 shadow-xs">
                     <HeartHandshake className="w-5 h-5 text-[#A783A2] mx-auto" />
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Artisanal Roots</h4>
+                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Artisan Karigari</h4>
                     <p className="text-[11.5px] sm:text-xs text-[#77716F] leading-snug">
-                      Preserving traditional craftsmanship with dual-tone oxidised silver and antique polish.
+                      Handcrafted by generational artisans (karigars) across Jaipur, Rajkot, and Bengal.
                     </p>
                   </div>
 
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] text-center space-y-1.5 sm:space-y-2 shadow-xs">
                     <Award className="w-5 h-5 text-[#B49A6C] mx-auto" />
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Premium Micro-Polish</h4>
+                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Noble Metallurgy</h4>
                     <p className="text-[11.5px] sm:text-xs text-[#77716F] leading-snug">
-                      Durable brass core with antique gold and silver plating sealed with an anti-tarnish barrier.
+                      Solid brass with micro gold plating, 925 silver, 18k vermeil, and anti-tarnish e-coating.
                     </p>
                   </div>
 
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] text-center space-y-1.5 sm:space-y-2 shadow-xs">
-                    <Sparkles className="w-5 h-5 text-[#A783A2] mx-auto" />
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Semi-Precious Stones</h4>
+                    <ShieldCheck className="w-5 h-5 text-[#4E6148] mx-auto" />
+                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">100% Skin-Safe</h4>
                     <p className="text-[11.5px] sm:text-xs text-[#77716F] leading-snug">
-                      Curated Kundan, Polki, Onyx, sparkling Zircons, and freshwater pearls.
+                      100% skin-safe &amp; hypoallergenic (nickel-free and lead-free comfort).
                     </p>
                   </div>
                 </div>
 
                 <div className="p-3.5 sm:p-4 bg-[#C8D4C1]/30 rounded-xl border border-[#C8D4C1]/60 text-xs text-[#292624] flex items-center space-x-3">
-                  <ShieldCheck className="w-5 h-5 text-[#4E6148] shrink-0" />
+                  <Truck className="w-5 h-5 text-[#4E6148] shrink-0" />
                   <span>
-                    Each piece undergoes rigorous quality assessment in our Hyderabad atelier before dispatch.
+                    Headquartered in Hyderabad. Dispatched in 24 to 48 business hours (2 to 4 business days). Pan-India delivery only for now.
                   </span>
                 </div>
               </div>
@@ -421,30 +454,30 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <div className="flex items-center space-x-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-[#B49A6C] shrink-0" />
-                      <h4 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Premium Brass Core & Micro-Polish</h4>
+                      <h4 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Solid Brass with 18k/24k Micro Gold Polish</h4>
                     </div>
                     <p className="text-xs sm:text-sm text-[#5C5855] leading-relaxed">
-                      Forged on a solid, hypoallergenic brass foundation treated with multi-step antique gold, silver, and dual-tone micro-polishing. A transparent anti-tarnish barrier seals every contour to resist environmental oxidation.
+                      Forged on a solid brass base finished with brilliant 18k/24k micro gold polish and anti-tarnish e-coating to resist environmental oxidation and preserve radiant lustre.
                     </p>
                   </div>
 
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <div className="flex items-center space-x-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-[#A783A2] shrink-0" />
-                      <h4 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Dual-Tone Oxidised Silver</h4>
+                      <h4 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Everyday Waterproof Stainless Steel</h4>
                     </div>
                     <p className="text-xs sm:text-sm text-[#5C5855] leading-relaxed">
-                      Our signature tribal and festive collections feature handcrafted oxidised finishes with contrasting high-polish highlights, evoking royal heritage aesthetics with modern lightweight comfort.
+                      Our modern daily wear collections utilize anti-tarnish stainless steel engineered for sweat resistance, water contact, and active lifestyle durability.
                     </p>
                   </div>
 
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <div className="flex items-center space-x-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-[#4E6148] shrink-0" />
-                      <h4 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Kundan, Polki & Natural Pearls</h4>
+                      <h4 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Curated from Master Clusters (Jaipur / Rajkot / Bengal)</h4>
                     </div>
                     <p className="text-xs sm:text-sm text-[#5C5855] leading-relaxed">
-                      Embellished with precision glass-foil Kundan, faceted Onyx, micro-pave Zircons, and real freshwater and shell pearls strung securely by master artisans.
+                      Every piece is curated from iconic jewellery clusters carrying heritage karigar traditions, 100% skin-safe & hypoallergenic (lead-free and nickel-free).
                     </p>
                   </div>
                 </div>
@@ -456,56 +489,48 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               <div className="space-y-5 sm:space-y-6 animate-fadeIn">
                 <div className="border-b border-[#E7E0DA] pb-3 sm:pb-4">
                   <span className="font-sans font-medium text-[10px] sm:text-[10.5px] tracking-[0.25em] text-[#77716F] uppercase">
-                    JEWELLERY CARE
+                    RASS BY RIDHIMA
                   </span>
                   <h2 className="font-editorial text-[25px] sm:text-[34px] lg:text-[38px] text-[#292624] font-normal leading-tight mt-1">
-                    Preserving Your Everyday Heirlooms
+                    A Little Love &amp; Care for Your Jewellery ♡
                   </h2>
                 </div>
 
                 <p className="text-xs sm:text-sm text-[#5C5855] leading-relaxed">
-                  With mindful care, your Rass jewellery will retain its brilliance and anti-tarnish finish. Follow these four golden rules:
+                  Your jewellery is special, and with a little care, you can keep it beautiful for longer:
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1">
-                    <span className="text-[10.5px] font-bold text-[#A783A2] uppercase tracking-wider">Rule 01</span>
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Keep Away from Water & Chemicals</h4>
-                    <p className="text-[11.5px] sm:text-xs text-[#77716F] leading-relaxed">
-                      Avoid contact with water, soaps, lotions, perfumes, and chemical sprays. Always apply cosmetics and fragrances before wearing your jewellery.
-                    </p>
+                <div className="space-y-2.5">
+                  <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] flex items-center gap-2.5">
+                    <span className="text-sm select-none shrink-0">✨</span>
+                    <span className="text-xs sm:text-[13px] text-[#292624] font-medium">Keep away from water, perfumes and lotions .</span>
                   </div>
-
-                  <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1">
-                    <span className="text-[10.5px] font-bold text-[#A783A2] uppercase tracking-wider">Rule 02</span>
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Store in Airtight Zip-Locks</h4>
-                    <p className="text-[11.5px] sm:text-xs text-[#77716F] leading-relaxed">
-                      Store each piece individually in sealed airtight zip-lock bags or soft pouches. Do NOT store pieces in velvet boxes to prevent moisture retention.
-                    </p>
+                  <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] flex items-center gap-2.5">
+                    <span className="text-sm select-none shrink-0">✨</span>
+                    <span className="text-xs sm:text-[13px] text-[#292624] font-medium">Store each piece separately in a jewellery pouch or airtight box to prevent scratches and tangling.</span>
                   </div>
-
-                  <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1">
-                    <span className="text-[10.5px] font-bold text-[#A783A2] uppercase tracking-wider">Rule 03</span>
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Gentle Microfibre Cleaning</h4>
-                    <p className="text-[11.5px] sm:text-xs text-[#77716F] leading-relaxed">
-                      Wipe your jewellery gently with a soft microfibre cloth after each wear to remove residual skin oils and airborne dust.
-                    </p>
+                  <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] flex items-center gap-2.5">
+                    <span className="text-sm select-none shrink-0">✨</span>
+                    <span className="text-xs sm:text-[13px] text-[#292624] font-medium">Keep away from direct sunlight, moisture and humidity.</span>
                   </div>
-
-                  <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1">
-                    <span className="text-[10.5px] font-bold text-[#A783A2] uppercase tracking-wider">Rule 04</span>
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Dry & Friction-Free</h4>
-                    <p className="text-[11.5px] sm:text-xs text-[#77716F] leading-relaxed">
-                      Remove before bathing, swimming, or sleeping. Separate each item to prevent stones and chains from scratching against one another.
-                    </p>
+                  <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] flex items-center gap-2.5">
+                    <span className="text-sm select-none shrink-0">✨</span>
+                    <span className="text-xs sm:text-[13px] text-[#292624] font-medium">Clean gently with a soft, dry cloth after every use.</span>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] flex items-center gap-2.5">
+                    <span className="text-sm select-none shrink-0">✨</span>
+                    <span className="text-xs sm:text-[13px] text-[#292624] font-medium">Handle delicate pieces with love and care.</span>
                   </div>
                 </div>
 
-                <div className="p-3.5 sm:p-4 bg-[#FAF8F5] border border-[#A783A2]/40 rounded-xl flex items-center space-x-3 text-xs text-[#292624]">
-                  <Sparkles className="w-5 h-5 text-[#A783A2] shrink-0" />
-                  <span>
-                    <strong>Complimentary Spa Service:</strong> Rass patrons enjoy one complimentary professional re-polishing per year. Contact our concierge to arrange your complimentary service.
-                  </span>
+                <div className="p-4 bg-[#FAF5F9] border border-[#A783A2]/30 rounded-xl text-center space-y-1">
+                  <p className="font-editorial text-[15px] sm:text-[17px] text-[#8B5E86] italic leading-relaxed">
+                    “A little reminder: Jewellery is made to make you shine. Treat every piece with love, and it will remain a beautiful part of your story.”
+                  </p>
+                  <p className="text-xs font-sans text-[#A783A2] font-semibold pt-1">
+                    With love,<br />
+                    Team Rass by Ridhima ♡
+                  </p>
                 </div>
               </div>
             )}
@@ -659,19 +684,19 @@ export const AboutModal: React.FC<AboutModalProps> = ({
               </div>
             )}
 
-            {/* 6. CONTACT & ATELIER */}
+            {/* 6. CONTACT US */}
             {activeTab === 'contact' && (
               <div className="space-y-5 sm:space-y-6 animate-fadeIn">
                 <div className="border-b border-[#E7E0DA] pb-3 sm:pb-4">
                   <span className="font-sans font-medium text-[10px] sm:text-[10.5px] tracking-[0.25em] text-[#77716F] uppercase">
-                    CLIENT CONCIERGE
+                    GET IN TOUCH
                   </span>
                   <h2 className="font-editorial text-[25px] sm:text-[34px] lg:text-[38px] text-[#292624] font-normal leading-tight mt-1">
-                    Get in Touch with Our Atelier
+                    Get in Touch with Our Team
                   </h2>
                 </div>
 
-                {/* Atelier Information Cards */}
+                {/* Contact Information Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <div className="flex items-center space-x-2 text-[#A783A2]">
@@ -679,19 +704,19 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                       <h4 className="font-sans text-xs font-bold uppercase tracking-wider text-[#292624]">Direct Inquiries</h4>
                     </div>
                     <p className="text-xs text-[#5C5855]">
-                      <span className="font-medium text-[#292624]">Email:</span> concierge@rassbyriddhima.com<br />
-                      <span className="font-medium text-[#292624]">VIP WhatsApp:</span> +91 98201 11223
+                      <span className="font-medium text-[#292624]">Official Email:</span> Rassbyridhima@gmail.com<br />
+                      <span className="font-medium text-[#292624]">Instagram DM:</span> @rassbyridhima
                     </p>
                   </div>
 
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <div className="flex items-center space-x-2 text-[#B49A6C]">
                       <Clock className="w-4 h-4" />
-                      <h4 className="font-sans text-xs font-bold uppercase tracking-wider text-[#292624]">Atelier Hours</h4>
+                      <h4 className="font-sans text-xs font-bold uppercase tracking-wider text-[#292624]">Support Hours</h4>
                     </div>
                     <p className="text-xs text-[#5C5855]">
-                      Monday – Saturday: 10:00 AM – 7:30 PM IST<br />
-                      Sunday: Private appointments by request
+                      Monday – Saturday: 10:00 AM – 7:00 PM IST<br />
+                      Sunday & National Holidays: Closed
                     </p>
                   </div>
                 </div>
@@ -704,7 +729,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     <div className="p-4 bg-[#C8D4C1]/30 border border-[#C8D4C1] rounded-xl text-center space-y-1.5 animate-fadeIn">
                       <CheckCircle2 className="w-6 h-6 text-[#4E6148] mx-auto" />
                       <p className="text-sm font-medium text-[#292624]">Message Received with Grace</p>
-                      <p className="text-xs text-[#5C5855]">Our jewellery concierge will respond to your inquiry within 4 working hours.</p>
+                      <p className="text-xs text-[#5C5855]">Our client care team will respond to your inquiry via Rassbyridhima@gmail.com within 24 working hours.</p>
                     </div>
                   ) : (
                     <form onSubmit={handleContactSubmit} className="space-y-3">
@@ -740,9 +765,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                           className="w-full text-xs px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-[#FAF8F5] focus:bg-white focus:outline-none focus:border-[#A783A2]"
                         >
                           <option value="General Inquiry">General Inquiry</option>
-                          <option value="Bespoke Order / Custom Sizing">Bespoke Order / Custom Sizing</option>
+                          <option value="Sizing Consultation">Sizing Consultation</option>
                           <option value="Order Tracking">Order Tracking</option>
-                          <option value="Bridal / Trousseau Styling">Bridal / Trousseau Styling</option>
+                          <option value="Exchange Request">Exchange Request</option>
                         </select>
                       </div>
                       <textarea
@@ -774,7 +799,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     LOGISTICS & DELIVERY
                   </span>
                   <h2 className="font-editorial text-[25px] sm:text-[34px] lg:text-[38px] text-[#292624] font-normal leading-tight mt-1">
-                    Shipping & Delivery Policy
+                    Shipping &amp; Delivery Policy
                   </h2>
                 </div>
 
@@ -782,24 +807,24 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-2">
                     <div className="flex items-center space-x-2">
                       <Truck className="w-4 h-4 text-[#A783A2]" />
-                      <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Domestic Shipping Across India</h4>
+                      <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Domestic Shipping (Pan-India)</h4>
                     </div>
-                    <ul className="list-disc pl-5 space-y-1 text-xs text-[#5C5855]">
-                      <li><strong>Free Shipping:</strong> Complimentary standard shipping on all orders above ₹2,999.</li>
-                      <li><strong>Below ₹2,999:</strong> Standard courier is ₹250; Urgent / Express shipping is ₹350.</li>
-                      <li><strong>Dispatch Time:</strong> Orders are dispatched from our Hyderabad atelier within 24 to 48 business hours.</li>
-                      <li><strong>Delivery Timeline:</strong> Pan-India transit takes 5 to 7 business days with end-to-end tracking updates.</li>
-                      <li><strong>Prepaid Only:</strong> All orders are prepaid to prevent transit damage and high RTO return rates.</li>
+                    <ul className="list-disc pl-5 space-y-1.5 text-xs text-[#5C5855]">
+                      <li><strong>Free Shipping:</strong> Free shipping above ₹3,999 (below that ₹250 for orders).</li>
+                      <li><strong>Dispatch Time:</strong> Orders are dispatched within 24 to 48 business hours (2 to 4 business days).</li>
+                      <li><strong>Delivery Timeline:</strong> Domestic Pan-India transit takes 5 to 7 business days with live tracking updates.</li>
+                      <li><strong>International Shipping:</strong> No, Pan-India only for now.</li>
+                      <li><strong>Payment Mode:</strong> Prepaid Only (UPI, GPay, PhonePe, Cards, NetBanking via Razorpay) — recommended to avoid RTO transit damage.</li>
                     </ul>
                   </div>
 
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <div className="flex items-center space-x-2">
                       <ShieldCheck className="w-4 h-4 text-[#B49A6C]" />
-                      <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">100% Transit Insurance</h4>
+                      <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">100% Insured Delivery</h4>
                     </div>
                     <p className="text-xs text-[#5C5855]">
-                      Every parcel is sealed in a heavy-duty tamper-proof security envelope and fully insured until safely delivered and signed for at your doorstep.
+                      Every parcel is sealed in a tamper-proof security envelope and fully insured until delivered safely to your doorstep.
                     </p>
                   </div>
                 </div>
@@ -814,41 +839,41 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                     PEACE OF MIND POLICY
                   </span>
                   <h2 className="font-editorial text-[25px] sm:text-[34px] lg:text-[38px] text-[#292624] font-normal leading-tight mt-1">
-                    48-Hour Exchange-Only Policy
+                    48-Hour Exchange / Store Credit Policy
                   </h2>
                 </div>
 
                 <div className="space-y-3.5 text-xs sm:text-sm text-[#5C5855] leading-relaxed">
                   <p>
-                    We want you to be delighted with your jewellery piece. We offer an <strong>Exchange-Only</strong> policy for size issues or defects within 48 hours of delivery (no cash refunds).
+                    We offer <strong>Exchange / Store Credit Only within 48 hours</strong> of delivery (no cash refunds).
                   </p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                     <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] text-center space-y-1">
                       <span className="w-5 h-5 rounded-full bg-[#A783A2]/20 text-[#A783A2] font-bold text-xs flex items-center justify-center mx-auto">1</span>
                       <h5 className="font-editorial text-xs sm:text-sm text-[#292624] font-medium">Report in 48 Hours</h5>
-                      <p className="text-[11px] text-[#77716F]">WhatsApp +91 98197 33572 or email care@rassbyridhima.com.</p>
+                      <p className="text-[11px] text-[#77716F]">Email Rassbyridhima@gmail.com with your Order ID.</p>
                     </div>
 
                     <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] text-center space-y-1">
                       <span className="w-5 h-5 rounded-full bg-[#A783A2]/20 text-[#A783A2] font-bold text-xs flex items-center justify-center mx-auto">2</span>
-                      <h5 className="font-editorial text-xs sm:text-sm text-[#292624] font-medium">360° Unboxing Video</h5>
-                      <p className="text-[11px] text-[#77716F]">Clear video showing unopened sealed parcel opening is mandatory.</p>
+                      <h5 className="font-editorial text-xs sm:text-sm text-[#292624] font-medium">Mandatory 360° Video</h5>
+                      <p className="text-[11px] text-[#77716F]">Continuous 360° unboxing video showing opening of sealed outer box is mandatory.</p>
                     </div>
 
                     <div className="p-3 bg-white rounded-xl border border-[#E7E0DA] text-center space-y-1">
                       <span className="w-5 h-5 rounded-full bg-[#A783A2]/20 text-[#A783A2] font-bold text-xs flex items-center justify-center mx-auto">3</span>
                       <h5 className="font-editorial text-xs sm:text-sm text-[#292624] font-medium">Prompt Exchange</h5>
-                      <p className="text-[11px] text-[#77716F]">Replacement dispatched upon return receipt (reverse shipping ₹100–₹150).</p>
+                      <p className="text-[11px] text-[#77716F]">Store credit or replacement issued once returned item is inspected.</p>
                     </div>
                   </div>
 
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">Conditions for Exchange</h4>
                     <ul className="list-disc pl-5 space-y-1 text-xs text-[#5C5855]">
-                      <li>Items must be unworn, undamaged, and returned with the original security tag intact.</li>
-                      <li>A mandatory, continuous 360° unboxing video must be submitted with your claim.</li>
-                      <li>Customer covers nominal reverse shipping charges (approx. ₹100–₹150).</li>
+                      <li>A continuous 360° unboxing video showing the opening of the sealed outer box is strictly mandatory for any damage or missing claims.</li>
+                      <li>Items must be unworn, undamaged, and returned with all original packaging.</li>
+                      <li><strong>Pierced Earrings Hygiene Policy:</strong> Strictly non-exchangeable for hygiene reasons.</li>
                     </ul>
                   </div>
                 </div>
@@ -889,7 +914,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1.5">
                     <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">3. Your Data Rights</h4>
                     <p className="text-xs text-[#5C5855]">
-                      You may at any time request a copy of your stored customer records or request total deletion by emailing <span className="font-medium text-[#292624]">privacy@rassbyriddhima.com</span>.
+                      You may at any time request a copy of your stored customer records or request total deletion by emailing <span className="font-medium text-[#292624]">Rassbyridhima@gmail.com</span>.
                     </p>
                   </div>
                 </div>
@@ -910,9 +935,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({
 
                 <div className="space-y-3.5 text-xs sm:text-sm text-[#5C5855] leading-relaxed">
                   <div className="p-3.5 sm:p-4 bg-white rounded-xl border border-[#E7E0DA] space-y-1">
-                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">1. Authenticity & Hallmarking</h4>
+                    <h4 className="font-editorial text-[15px] sm:text-base text-[#292624] font-medium">1. Material Integrity & Craftsmanship</h4>
                     <p className="text-xs text-[#5C5855]">
-                      All creations sold under Rass by Riddhima conform strictly to stated specifications of 925 sterling silver purity and 18k yellow gold vermeil thickness. Every piece carries our registered hallmark.
+                      All creations sold under Rass by Riddhima conform strictly to stated specifications of solid brass with 18k/24k micro gold polish, anti-tarnish e-coating, and anti-tarnish stainless steel. Every piece is 100% skin-safe & hypoallergenic (nickel-free and lead-free).
                     </p>
                   </div>
 

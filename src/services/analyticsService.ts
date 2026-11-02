@@ -252,6 +252,11 @@ export class AnalyticsService {
       'kangna': 'Kangna',
       'necklaces': 'Necklaces',
       'bracelets': 'Bracelets',
+      'tribal': 'Tribal Jewellery',
+      'western': 'Western Jewellery',
+      'kadas': 'Kadas',
+      'accessories': 'Accessories',
+      'toran': 'Toran',
     };
 
     return Object.keys(categoryNames).map((key) => {

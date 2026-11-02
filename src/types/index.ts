@@ -5,7 +5,12 @@ export type ProductCategory =
   | 'earrings'
   | 'kangan-sets'
   | 'kangna'
-  | 'bracelets';
+  | 'bracelets'
+  | 'tribal'
+  | 'western'
+  | 'kadas'
+  | 'accessories'
+  | 'toran';
 
 export type ProductStatus = 'draft' | 'published' | 'archived' | 'inactive';
 
@@ -241,5 +246,17 @@ export interface DatabaseFeatureTestResult {
   latencyMs?: number;
   details: string;
   error?: string;
+}
+
+export interface CustomerInquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  createdAt: string;
+  status: 'unread' | 'read' | 'replied';
+  source?: 'about_modal' | 'help_view' | 'contact_form';
 }
 

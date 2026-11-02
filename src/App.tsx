@@ -33,6 +33,23 @@ export const App: React.FC = () => {
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | 'all'>('all');
 
+  // Sync with URL Hash for seamless direct links (e.g. #shop, #western, #rings)
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace(/^#\/?/, '').toLowerCase();
+      if (!hash) return;
+      if (['home', 'shop', 'about', 'help', 'cart', 'admin'].includes(hash)) {
+        setActivePage(hash as ActivePage);
+      } else if (['western', 'jhumka', 'tribal', 'rings', 'kadas', 'accessories', 'toran', 'earrings', 'necklaces', 'kangan-sets', 'kangna', 'bracelets'].includes(hash)) {
+        setActivePage('shop');
+        setSelectedCategory(hash as ProductCategory);
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
   // Admin Authentication State
   const [adminUser, setAdminUser] = useState<AdminUser | null>(() => authService.getCurrentUser());
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => authService.isAuthenticated());
@@ -53,7 +70,16 @@ export const App: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('rass_cart');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* fallback */ }
+      try {
+        const parsed = JSON.parse(saved);
+        const validItems = parsed.filter((item: CartItem) => PRODUCTS.some(p => p.id === item.product?.id));
+        if (validItems.length > 0) {
+          return validItems.map((item: CartItem) => {
+            const canonical = PRODUCTS.find(p => p.id === item.product.id) || PRODUCTS[0];
+            return { ...item, product: canonical };
+          });
+        }
+      } catch (e) { /* fallback */ }
     }
     return [
       { product: PRODUCTS[0], quantity: 1 }
@@ -64,9 +90,13 @@ export const App: React.FC = () => {
   const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('rass_wishlist');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* fallback */ }
+      try {
+        const parsed = JSON.parse(saved);
+        const valid = parsed.filter((id: string) => PRODUCTS.some(p => p.id === id));
+        if (valid.length > 0) return valid;
+      } catch (e) { /* fallback */ }
     }
-    return [PRODUCTS[1].id];
+    return [PRODUCTS[0].id];
   });
 
   // Orders State (Stored in localStorage)
@@ -85,11 +115,11 @@ export const App: React.FC = () => {
         city: 'New Delhi',
         state: 'Delhi',
         pincode: '110057',
-        items: [{ product: PRODUCTS[5], quantity: 1 }],
-        subtotal: 38000,
-        discount: 3800,
+        items: [{ product: PRODUCTS[0], quantity: 1 }],
+        subtotal: 5000,
+        discount: 500,
         shippingFee: 0,
-        total: 34200,
+        total: 4500,
         date: '14 Oct 2026',
         status: 'Shipped',
         paymentMethod: 'Razorpay UPI',
@@ -318,8 +348,8 @@ export const App: React.FC = () => {
         onSelectCategory={handleSelectCategory}
       />
 
-      {/* 3. Exquisite Mauve Lotus Toran (Directly under Header) */}
-      <ToranDecoration />
+      {/* 3. Exquisite Mauve Lotus Toran (Directly under Header on Home page) */}
+      {activePage === 'home' && <ToranDecoration />}
 
       {/* Main View Switcher */}
       <main className="flex-1">

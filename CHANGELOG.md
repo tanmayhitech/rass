@@ -29,7 +29,7 @@ All notable changes to the backend, admin management system, database, and opera
 ### Added
 - Created `src/services/pdfService.ts` using `jspdf` to generate:
   - Luxury branded Retail/Tax Invoices (`INV-YYYY-XXXXX`) with full order details, customer info, price breakdowns, and authenticity certificates.
-  - Atelier Packing Slips with logistics routing, AWB references, and master karigar QC inspection checklists.
+  - Packing Slips with logistics routing, AWB references, and master karigar QC inspection checklists.
 - Created `src/services/couponService.ts` with server-validated promotions (`RASS20`, `WELCOME10`, `HEIRLOOM5000`), minimum order spend, discount caps, global limits, and per-customer usage counters.
 - Integrated coupon validation and invoice download into `CheckoutModal.tsx` and `CartDrawer.tsx`.
 

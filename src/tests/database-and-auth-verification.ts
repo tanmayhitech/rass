@@ -1,12 +1,12 @@
 // ============================================================================
 // Rass by Riddhima — Comprehensive Database & Admin Auth Verification Suite
-// Tests live cloud integration against Supabase project: qugrjbcjnddqceynynds
+// Tests live cloud integration against Supabase project: ukgjkmjhhxtaedxyhaeu
 // ============================================================================
 
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://qugrjbcjnddqceynynds.supabase.co';
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_AOECMefE4vYt-hiSnGIhAg_UeyWYKDQ';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://ukgjkmjhhxtaedxyhaeu.supabase.co';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_aQvzTF6diderDC1UqoMROQ_DXBGZaNg';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
