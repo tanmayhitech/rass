@@ -6,7 +6,8 @@ import {
   Minus, 
   Plus, 
   ShoppingBag, 
-  ShieldCheck 
+  ShieldCheck,
+  MapPin
 } from 'lucide-react';
 import { CartItem } from '../types';
 import { couponService } from '../services/couponService';
@@ -18,6 +19,7 @@ interface CartDrawerProps {
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
+  onViewCart?: () => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -27,11 +29,51 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onCheckout,
+  onViewCart,
 }) => {
   const [promoCode, setPromoCode] = useState('');
   const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoError, setPromoError] = useState('');
+
+  // Shipping location state
+  const [shippingPincode, setShippingPincode] = useState(() => {
+    try {
+      return localStorage.getItem('rass_shipping_pincode') || '400050';
+    } catch {
+      return '400050';
+    }
+  });
+  const [shippingCity, setShippingCity] = useState(() => {
+    try {
+      return localStorage.getItem('rass_shipping_city') || 'Mumbai';
+    } catch {
+      return 'Mumbai';
+    }
+  });
+  const [shippingState, setShippingState] = useState(() => {
+    try {
+      return localStorage.getItem('rass_shipping_state') || 'Maharashtra';
+    } catch {
+      return 'Maharashtra';
+    }
+  });
+
+  // Sync shipping info whenever drawer opens
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const p = localStorage.getItem('rass_shipping_pincode');
+        const c = localStorage.getItem('rass_shipping_city');
+        const s = localStorage.getItem('rass_shipping_state');
+        if (p) setShippingPincode(p);
+        if (c) setShippingCity(c);
+        if (s) setShippingState(s);
+      } catch {
+        // ignore
+      }
+    }
+  }, [isOpen]);
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -306,6 +348,26 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             </div>
 
+            {/* Delivery Destination Badge */}
+            <div className="flex items-center justify-between text-[11px] text-[#77716F] bg-[#FAF8F5] px-3 py-2 rounded-[6px] border border-[#E7E0DA]">
+              <span className="flex items-center gap-1.5 truncate">
+                <MapPin className="w-3.5 h-3.5 text-[#A783A2] shrink-0" />
+                <span className="truncate">Deliver to <strong>{shippingCity}, {shippingState}</strong> ({shippingPincode})</span>
+              </span>
+              {onViewCart && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onViewCart();
+                  }}
+                  className="text-[10.5px] font-semibold text-[#292624] hover:text-[#A783A2] underline shrink-0 ml-2 cursor-pointer"
+                >
+                  Change
+                </button>
+              )}
+            </div>
+
             {/* Checkout Button */}
             <button
               onClick={() => {
@@ -317,6 +379,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               <span>Checkout • ₹{total.toLocaleString('en-IN')}</span>
               <ArrowRight className="w-4 h-4 stroke-[2]" />
             </button>
+
+            {/* View Full Bag Link */}
+            {onViewCart && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onViewCart();
+                }}
+                className="w-full text-center text-[11px] font-sans font-medium text-[#77716F] hover:text-[#292624] tracking-wider uppercase transition-colors py-0.5 cursor-pointer"
+              >
+                View Full Bag & Check Pincode →
+              </button>
+            )}
 
             {/* Micro Reassurance */}
             <p className="text-center text-[10.5px] text-[#8C827A] font-sans flex items-center justify-center gap-1.5 pt-0.5">

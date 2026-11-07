@@ -304,6 +304,9 @@ export const App: React.FC = () => {
             authService.signOut();
             setIsAdminAuthenticated(false);
             setAdminUser(null);
+            try {
+              window.history.replaceState(null, '', window.location.pathname);
+            } catch {}
             setActivePage('home');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
@@ -481,6 +484,11 @@ export const App: React.FC = () => {
         onUpdateQuantity={handleUpdateCartQuantity}
         onRemoveItem={handleRemoveFromCart}
         onCheckout={() => setIsCheckoutOpen(true)}
+        onViewCart={() => {
+          setIsCartOpen(false);
+          setActivePage('cart');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
       <WishlistDrawer

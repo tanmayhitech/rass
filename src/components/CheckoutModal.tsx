@@ -2,13 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, 
   CheckCircle, 
+  CheckCircle2,
   ShieldCheck, 
   Lock, 
   Smartphone, 
   Package,
   Calendar,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Loader2,
+  MapPin,
+  Download,
+  Tag
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CartItem, Order } from '../types';
@@ -16,7 +21,7 @@ import { CartItem, Order } from '../types';
 import { orderService } from '../services/orderService';
 import { couponService } from '../services/couponService';
 import { PDFService } from '../services/pdfService';
-import { Download, Tag } from 'lucide-react';
+import { pincodeService } from '../services/pincodeService';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -33,16 +38,57 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onOrderComplete,
   initialCoupon,
 }) => {
-  const [formData, setFormData] = useState({
-    name: 'Ananya Sharma',
-    email: 'ananya.sharma@example.com',
-    phone: '+91 98765 43210',
-    address: 'Flat 402, Lotus Heritage, Linking Road, Bandra West',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    pincode: '400050',
-    paymentMethod: 'razorpay',
+  const [formData, setFormData] = useState(() => {
+    let savedPin = '400050';
+    let savedCity = 'Mumbai';
+    let savedState = 'Maharashtra';
+    try {
+      if (typeof window !== 'undefined') {
+        savedPin = localStorage.getItem('rass_shipping_pincode') || '400050';
+        savedCity = localStorage.getItem('rass_shipping_city') || 'Mumbai';
+        savedState = localStorage.getItem('rass_shipping_state') || 'Maharashtra';
+      }
+    } catch {
+      // ignore
+    }
+    return {
+      name: 'Ananya Sharma',
+      email: 'ananya.sharma@example.com',
+      phone: '+91 98765 43210',
+      address: 'Flat 402, Lotus Heritage, Linking Road, Bandra West',
+      city: savedCity,
+      state: savedState,
+      pincode: savedPin,
+      paymentMethod: 'razorpay',
+    };
   });
+
+  const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+  const [pincodeDetected, setPincodeDetected] = useState(true);
+  const [pincodeError, setPincodeError] = useState('');
+
+  // Sync shipping info from localStorage when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const savedPin = localStorage.getItem('rass_shipping_pincode');
+        const savedCity = localStorage.getItem('rass_shipping_city');
+        const savedState = localStorage.getItem('rass_shipping_state');
+        if (savedPin && savedCity && savedState) {
+          setFormData(prev => ({
+            ...prev,
+            pincode: savedPin,
+            city: savedCity,
+            state: savedState,
+          }));
+          setPincodeDetected(true);
+          setPincodeError('');
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [isOpen]);
 
   const [couponInput, setCouponInput] = useState(initialCoupon || '');
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | null>(initialCoupon || null);
@@ -109,6 +155,45 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handlePincodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value;
+    const cleanPin = pincodeService.sanitize(rawValue);
+    
+    setFormData(prev => ({ ...prev, pincode: cleanPin }));
+
+    if (cleanPin.length === 6) {
+      setIsPincodeLoading(true);
+      setPincodeError('');
+      const res = await pincodeService.lookup(cleanPin);
+      setIsPincodeLoading(false);
+
+      if (res.success && res.data) {
+        setFormData(prev => ({
+          ...prev,
+          city: res.data!.city,
+          state: res.data!.state,
+        }));
+        setPincodeDetected(true);
+        setPincodeError('');
+        try {
+          localStorage.setItem('rass_shipping_pincode', cleanPin);
+          localStorage.setItem('rass_shipping_city', res.data!.city);
+          localStorage.setItem('rass_shipping_state', res.data!.state);
+        } catch {
+          // ignore
+        }
+      } else {
+        setPincodeDetected(false);
+        setPincodeError(res.error || 'PIN code not recognized');
+      }
+    } else {
+      setPincodeDetected(false);
+      if (cleanPin.length === 0) {
+        setPincodeError('');
+      }
+    }
   };
 
   const processFinalOrder = async (razorpayPaymentId?: string, razorpayOrderId?: string) => {
@@ -425,15 +510,38 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-[#292624] mb-1">PIN Code</label>
-                    <input
-                      type="text"
-                      name="pincode"
-                      required
-                      value={formData.pincode}
-                      onChange={handleInputChange}
-                      className="w-full h-11 sm:h-10 px-3.5 rounded-[8px] border border-[#E7E0DA] bg-white text-xs sm:text-[13px] text-[#292624] focus:outline-none focus:border-[#A783A2]"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-medium text-[#292624]">PIN Code</label>
+                      {isPincodeLoading && (
+                        <span className="text-[10px] text-[#A783A2] flex items-center gap-1 font-sans">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Detecting...
+                        </span>
+                      )}
+                      {pincodeDetected && !isPincodeLoading && formData.city && (
+                        <span className="text-[10px] text-emerald-700 font-medium flex items-center gap-1 font-sans">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Auto-detected
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        name="pincode"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        value={formData.pincode}
+                        onChange={handlePincodeChange}
+                        placeholder="e.g. 400050"
+                        className="w-full h-11 sm:h-10 px-3.5 rounded-[8px] border border-[#E7E0DA] bg-white text-xs sm:text-[13px] text-[#292624] tracking-wider focus:outline-none focus:border-[#A783A2]"
+                      />
+                      {isPincodeLoading && (
+                        <Loader2 className="w-4 h-4 text-[#A783A2] animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
+                      )}
+                    </div>
+                    {pincodeError && (
+                      <p className="text-[10.5px] text-red-600 mt-1 font-sans">{pincodeError}</p>
+                    )}
                   </div>
 
                   <div className="sm:col-span-2">
@@ -449,7 +557,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-[#292624] mb-1">City</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-medium text-[#292624]">City</label>
+                      {pincodeDetected && formData.city && (
+                        <span className="text-[9.5px] text-[#8C827A] uppercase font-sans">Auto-filled</span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="city"
@@ -461,7 +574,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium text-[#292624] mb-1">State</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-medium text-[#292624]">State</label>
+                      {pincodeDetected && formData.state && (
+                        <span className="text-[9.5px] text-[#8C827A] uppercase font-sans">Auto-filled</span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       name="state"

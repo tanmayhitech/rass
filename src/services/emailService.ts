@@ -16,10 +16,12 @@ export interface SendEmailParams {
 
 class EmailService {
   private resendApiKey: string = 
-    import.meta.env.VITE_RESEND_API_KEY || '';
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RESEND_API_KEY) || 
+    (typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.VITE_RESEND_API_KEY) || '';
   
   private defaultSender: string = 
-    import.meta.env.VITE_RESEND_FROM_EMAIL || 
+    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RESEND_FROM_EMAIL) || 
+    (typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.VITE_RESEND_FROM_EMAIL) || 
     'Rass by Riddhima <onboarding@resend.dev>';
   private supportEmail: string = 'Rassbyridhima@gmail.com';
   private sandboxOwnerEmail: string = 'rassbyridhima1@gmail.com';

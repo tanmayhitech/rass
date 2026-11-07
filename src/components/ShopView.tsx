@@ -105,7 +105,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
       if (cat.id !== 'all') {
         counts[cat.id] = products.filter((p) => 
           p.category === cat.id || 
-          (['jhumka', 'earrings', 'tribal'].includes(cat.id) && ['jhumka', 'earrings', 'tribal'].includes(p.category))
+          (['jhumka', 'tribal'].includes(cat.id) && ['jhumka', 'tribal'].includes(p.category))
         ).length;
       }
     });
@@ -138,8 +138,8 @@ export const ShopView: React.FC<ShopViewProps> = ({
       if (selectedCategory !== 'all') {
         const matchesCategory = 
           product.category === selectedCategory ||
-          (['jhumka', 'earrings', 'tribal'].includes(selectedCategory) &&
-            ['jhumka', 'earrings', 'tribal'].includes(product.category));
+          (['jhumka', 'tribal'].includes(selectedCategory) &&
+            ['jhumka', 'tribal'].includes(product.category));
         if (!matchesCategory) return false;
       }
       if (priceTier === 'under-18k' && product.price >= 18000) return false;
@@ -168,9 +168,8 @@ export const ShopView: React.FC<ShopViewProps> = ({
       if (sortBy === 'price-low') return a.price - b.price;
       if (sortBy === 'price-high') return b.price - a.price;
       if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
-      if (a.isBestseller && !b.isBestseller) return -1;
-      if (!a.isBestseller && b.isBestseller) return 1;
-      return b.price - a.price;
+      // 'featured' preserves the editorial curation order of products
+      return 0;
     });
   }, [filteredProducts, sortBy]);
 

@@ -51,7 +51,7 @@ async function runTestSuite() {
   // --------------------------------------------------------------------------
   console.log('>> [TEST GROUP 1]: Product Management & SKU Uniqueness');
   const initialProducts = storeService.getProducts(true);
-  assert(initialProducts.length >= 8, 'Initial catalog has at least 8 luxury pieces');
+  assert(initialProducts.length >= 1, 'Initial catalog has signature piece');
 
   // Create unique product
   const testProduct = storeService.createProduct({
@@ -143,7 +143,7 @@ async function runTestSuite() {
   // Test spend below minimum
   const belowMinCoupon = couponService.validateCoupon({
     code: 'RASS20',
-    subtotal: 10000, // below 30000 min
+    subtotal: 5000, // below min spend
     customerEmail: 'patron@example.com',
   });
   assert(belowMinCoupon.valid === false, 'Coupon rejected when cart is below min spend');

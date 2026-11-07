@@ -6,9 +6,15 @@ import {
   Plus, 
   ShoppingBag, 
   ShieldCheck, 
-  ArrowRight 
+  ArrowRight,
+  MapPin,
+  CheckCircle2,
+  Truck,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { CartItem } from '../types';
+import { pincodeService, PincodeDetails } from '../services/pincodeService';
 
 interface CartViewProps {
   items: CartItem[];
@@ -29,6 +35,79 @@ export const CartView: React.FC<CartViewProps> = ({
   const [activeCoupon, setActiveCoupon] = useState<'RASS20' | 'WELCOME10' | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [promoError, setPromoError] = useState('');
+
+  // Delivery PIN Code State & Auto-Detection
+  const [pincode, setPincode] = useState<string>(() => {
+    try {
+      return localStorage.getItem('rass_shipping_pincode') || '400050';
+    } catch {
+      return '400050';
+    }
+  });
+
+  const [locationDetails, setLocationDetails] = useState<PincodeDetails | null>(() => {
+    try {
+      const saved = localStorage.getItem('rass_shipping_location');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return {
+      pincode: '400050',
+      city: 'Mumbai',
+      state: 'Maharashtra',
+      district: 'Mumbai',
+      formattedLocation: 'Mumbai, Maharashtra',
+    };
+  });
+
+  const [isDetecting, setIsDetecting] = useState<boolean>(false);
+  const [pincodeError, setPincodeError] = useState<string>('');
+
+  const handlePincodeLookup = async (codeToLookup: string) => {
+    const clean = pincodeService.sanitize(codeToLookup);
+    if (clean.length !== 6) {
+      setPincodeError('Please enter a 6-digit PIN code');
+      setLocationDetails(null);
+      return;
+    }
+
+    setIsDetecting(true);
+    setPincodeError('');
+    const res = await pincodeService.lookup(clean);
+    setIsDetecting(false);
+
+    if (res.success && res.data) {
+      setLocationDetails(res.data);
+      setPincodeError('');
+      try {
+        localStorage.setItem('rass_shipping_pincode', clean);
+        localStorage.setItem('rass_shipping_city', res.data.city);
+        localStorage.setItem('rass_shipping_state', res.data.state);
+        localStorage.setItem('rass_shipping_location', JSON.stringify(res.data));
+      } catch {
+        // ignore storage errors
+      }
+    } else {
+      setLocationDetails(null);
+      setPincodeError(res.error || 'Unable to detect location for this PIN code');
+    }
+  };
+
+  const handlePincodeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = pincodeService.sanitize(e.target.value);
+    setPincode(val);
+    if (val.length === 6) {
+      handlePincodeLookup(val);
+    } else {
+      if (val.length === 0) {
+        setLocationDetails(null);
+        setPincodeError('');
+      } else {
+        setPincodeError('');
+      }
+    }
+  };
 
   const FREE_SHIPPING_THRESHOLD = 3999;
   const subtotal = items.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
@@ -113,7 +192,7 @@ export const CartView: React.FC<CartViewProps> = ({
             </button>
           </div>
         ) : (
-          /* Populated Bag with Coupon Option */
+          /* Populated Bag with Coupon & Pincode Detection */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
             
             {/* Items List (7 cols) */}
@@ -200,7 +279,7 @@ export const CartView: React.FC<CartViewProps> = ({
               ))}
             </div>
 
-            {/* Summary + Coupon Section (5 cols) */}
+            {/* Summary + Coupon + Pincode Section (5 cols) */}
             <div className="lg:col-span-5 bg-white border border-[#E7E0DA] rounded-[12px] p-5 sm:p-7 space-y-5 shadow-xs sticky top-24">
               <h2 className="font-serif text-[19px] text-[#292624] font-medium pb-3 border-b border-[#E7E0DA]">
                 Order Summary
@@ -252,6 +331,100 @@ export const CartView: React.FC<CartViewProps> = ({
                 )}
               </div>
 
+              {/* Delivery PIN Code & Automatic City/State Detection */}
+              <div className="space-y-3 pt-3 border-t border-[#E7E0DA]">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider text-[#8C827A] flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#A783A2]" />
+                    <span>Delivery Location & PIN Code</span>
+                  </label>
+                  {locationDetails && (
+                    <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      Auto-detected
+                    </span>
+                  )}
+                </div>
+
+                {/* Input Row */}
+                <div className="relative flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={pincode}
+                      onChange={handlePincodeInputChange}
+                      placeholder="Enter 6-digit PIN code (e.g. 400050)"
+                      className="w-full h-9 pl-8 pr-8 rounded-[6px] border border-[#E7E0DA] bg-[#FAF8F5] text-xs font-sans tracking-wider text-[#292624] placeholder:text-[#A8A19C] placeholder:tracking-normal focus:outline-none focus:border-[#292624] focus:bg-white transition-colors"
+                    />
+                    <MapPin className="w-3.5 h-3.5 text-[#A8A19C] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    {isDetecting && (
+                      <Loader2 className="w-3.5 h-3.5 text-[#A783A2] animate-spin absolute right-2.5 top-1/2 -translate-y-1/2" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handlePincodeLookup(pincode)}
+                    disabled={pincode.length !== 6 || isDetecting}
+                    className="px-3.5 h-9 rounded-[6px] bg-[#24211E] hover:bg-black disabled:opacity-40 text-white text-[11px] font-sans font-medium tracking-wider uppercase transition-colors shrink-0 cursor-pointer"
+                  >
+                    Check
+                  </button>
+                </div>
+
+                {/* Auto-detected City & State Result Cards */}
+                {locationDetails ? (
+                  <div className="bg-[#FAF8F5] border border-[#E7E0DA] rounded-[8px] p-3 space-y-2 animate-fadeIn">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-semibold text-[#8C827A] uppercase tracking-wider text-[10px]">
+                        Detected Destination
+                      </span>
+                      <span className="text-emerald-700 font-medium flex items-center gap-1 text-[11px]">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        Serviceable PIN
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-white p-2.5 rounded-[6px] border border-[#E7E0DA] shadow-2xs">
+                        <span className="text-[10px] text-[#8C827A] uppercase font-semibold tracking-wider block">City / District</span>
+                        <span className="text-[13px] font-sans font-semibold text-[#292624] block truncate mt-0.5">
+                          {locationDetails.city}
+                        </span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-[6px] border border-[#E7E0DA] shadow-2xs">
+                        <span className="text-[10px] text-[#8C827A] uppercase font-semibold tracking-wider block">State</span>
+                        <span className="text-[13px] font-sans font-semibold text-[#292624] block truncate mt-0.5">
+                          {locationDetails.state}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-1 flex items-center justify-between text-[11px] text-[#77716F]">
+                      <div className="flex items-center gap-1.5">
+                        <Truck className="w-3.5 h-3.5 text-[#A783A2] shrink-0" />
+                        <span>Insured Delivery to <strong className="text-[#292624]">{locationDetails.city}</strong></span>
+                      </div>
+                      <span className="font-semibold text-[#292624]">2–4 Days</span>
+                    </div>
+                  </div>
+                ) : (
+                  !pincodeError && (
+                    <p className="text-[11px] text-[#8C827A] font-sans">
+                      Enter your 6-digit Indian PIN code to automatically detect your City and State for express delivery.
+                    </p>
+                  )
+                )}
+
+                {pincodeError && (
+                  <div className="p-2.5 bg-red-50/80 border border-red-200 rounded-[6px] text-[11px] text-red-700 font-sans flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+                    <span>{pincodeError}</span>
+                  </div>
+                )}
+              </div>
+
               {/* Price Calculations (NO SERIF in numbers, Neutral colors) */}
               <div className="space-y-2 text-[13px] text-[#77716F] pt-3 border-t border-[#E7E0DA]">
                 <div className="flex justify-between items-baseline">
@@ -276,6 +449,15 @@ export const CartView: React.FC<CartViewProps> = ({
                     {subtotal >= FREE_SHIPPING_THRESHOLD ? 'Complimentary' : 'Calculated at checkout'}
                   </span>
                 </div>
+
+                {locationDetails && (
+                  <div className="flex justify-between items-baseline text-[11.5px] text-[#8C827A]">
+                    <span>Delivering To</span>
+                    <span className="font-sans font-medium text-[#292624]">
+                      {locationDetails.city}, {locationDetails.state} ({pincode})
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-baseline text-[15px] text-[#292624] font-medium pt-2.5 border-t border-[#E7E0DA]">
                   <span className="font-semibold text-[13.5px] uppercase tracking-wider">Total Payable</span>
@@ -307,4 +489,3 @@ export const CartView: React.FC<CartViewProps> = ({
     </div>
   );
 };
-
