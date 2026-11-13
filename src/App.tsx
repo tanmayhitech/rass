@@ -40,6 +40,9 @@ export const App: React.FC = () => {
       if (!hash) return;
       if (['home', 'shop', 'about', 'help', 'cart', 'admin'].includes(hash)) {
         setActivePage(hash as ActivePage);
+      } else if (['earpins', 'earpin'].includes(hash)) {
+        setActivePage('shop');
+        setSelectedCategory('accessories');
       } else if (['western', 'jhumka', 'tribal', 'rings', 'kadas', 'accessories', 'toran', 'earrings', 'necklaces', 'kangan-sets', 'kangna', 'bracelets'].includes(hash)) {
         setActivePage('shop');
         setSelectedCategory(hash as ProductCategory);
