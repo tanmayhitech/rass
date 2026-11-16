@@ -13,6 +13,7 @@ import {
   Award
 } from 'lucide-react';
 import { Product } from '../types';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface ProductModalProps {
   product: Product | null;
@@ -132,9 +133,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             
             <div className="relative w-full aspect-[4/3] xs:aspect-[1/1] md:aspect-square max-w-[280px] sm:max-w-[340px] md:max-w-[380px] rounded-[16px] overflow-hidden bg-white shadow-card border border-[#E7E0DA]/85 group">
             <img
-              src={product.cleanImage || product.image}
+              src={getOptimizedImageUrl(product.cleanImage || product.image)}
               alt={product.name}
               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              onError={(e) => handleImageError(e, product.cleanImage || product.image)}
             />
 
             {/* Badges Overlay */}

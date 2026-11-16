@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { SectionDivider } from './SectionDivider';
 import { homeMediaService, HomeMediaItem } from '../services/homeMediaService';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface EditorialCraftsmanshipProps {
   onStoryClick: () => void;
@@ -38,9 +39,11 @@ export const EditorialCraftsmanship: React.FC<EditorialCraftsmanshipProps> = ({ 
         aria-hidden="true" 
       >
         <img
-          src="/elements/Pastel Lilac Half-Circle Panel.png"
+          src={getOptimizedImageUrl('/elements/Pastel Lilac Half-Circle Panel.png')}
           alt=""
           className="w-14 sm:w-16 md:w-20 lg:w-24 xl:w-28 h-auto object-contain object-left block opacity-95"
+          loading="lazy"
+          decoding="async"
         />
       </div>
 
@@ -96,9 +99,13 @@ export const EditorialCraftsmanship: React.FC<EditorialCraftsmanshipProps> = ({ 
             {/* Artisan Photo Container with Architectural Curved Top-Left Arch */}
             <div className="group relative overflow-hidden rounded-tl-[90px] sm:rounded-tl-[120px] lg:rounded-tl-[145px] rounded-tr-2xl rounded-br-2xl rounded-bl-2xl shadow-card hover:shadow-xl transition-all duration-700 bg-[#FAF8F5] hover-sheen">
               <img
-                src={imageSrc}
+                src={getOptimizedImageUrl(imageSrc)}
                 alt={imageAlt}
-                className="w-full h-[250px] sm:h-[360px] lg:h-[420px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out block"
+                className="w-full h-250px sm:h-[360px] lg:h-[420px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out block"
+                loading="lazy"
+                fetchPriority="low"
+                decoding="async"
+                onError={(e) => handleImageError(e, imageSrc)}
               />
             </div>
           </div>

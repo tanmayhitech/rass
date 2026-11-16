@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, Eye, Sparkles, Check, Plus } from 'lucide-react';
 import { Product } from '../types';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface ProductCardProps {
   product: Product;
@@ -9,6 +10,7 @@ interface ProductCardProps {
   onSelectProduct: (product: Product) => void;
   onAddToCart: (product: Product, quantity: number) => void;
   isSingleColumnMobile?: boolean;
+  priority?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -18,8 +20,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onSelectProduct,
   onAddToCart,
   isSingleColumnMobile = false,
+  priority = false,
 }) => {
   const [isAdded, setIsAdded] = useState(false);
+  const rawImage = product.cleanImage || product.image;
+  const optimizedImage = getOptimizedImageUrl(rawImage);
 
   const discountPercent = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -41,10 +46,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         className="relative aspect-[4/5] overflow-hidden bg-[#F4F1EC] cursor-pointer select-none hover-sheen"
       >
         <img
-          src={product.cleanImage || product.image}
+          src={optimizedImage}
           alt={product.name}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'low'}
+          decoding="async"
+          onError={(e) => handleImageError(e, rawImage)}
         />
 
         {/* Soft vignette overlay on hover */}

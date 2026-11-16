@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { CartItem } from '../types';
 import { couponService } from '../services/couponService';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -189,8 +190,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 {/* Thumbnail */}
                 <div className="w-20 h-24 sm:w-22 sm:h-26 rounded-[10px] bg-[#F4F1EC] border border-[#E7E0DA] overflow-hidden shrink-0 shadow-2xs">
                   <img
-                    src={item.product.cleanImage || item.product.image}
+                    src={getOptimizedImageUrl(item.product.cleanImage || item.product.image)}
                     alt={item.product.name}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => handleImageError(e, item.product.cleanImage || item.product.image)}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

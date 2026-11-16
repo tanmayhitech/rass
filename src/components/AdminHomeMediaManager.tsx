@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { homeMediaService, HomeMediaItem, INITIAL_HOME_MEDIA } from '../services/homeMediaService';
 import { optimizeImageFile, validateImageUrl, formatBytes, OptimizedImageResult } from '../lib/imageOptimizer';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 import { ProductCategory } from '../types';
 
 interface AdminHomeMediaManagerProps {
@@ -407,10 +408,12 @@ export const AdminHomeMediaManager: React.FC<AdminHomeMediaManagerProps> = ({
         <div className="relative w-full bg-[#FAF8F5] overflow-hidden group">
           <div className={`w-full ${item.heightClass} max-h-[220px] overflow-hidden relative`}>
             <img
-              src={item.currentImage}
+              src={getOptimizedImageUrl(item.currentImage)}
               alt={item.altText || item.title}
               className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.04]"
               loading="lazy"
+              decoding="async"
+              onError={(e) => handleImageError(e, item.currentImage)}
             />
 
             {/* Quick zoom preview button */}
@@ -1107,8 +1110,11 @@ export const AdminHomeMediaManager: React.FC<AdminHomeMediaManagerProps> = ({
                   <span className="text-[10.5px] text-[#77716F] font-medium block">Current Live on Storefront</span>
                   <div className="relative h-28 rounded-lg overflow-hidden border border-[#E7E0DA] bg-[#FAF8F5]">
                     <img
-                      src={replacingItem.currentImage}
+                      src={getOptimizedImageUrl(replacingItem.currentImage)}
                       alt={replacingItem.title}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => handleImageError(e, replacingItem.currentImage)}
                       className="w-full h-full object-cover object-center"
                     />
                   </div>

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 import { 
   ArrowLeft, 
   Package, 
@@ -568,26 +569,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // Filtered Lists
-  const filteredProducts = products.filter((p) => {
-    if (productCategoryFilter !== 'all' && p.category !== productCategoryFilter) return false;
-    if (productStatusFilter !== 'all' && p.status !== productStatusFilter) return false;
-    return true;
-  });
+  // Filtered Lists & Analytics (Optimized with useMemo to prevent main-thread lag)
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      if (productCategoryFilter !== 'all' && p.category !== productCategoryFilter) return false;
+      if (productStatusFilter !== 'all' && p.status !== productStatusFilter) return false;
+      return true;
+    });
+  }, [products, productCategoryFilter, productStatusFilter]);
 
-  const filteredVariants = variants.filter((v) => {
-    if (!inventorySearch.trim()) return true;
+  // Fast Product Table Pagination (12 designs per page)
+  const [productPage, setProductPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 12;
+  const totalProductPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const paginatedProducts = useMemo(() => {
+    const start = (productPage - 1) * PRODUCTS_PER_PAGE;
+    return filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filteredProducts, productPage]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setProductPage(1);
+  }, [productCategoryFilter, productStatusFilter]);
+
+  const filteredVariants = useMemo(() => {
+    if (!inventorySearch.trim()) return variants;
     const q = inventorySearch.toLowerCase();
-    const prod = products.find((p) => p.id === v.productId);
-    return v.sku.toLowerCase().includes(q) || (prod && prod.name.toLowerCase().includes(q));
-  });
+    return variants.filter((v) => {
+      const prod = products.find((p) => p.id === v.productId);
+      return v.sku.toLowerCase().includes(q) || (prod && prod.name.toLowerCase().includes(q));
+    });
+  }, [variants, products, inventorySearch]);
 
-  const filteredOrders = orderService.getOrders({
-    status: orderStatusFilter,
-    search: orderSearch,
-  });
+  const filteredOrders = useMemo(() => {
+    return orderService.getOrders({
+      status: orderStatusFilter,
+      search: orderSearch,
+    });
+  }, [orders, orderStatusFilter, orderSearch]);
 
-  const stockValuation = storeService.getStockValuation();
+  const stockValuation = useMemo(() => {
+    return storeService.getStockValuation();
+  }, [variants, products]);
 
   // Enhanced Print Handlers for Invoices & Courier Slips
   const handleTriggerPrint = (targetType: 'invoice' | 'slip' = 'invoice') => {
@@ -716,9 +739,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="h-14 px-4 border-b border-[#2D2926] flex items-center justify-between">
             <div className="flex items-center space-x-2 py-1">
               <img
-                src="/images/Rass by Ridhima Wordmark.png"
+                src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                 alt="Rass by Riddhima"
                 className="h-6 w-auto object-contain brightness-0 invert opacity-95 select-none"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
             </div>
             <button
@@ -816,9 +842,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {!isSidebarCollapsed ? (
               <div className="flex items-center space-x-2 py-1">
                 <img
-                  src="/images/Rass by Ridhima Wordmark.png"
+                  src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                   alt="Rass by Riddhima"
                   className="h-6 w-auto object-contain brightness-0 invert opacity-95 select-none"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                 />
               </div>
             ) : (
@@ -923,9 +952,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Mobile Wordmark Pill */}
             <div className="md:hidden flex items-center pr-2 border-r border-[#E7E0DA]">
               <img
-                src="/images/Rass by Ridhima Wordmark.png"
+                src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                 alt="Rass"
                 className="h-4 sm:h-5 w-auto object-contain"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
             </div>
 
@@ -1038,18 +1070,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 {/* Subtle decorative motif sprig in background */}
                 <div className="absolute right-0 top-0 bottom-0 pointer-events-none opacity-[0.06] select-none overflow-hidden">
                   <img
-                    src="/elements/Mauve Botanical Sprig Line Art.png"
+                    src={getOptimizedImageUrl('/elements/Mauve Botanical Sprig Line Art.png')}
                     alt=""
                     className="h-full w-auto object-cover object-right"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
 
                 <div className="flex items-center space-x-3 sm:space-x-4 z-10">
                   <div className="p-2 sm:p-2.5 bg-[#FAF8F5] rounded-xl border border-[#E7E0DA] shrink-0 shadow-2xs">
                     <img
-                      src="/images/Rass by Ridhima Wordmark.png"
+                      src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                       alt="Rass by Riddhima"
                       className="h-7 sm:h-9 w-auto object-contain select-none"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                      onError={(e) => handleImageError(e, '/images/Rass by Ridhima Wordmark.png')}
                     />
                   </div>
                   <div>
@@ -1408,8 +1446,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <div className="flex items-center space-x-3.5">
                         <img
-                          src={performance[0].imageUrl}
+                          src={getOptimizedImageUrl(performance[0].imageUrl)}
                           alt={performance[0].productTitle}
+                          loading="lazy"
+                          decoding="async"
+                          onError={(e) => handleImageError(e, performance[0].imageUrl)}
                           className="w-16 h-16 rounded-lg object-cover border border-[#E7E0DA] bg-[#FAF8F5] shrink-0"
                         />
                         <div>
@@ -1738,12 +1779,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E7E0DA]">
-                      {filteredProducts.map((p) => (
+                      {paginatedProducts.map((p) => (
                         <tr key={p.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
                           <td className="py-3 px-4 flex items-center space-x-3">
                             <img
-                              src={p.cleanImage || p.image}
+                              src={getOptimizedImageUrl(p.cleanImage || p.image)}
                               alt={p.name}
+                              loading="lazy"
+                              decoding="async"
+                              onError={(e) => handleImageError(e, p.cleanImage || p.image)}
                               className="w-10 h-10 rounded object-cover bg-stone-100 border border-[#E7E0DA]"
                             />
                             <div>
@@ -1797,6 +1841,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </tbody>
                   </table>
                 </div>
+
+                {/* Snappy Pagination Controls */}
+                {totalProductPages > 1 && (
+                  <div className="px-4 py-3 bg-[#FAF8F5] border-t border-[#E7E0DA] flex items-center justify-between text-xs text-[#77716F]">
+                    <div>
+                      Showing <span className="font-semibold text-[#292624]">{(productPage - 1) * PRODUCTS_PER_PAGE + 1}</span> to{' '}
+                      <span className="font-semibold text-[#292624]">
+                        {Math.min(productPage * PRODUCTS_PER_PAGE, filteredProducts.length)}
+                      </span>{' '}
+                      of <span className="font-semibold text-[#292624]">{filteredProducts.length}</span> designs
+                    </div>
+                    <div className="flex items-center space-x-1.5">
+                      <button
+                        onClick={() => setProductPage(prev => Math.max(1, prev - 1))}
+                        disabled={productPage === 1}
+                        className="px-2.5 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-40 disabled:cursor-not-allowed font-medium text-[#292624] transition-colors cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-2 font-mono text-[11px] text-[#292624]">
+                        Page {productPage} / {totalProductPages}
+                      </span>
+                      <button
+                        onClick={() => setProductPage(prev => Math.min(totalProductPages, prev + 1))}
+                        disabled={productPage === totalProductPages}
+                        className="px-2.5 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-40 disabled:cursor-not-allowed font-medium text-[#292624] transition-colors cursor-pointer"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2300,8 +2376,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <td className="py-3 px-4">
                                 <div className="flex items-center space-x-3">
                                   <img
-                                    src={item.imageUrl}
+                                    src={getOptimizedImageUrl(item.imageUrl)}
                                     alt={item.productTitle}
+                                    loading="lazy"
+                                    decoding="async"
+                                    onError={(e) => handleImageError(e, item.imageUrl)}
                                     className="w-9 h-9 object-cover rounded border border-[#E7E0DA] bg-stone-100 shrink-0"
                                   />
                                   <span className="font-medium text-[#292624]">{item.productTitle}</span>
@@ -2531,9 +2610,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <img
-                      src="/images/Rass by Ridhima Wordmark.png"
+                      src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                       alt="Rass by Ridhima"
                       className="h-10 sm:h-12 w-auto object-contain select-none"
+                      loading="lazy"
+                      decoding="async"
                     />
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-[#B49A6C] font-semibold tracking-wider uppercase">
@@ -2776,9 +2857,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div>
                   <span className="font-extrabold text-[9px] uppercase text-[#77716F] block mb-1">RETURN / FROM:</span>
                   <img
-                    src="/images/Rass by Ridhima Wordmark.png"
+                    src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                     alt="Rass by Riddhima"
                     className="h-4.5 w-auto object-contain mb-1"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="font-bold text-[#292624] text-[11px]">Rass by Ridhima</div>
                   <div className="text-[#77716F] text-[10px] leading-tight">
@@ -2924,8 +3007,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {/* Image Thumbnail Preview */}
                   <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-[#E7E0DA] bg-white shrink-0 shadow-2xs group">
                     <img
-                      src={newProductForm.image || '/images/cat_rings.png'}
+                      src={getOptimizedImageUrl(newProductForm.image || '/images/cat_rings.png')}
                       alt="Preview"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => handleImageError(e, newProductForm.image || '/images/cat_rings.png')}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -2995,7 +3081,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 newProductForm.image === imgs.image ? 'border-[#B49A6C] ring-1 ring-[#B49A6C] bg-[#FAF5EC]' : 'border-[#E7E0DA] hover:border-[#C2BCB6]'
                               }`}
                             >
-                              <img src={imgs.image} alt={catKey} className="w-full h-8 object-cover rounded" />
+                              <img
+                                src={getOptimizedImageUrl(imgs.image)}
+                                alt={catKey}
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => handleImageError(e, imgs.image)}
+                                className="w-full h-8 object-cover rounded"
+                              />
                               <span className="text-[8px] font-medium capitalize text-[#292624] block truncate mt-0.5">{catKey}</span>
                             </button>
                           ))}

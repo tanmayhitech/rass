@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { ProductCategory } from '../types';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 // Signature Sacred 5-Petal Lotus Crest & Tapered Horizontal Accent Wings
 const LotusCrest: React.FC<{ className?: string }> = ({ className = 'w-full h-auto' }) => (
@@ -69,10 +70,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
       >
         {/* Luxury Stationery Tactile Background with Soft Center Radiance */}
         <img
-          src="/images/card_bg_jhumka.png"
+          src={getOptimizedImageUrl('/images/card_bg_jhumka.png')}
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out pointer-events-none"
-          loading="eager"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'low'}
+          decoding="async"
+          onError={(e) => handleImageError(e, '/images/card_bg_jhumka.png')}
         />
 
         {/* Bespoke Royal Passe-Partout Inset Hairline Frame */}
@@ -90,10 +94,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         {/* Center Dramatic Artwork: User's Exact Sacred Lotus & Winged Calligraphy for JHUMKA in Crisp Luminous Sage */}
         <div className="relative z-10 w-[92%] xs:w-[90%] sm:w-[86%] max-w-[380px] flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
           <img
-            src="/images/jhumka_motif_sage_3x.png"
+            src={getOptimizedImageUrl('/images/jhumka_motif_sage_3x.png')}
             alt="Jhumka"
             className="w-full h-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.12)]"
-            loading="eager"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'low'}
+            decoding="async"
+            onError={(e) => handleImageError(e, '/images/jhumka_motif_sage_3x.png')}
           />
         </div>
       </div>
@@ -113,10 +120,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
       >
         {/* Luxury Stationery Tactile Background with Soft Center Radiance */}
         <img
-          src="/images/card_bg_kadas.png"
+          src={getOptimizedImageUrl('/images/card_bg_kadas.png')}
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out pointer-events-none"
-          loading="eager"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'low'}
+          decoding="async"
+          onError={(e) => handleImageError(e, '/images/card_bg_kadas.png')}
         />
 
         {/* Bespoke Royal Passe-Partout Inset Hairline Frame in Theme Plum */}
@@ -134,10 +144,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         {/* Center Dramatic Artwork: Sacred Lotus Flower & Winged Calligraphy for कड़ा in Rich Theme Pink - Perfectly Centered */}
         <div className="relative z-10 w-[92%] xs:w-[90%] sm:w-[86%] max-w-[380px] flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
           <img
-            src="/images/kada_motif_pink_3x.png"
+            src={getOptimizedImageUrl('/images/kada_motif_pink_3x.png')}
             alt="कड़ा"
             className="w-full h-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.08)]"
-            loading="eager"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'low'}
+            decoding="async"
+            onError={(e) => handleImageError(e, '/images/kada_motif_pink_3x.png')}
           />
         </div>
       </div>
@@ -157,10 +170,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
       >
         {/* Luxury Stationery Tactile Background with Soft Center Radiance */}
         <img
-          src="/images/card_bg_buy4.png"
+          src={getOptimizedImageUrl('/images/card_bg_buy4.png')}
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out pointer-events-none"
-          loading="eager"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'low'}
+          decoding="async"
+          onError={(e) => handleImageError(e, '/images/card_bg_buy4.png')}
         />
 
         {/* Bespoke Royal Passe-Partout Inset Hairline Frame */}
@@ -178,10 +194,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         {/* Center Dramatic Artwork: Perfectly centered, 100% visible, fully contained to prevent desktop cropping */}
         <div className="relative z-10 w-full h-full max-h-full flex items-center justify-center p-0.5 xs:p-1 sm:p-2.5 transition-transform duration-500 group-hover:scale-105">
           <img
-            src="/images/buy4_motif_sage_3x.png"
+            src={getOptimizedImageUrl('/images/buy4_motif_sage_3x.png')}
             alt="Buy 4 for ₹999"
             className="max-h-[90%] max-w-[90%] sm:max-h-[84%] sm:max-w-[84%] w-auto h-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.12)]"
-            loading="eager"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'low'}
+            decoding="async"
+            onError={(e) => handleImageError(e, '/images/buy4_motif_sage_3x.png')}
           />
         </div>
       </div>
@@ -200,10 +219,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
     >
       {/* Background Photography with subtle hover zoom */}
       <img
-        src={displayImage}
+        src={getOptimizedImageUrl(displayImage)}
         alt={`${title} jewellery collection`}
         className={`w-full h-full object-cover ${id === 'earrings' ? 'object-[56%_48%]' : 'object-center'} transform group-hover:scale-[1.05] transition-transform duration-700 ease-out`}
         loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'low'}
+        decoding="async"
+        onError={(e) => handleImageError(e, displayImage)}
       />
 
       {/* Light, soft & natural photographic bottom vignette */}

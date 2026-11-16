@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { Product } from '../types';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface WishlistDrawerProps {
   isOpen: boolean;
@@ -62,8 +63,11 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
               items.map((product) => (
                 <div key={product.id} className="py-4 flex space-x-4 first:pt-0 last:pb-0">
                   <img
-                    src={product.cleanImage || product.image}
+                    src={getOptimizedImageUrl(product.cleanImage || product.image)}
                     alt={product.name}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => handleImageError(e, product.cleanImage || product.image)}
                     className="w-20 h-20 rounded-[8px] object-cover bg-white border border-[#E7E0DA]"
                   />
                   <div className="flex-1 flex flex-col justify-between">

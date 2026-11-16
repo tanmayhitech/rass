@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface EntrySplashProps {
   onComplete?: () => void;
@@ -86,9 +87,13 @@ export const EntrySplash: React.FC<EntrySplashProps> = ({ onComplete }) => {
           
           {/* Authentic Rass Wordmark Logo */}
           <img
-            src="/images/Rass by Ridhima Wordmark.png"
+            src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
             alt="Rass by Ridhima"
             className="h-14 sm:h-20 md:h-24 lg:h-28 w-auto max-w-[85vw] object-contain drop-shadow-[0_6px_20px_rgba(41,38,36,0.1)]"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            onError={(e) => handleImageError(e, '/images/Rass by Ridhima Wordmark.png')}
           />
 
           {/* Radiant Metallic Shine Gleam Passing Across Logo */}

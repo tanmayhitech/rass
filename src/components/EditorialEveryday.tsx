@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { homeMediaService, HomeMediaItem } from '../services/homeMediaService';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface EditorialEverydayProps {
   onExploreClick: () => void;
@@ -32,9 +33,11 @@ export const EditorialEveryday: React.FC<EditorialEverydayProps> = ({ onExploreC
         aria-hidden="true"
       >
         <img
-          src="/elements/Delicate Mauve Botanical Branch.png"
+          src={getOptimizedImageUrl('/elements/Delicate Mauve Botanical Branch.png')}
           alt=""
           className="w-60 sm:w-72 md:w-80 lg:w-88 xl:w-96 h-auto max-h-[390px] lg:max-h-[440px] object-contain object-right block"
+          loading="lazy"
+          decoding="async"
         />
       </div>
 
@@ -55,9 +58,13 @@ export const EditorialEveryday: React.FC<EditorialEverydayProps> = ({ onExploreC
               {/* Domed Arch Window Framing the Earrings */}
               <div className="group relative w-full overflow-hidden rounded-t-full rounded-b-md shadow-card hover:shadow-xl transition-all duration-700 bg-[#FAF8F5] hover-sheen">
                 <img
-                  src={imageSrc}
+                  src={getOptimizedImageUrl(imageSrc)}
                   alt={imageAlt}
                   className="w-full h-[320px] sm:h-[370px] lg:h-[400px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out block"
+                  loading="lazy"
+                  fetchPriority="low"
+                  decoding="async"
+                  onError={(e) => handleImageError(e, imageSrc)}
                 />
               </div>
 

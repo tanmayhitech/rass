@@ -25,6 +25,7 @@ import { paymentService } from '../services/paymentService';
 import { couponService } from '../services/couponService';
 import { PDFService } from '../services/pdfService';
 import { pincodeService } from '../services/pincodeService';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -504,8 +505,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-[#FAF8F5] border border-[#E7E0DA]/80">
                             <div className="flex items-center space-x-2.5 min-w-0">
                               <img
-                                src={snap.imageUrl || '/images/cat_rings.png'}
+                                src={getOptimizedImageUrl(snap.imageUrl || '/images/cat_rings.png')}
                                 alt={snap.productTitle}
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => handleImageError(e, snap.imageUrl || '/images/cat_rings.png')}
                                 className="w-10 h-10 rounded object-cover border border-[#E7E0DA] bg-white shrink-0"
                               />
                               <div className="text-left min-w-0">
@@ -616,8 +620,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       <div key={item.product.id} className="pt-2.5 first:pt-0 flex items-center justify-between text-xs">
                         <div className="flex items-center space-x-3">
                           <img
-                            src={item.product.cleanImage || item.product.image}
+                            src={getOptimizedImageUrl(item.product.cleanImage || item.product.image)}
                             alt={item.product.name}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => handleImageError(e, item.product.cleanImage || item.product.image)}
                             className="w-10 h-12 rounded-[6px] object-cover bg-white border border-[#E7E0DA]"
                           />
                           <div>

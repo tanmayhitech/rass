@@ -613,7 +613,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
                 ? 'grid-cols-1 gap-4 sm:grid-cols-2'
                 : 'grid-cols-2 gap-2 sm:gap-4'
             } lg:grid-cols-3 lg:gap-6 xl:gap-7`}>
-              {sortedProducts.map((product) => {
+              {sortedProducts.map((product, index) => {
                 const isWishlisted = wishlistIds.includes(product.id);
                 return (
                   <ProductCard
@@ -624,6 +624,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
                     onSelectProduct={onSelectProduct}
                     onAddToCart={onAddToCart}
                     isSingleColumnMobile={mobileColumns === 1}
+                    priority={index < 4}
                   />
                 );
               })}

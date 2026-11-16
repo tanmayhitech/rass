@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Heart, ShoppingBag, Menu, X, ChevronRight } from 'lucide-react';
 import { ActivePage, ProductCategory } from '../types';
+import { getOptimizedImageUrl, handleImageError } from '../utils/imageOptimizer';
 
 interface SiteHeaderProps {
   activePage: ActivePage;
@@ -119,9 +120,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               aria-label="Rass by Riddhima - Go to Homepage"
             >
               <img
-                src="/images/Rass by Ridhima Wordmark.png"
+                src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                 alt="Rass by Riddhima"
                 className="h-6 sm:h-7 md:h-8 lg:h-[34px] w-auto object-contain transition-opacity duration-200 group-hover:opacity-85 select-none"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                onError={(e) => handleImageError(e, '/images/Rass by Ridhima Wordmark.png')}
               />
             </button>
           </div>
@@ -262,9 +267,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             {/* Drawer Header */}
             <div className="h-16 px-5 flex items-center justify-between border-b border-[#292725]/10">
               <img
-                src="/images/Rass by Ridhima Wordmark.png"
+                src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                 alt="Rass by Riddhima"
                 className="h-6 w-auto object-contain"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                onError={(e) => handleImageError(e, '/images/Rass by Ridhima Wordmark.png')}
               />
               <button
                 onClick={() => setMobileMenuOpen(false)}
