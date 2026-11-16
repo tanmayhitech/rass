@@ -70,6 +70,15 @@ export const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>(() => storeService.getProducts());
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // Synchronize catalog with Supabase on mount
+  useEffect(() => {
+    storeService.syncWithSupabase().then(() => {
+      setProducts(storeService.getProducts());
+    }).catch((err) => {
+      console.warn('[App] Supabase catalog sync deferred:', err);
+    });
+  }, []);
+
   // Cart State (Initialized with 1 item for immediate delight)
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('rass_cart');

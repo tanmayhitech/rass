@@ -748,8 +748,8 @@ class StoreService {
 
       if (storedProducts) {
         const parsed = JSON.parse(storedProducts) as Product[];
-        // Filter out any stale products not in the current canonical PRODUCTS catalog
-        const valid = parsed.filter((p) => PRODUCTS.some((prod) => prod.id === p.id));
+        // Preserve both canonical catalog products AND any newly created/custom admin products
+        const valid = parsed.filter((p) => p && p.id && (PRODUCTS.some((prod) => prod.id === p.id) || p.id.startsWith('rass-prod-') || !p.id.startsWith('rass-seed-')));
         if (valid.length > 0) {
           const validProductIds = new Set(valid.map((p) => p.id));
           const missingCanonical = INITIAL_PRODUCTS.filter((p) => !validProductIds.has(p.id));
@@ -771,8 +771,12 @@ class StoreService {
             }),
             ...missingCanonical,
           ];
-          // Preserve the curated editorial order of canonical PRODUCTS
+          // Preserve the curated editorial order of canonical PRODUCTS, keeping custom products at the front
           this.products = combined.sort((a, b) => {
+            const isCustomA = a.id.startsWith('rass-prod-');
+            const isCustomB = b.id.startsWith('rass-prod-');
+            if (isCustomA && !isCustomB) return -1;
+            if (!isCustomA && isCustomB) return 1;
             const indexA = PRODUCTS.findIndex((p) => p.id === a.id);
             const indexB = PRODUCTS.findIndex((p) => p.id === b.id);
             return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
@@ -786,7 +790,7 @@ class StoreService {
 
       if (storedVariants) {
         const parsedV = JSON.parse(storedVariants) as ProductVariant[];
-        const validV = parsedV.filter((v) => PRODUCTS.some((p) => p.id === v.productId));
+        const validV = parsedV.filter((v) => v && v.id && (PRODUCTS.some((p) => p.id === v.productId) || v.productId.startsWith('rass-prod-') || !v.productId.startsWith('rass-seed-')));
         if (validV.length > 0) {
           const validVariantIds = new Set(validV.map((v) => v.id));
           const missingVariants = INITIAL_VARIANTS.filter((v) => !validVariantIds.has(v.id));
