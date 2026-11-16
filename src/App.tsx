@@ -16,9 +16,7 @@ import { ShopView } from './components/ShopView';
 import { AboutModal } from './components/AboutModal';
 import { AboutView } from './components/AboutView';
 import { HelpView, HelpTab } from './components/HelpView';
-import { AdminDashboard } from './components/AdminDashboard';
 import { AdminErrorBoundary } from './components/AdminErrorBoundary';
-import { AdminLogin } from './components/AdminLogin';
 import { CartView } from './components/CartView';
 import { EntrySplash } from './components/EntrySplash';
 import { WelcomeOfferModal } from './components/WelcomeOfferModal';
@@ -28,6 +26,14 @@ import { storeService } from './services/storeService';
 import { orderService } from './services/orderService';
 import { authService } from './services/authService';
 import { couponService } from './services/couponService';
+
+// Code-split heavy Admin modules so storefront customers load instantly
+const AdminDashboard = React.lazy(() =>
+  import('./components/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+const AdminLogin = React.lazy(() =>
+  import('./components/AdminLogin').then((m) => ({ default: m.AdminLogin }))
+);
 
 export const App: React.FC = () => {
   // Navigation State
@@ -291,51 +297,58 @@ export const App: React.FC = () => {
 
   const isAnyModalOpen = Boolean(selectedProduct || isCartOpen || isWishlistOpen || isSearchOpen || isCheckoutOpen || isAboutOpen || isWelcomeOfferOpen);
 
-  // Dedicated full-screen Admin Operations Portal (Protected with Authentication)
+  // Dedicated full-screen Admin Operations Portal (Protected with Authentication & Lazily Loaded)
   if (activePage === 'admin') {
-    if (!isAdminAuthenticated) {
-      return (
-        <AdminLogin
-          onLoginSuccess={(user) => {
-            setAdminUser(user);
-            setIsAdminAuthenticated(true);
-          }}
-          onBackToStore={() => {
-            setActivePage('home');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-        />
-      );
-    }
-
     return (
-      <AdminErrorBoundary
-        onBackToStore={() => {
-          setActivePage('home');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+      <React.Suspense
+        fallback={
+          <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center space-y-4">
+            <div className="w-10 h-10 border-2 border-[#A783A2] border-t-transparent rounded-full animate-spin" />
+            <p className="font-serif text-[#292624] tracking-widest text-xs uppercase">Loading Rass Concierge Portal...</p>
+          </div>
+        }
       >
-        <AdminDashboard
-          currentUser={adminUser}
-          onLogout={() => {
-            authService.signOut();
-            setIsAdminAuthenticated(false);
-            setAdminUser(null);
-            try {
-              window.history.replaceState(null, '', window.location.pathname);
-            } catch {}
-            setActivePage('home');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onBackToStore={() => {
-            setActivePage('home');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onRefreshStorefront={() => {
-            setProducts(storeService.getProducts());
-          }}
-        />
-      </AdminErrorBoundary>
+        {!isAdminAuthenticated ? (
+          <AdminLogin
+            onLoginSuccess={(user) => {
+              setAdminUser(user);
+              setIsAdminAuthenticated(true);
+            }}
+            onBackToStore={() => {
+              setActivePage('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        ) : (
+          <AdminErrorBoundary
+            onBackToStore={() => {
+              setActivePage('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <AdminDashboard
+              currentUser={adminUser}
+              onLogout={() => {
+                authService.signOut();
+                setIsAdminAuthenticated(false);
+                setAdminUser(null);
+                try {
+                  window.history.replaceState(null, '', window.location.pathname);
+                } catch {}
+                setActivePage('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onBackToStore={() => {
+                setActivePage('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onRefreshStorefront={() => {
+                setProducts(storeService.getProducts());
+              }}
+            />
+          </AdminErrorBoundary>
+        )}
+      </React.Suspense>
     );
   }
 

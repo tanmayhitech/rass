@@ -212,7 +212,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
 
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TvGgknGYczp7Fz';
 
     // Security Gate (ADV-13): Fail safely if Razorpay SDK or public key is unavailable
     if (typeof (window as any).Razorpay === 'undefined') {

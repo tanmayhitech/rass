@@ -19,7 +19,7 @@ export class DatabaseDiagnosticsService {
    */
   public static async runDiagnostics(): Promise<DatabaseHealthSummary> {
     const results: DatabaseFeatureTestResult[] = [];
-    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://qugrjbcjnddqceynynds.supabase.co';
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://ukgjkmjhhxtaedxyhaeu.supabase.co';
 
     if (!isSupabaseConfigured) {
       return {

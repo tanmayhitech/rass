@@ -105,10 +105,10 @@ export const DatabaseDiagnosticsModal: React.FC<DatabaseDiagnosticsModalProps> =
                 <Server className="w-4 h-4 text-[#B49A6C]" />
               </div>
               <p className="text-xs font-mono font-medium text-[#292624] truncate" title={diagnostics?.supabaseUrl}>
-                {diagnostics?.supabaseUrl || 'qugrjbcjnddqceynynds.supabase.co'}
+                {diagnostics?.supabaseUrl || 'ukgjkmjhhxtaedxyhaeu.supabase.co'}
               </p>
               <a
-                href="https://supabase.com/dashboard/project/qugrjbcjnddqceynynds"
+                href="https://supabase.com/dashboard/project/ukgjkmjhhxtaedxyhaeu"
                 target="_blank"
                 rel="noreferrer"
                 className="mt-2 text-[11px] text-[#A783A2] hover:underline flex items-center gap-1 font-medium"

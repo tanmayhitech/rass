@@ -5,37 +5,74 @@ interface EntrySplashProps {
 }
 
 export const EntrySplash: React.FC<EntrySplashProps> = ({ onComplete }) => {
-  const [isVisible, setIsVisible] = useState(true);
+  // If the user already experienced the entry flourish in this session, skip on subsequent reloads
+  const [isVisible, setIsVisible] = useState(() => {
+    try {
+      return sessionStorage.getItem('rass_intro_shown') !== 'true';
+    } catch {
+      return true;
+    }
+  });
   const [isExiting, setIsExiting] = useState(false);
 
+  const dismissSplash = () => {
+    setIsExiting(true);
+    try {
+      sessionStorage.setItem('rass_intro_shown', 'true');
+    } catch { /* ignore */ }
+    setTimeout(() => {
+      setIsVisible(false);
+      if (onComplete) onComplete();
+    }, 300);
+  };
+
   useEffect(() => {
-    // 1. Automatically begin smooth transition into the site after 1.8s
+    if (!isVisible) {
+      if (onComplete) onComplete();
+      return;
+    }
+
+    // 1. Automatically begin smooth transition into the site after 750ms
     const exitTimer = setTimeout(() => {
       setIsExiting(true);
-    }, 1800);
+      try {
+        sessionStorage.setItem('rass_intro_shown', 'true');
+      } catch { /* ignore */ }
+    }, 750);
 
-    // 2. Completely unmount at 2.4s so the site is fully active and clean
+    // 2. Completely unmount at 1100ms so the site is fully interactive and snappy
     const hideTimer = setTimeout(() => {
       setIsVisible(false);
       if (onComplete) onComplete();
-    }, 2400);
+    }, 1100);
+
+    // Allow user to press Esc or Space to skip immediately
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+        dismissSplash();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       clearTimeout(exitTimer);
       clearTimeout(hideTimer);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onComplete]);
+  }, [isVisible, onComplete]);
 
   if (!isVisible) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#FAF8F5] select-none transition-opacity duration-600 ease-out ${
+      onClick={dismissSplash}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#FAF8F5] select-none cursor-pointer transition-opacity duration-300 ease-out ${
         isExiting 
           ? 'opacity-0 pointer-events-none' 
           : 'opacity-100 pointer-events-auto'
       }`}
-      aria-label="Rass by Ridhima"
+      aria-label="Rass by Ridhima (Click anywhere to skip)"
+      title="Click anywhere to enter"
       role="status"
     >
       {/* 3D Perspective Stage for Rass Logo */}
