@@ -149,6 +149,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [perfSearch, setPerfSearch] = useState('');
 
   // Modals & Slips
+  // Manual Order Creation State (Private Concierge / WhatsApp Client Orders)
+  const [isManualOrderModalOpen, setIsManualOrderModalOpen] = useState(false);
+  const [manualOrderForm, setManualOrderForm] = useState({
+    customerName: '',
+    phone: '',
+    email: '',
+    shippingAddress: '',
+    city: '',
+    state: 'Telangana',
+    pincode: '',
+    productId: '',
+    quantity: 1,
+    discountAmount: 0,
+    paymentMethod: 'Prepaid UPI / Bank Transfer',
+    paymentStatus: 'captured' as 'captured' | 'pending',
+  });
+
   const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
   const [isNewCouponModalOpen, setIsNewCouponModalOpen] = useState(false);
   const [previewInvoiceOrder, setPreviewInvoiceOrder] = useState<Order | null>(null);
@@ -549,6 +566,69 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     maxPerCustomer: 1,
   });
 
+  const handleCreateManualOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const selectedProduct = products.find(p => p.id === manualOrderForm.productId) || products[0];
+      if (!selectedProduct) {
+        showNotification('Please select a jewellery piece for this order.', 'error');
+        return;
+      }
+      if (!manualOrderForm.customerName.trim() || !manualOrderForm.phone.trim()) {
+        showNotification('Client name and contact phone are required.', 'error');
+        return;
+      }
+
+      const qty = Math.max(1, Number(manualOrderForm.quantity) || 1);
+      const lineTotal = selectedProduct.price * qty;
+      const discount = Math.min(lineTotal, Math.max(0, Number(manualOrderForm.discountAmount) || 0));
+      const grandTotal = Math.max(0, lineTotal - discount);
+
+      showNotification('Generating verified order token and reserving vault inventory...');
+
+      const newOrder = await orderService.createOrder({
+        customerName: manualOrderForm.customerName.trim(),
+        email: manualOrderForm.email.trim() || 'concierge@rassbyriddhima.com',
+        phone: manualOrderForm.phone.trim(),
+        shippingAddress: manualOrderForm.shippingAddress.trim() || 'Private Client Studio Delivery',
+        city: manualOrderForm.city.trim() || 'Hyderabad',
+        state: manualOrderForm.state.trim() || 'Telangana',
+        pincode: manualOrderForm.pincode.trim() || '500034',
+        country: 'India',
+        items: [{ product: selectedProduct, quantity: qty } as any],
+        subtotal: lineTotal,
+        discount,
+        shippingFee: 0,
+        total: grandTotal,
+        paymentMethod: manualOrderForm.paymentMethod,
+        paymentStatus: manualOrderForm.paymentStatus,
+        appliedCoupon: discount > 0 ? 'CONCIERGE-PRIVILEGE' : undefined,
+      });
+
+      showNotification(`Order #${newOrder.id} successfully created for ${newOrder.customerName}`);
+      setIsManualOrderModalOpen(false);
+      setManualOrderForm({
+        customerName: '',
+        phone: '',
+        email: '',
+        shippingAddress: '',
+        city: '',
+        state: 'Telangana',
+        pincode: '',
+        productId: '',
+        quantity: 1,
+        discountAmount: 0,
+        paymentMethod: 'Prepaid UPI / Bank Transfer',
+        paymentStatus: 'captured',
+      });
+      refreshAllData();
+      if (onRefreshStorefront) onRefreshStorefront();
+      setPreviewInvoiceOrder(newOrder);
+    } catch (err: any) {
+      showNotification(err.message || 'Failed to create manual order.', 'error');
+    }
+  };
+
   const handleSaveCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -852,7 +932,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             ) : (
               <div className="w-full flex justify-center py-1">
-                <span className="text-[#B49A6C] font-bold text-sm">✦</span>
+                <Sparkles className="w-4 h-4 text-[#B49A6C]" />
               </div>
             )}
             <button
@@ -967,6 +1047,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {(activeTab === 'orders' || activeTab === 'overview') && (
+              <button
+                onClick={() => {
+                  setManualOrderForm(prev => ({ ...prev, productId: products[0]?.id || '' }));
+                  setIsManualOrderModalOpen(true);
+                }}
+                className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-medium cursor-pointer transition-colors shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#B49A6C]" />
+                <span className="hidden sm:inline">Create Order</span>
+                <span className="sm:hidden text-xs">Order</span>
+              </button>
+            )}
+
             {activeTab === 'products' && (
               <button
                 onClick={() => {
@@ -1410,9 +1504,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <button
                                 onClick={() => {
                                   const phoneClean = (o.phone || '').replace(/[^0-9]/g, '');
-                                  const message = `Namaste ${o.customerName}! ✨\n\nThank you for choosing Rass by Riddhima.\nYour order *#${o.id}* is currently ${o.status}.\n\nItems:\n` +
+                                  const message = `Namaste ${o.customerName},\n\nThank you for choosing Rass by Riddhima.\nYour order *#${o.id}* is currently ${o.status}.\n\nItems:\n` +
                                     (o.itemSnapshots?.map(i => `• ${i.productTitle} (Qty: ${i.quantity})`).join('\n') || 'Demi-fine handcrafted jewellery') +
-                                    (o.awbNumber ? `\n\n📦 Courier: ${o.courierPartner || 'Express'}\nTracking Number: ${o.awbNumber}` : '') +
+                                    (o.awbNumber ? `\n\nCourier Partner: ${o.courierPartner || 'Express'}\nTracking Number: ${o.awbNumber}` : '') +
                                     `\n\nWith love,\nTeam Rass by Riddhima`;
                                   const url = `https://wa.me/${phoneClean.startsWith('91') ? phoneClean : '91' + phoneClean}?text=${encodeURIComponent(message)}`;
                                   window.open(url, '_blank');
@@ -1452,7 +1546,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="bg-white rounded-xl border border-[#E7E0DA] shadow-subtle p-5">
                       <div className="flex items-center justify-between pb-3 border-b border-[#E7E0DA] mb-3">
                         <div className="flex items-center space-x-2">
-                          <span className="text-[#B49A6C]">✦</span>
+                          <Sparkles className="w-3.5 h-3.5 text-[#B49A6C]" />
                           <span className="font-semibold text-xs tracking-wider uppercase text-[#292624]">
                             Top Selling Piece
                           </span>
@@ -1924,7 +2018,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'orders' && (
             <div className="space-y-6">
               {/* Order Controls */}
-              <div className="p-3 bg-white rounded-lg border border-[#E7E0DA] flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="p-4 bg-white rounded-xl border border-[#E7E0DA] shadow-subtle flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center space-x-3 w-full sm:w-auto">
+                  <button
+                    onClick={() => {
+                      setManualOrderForm(prev => ({ ...prev, productId: products[0]?.id || '' }));
+                      setIsManualOrderModalOpen(true);
+                    }}
+                    className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-[#B49A6C]" />
+                    <span>Create Client Order</span>
+                  </button>
+                </div>
                 <div className="relative w-full sm:w-72">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#77716F]" />
                   <input
@@ -1955,7 +2061,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Orders Table */}
               <div className="bg-white rounded-lg border border-[#E7E0DA] shadow-subtle overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[780px]">
+                  <table className="w-full text-left text-xs min-w-[820px]">
                     <thead className="bg-[#FAF8F5] text-[#77716F] uppercase font-semibold text-[11px] tracking-wider border-b border-[#E7E0DA]">
                       <tr>
                         <th className="py-2.5 px-4">Order ID & Date</th>
@@ -2054,9 +2160,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <button
                                 onClick={() => {
                                   const phoneClean = (o.phone || '').replace(/[^0-9]/g, '');
-                                  const message = `Namaste ${o.customerName}! ✨\n\nThank you for choosing Rass by Riddhima.\nYour order *#${o.id}* is currently ${o.status}.\n\nItems:\n` +
+                                  const message = `Namaste ${o.customerName},\n\nThank you for choosing Rass by Riddhima.\nYour order *#${o.id}* is currently ${o.status}.\n\nItems:\n` +
                                     (o.itemSnapshots?.map(i => `• ${i.productTitle} (Qty: ${i.quantity})`).join('\n') || 'Demi-fine handcrafted jewellery') +
-                                    (o.awbNumber ? `\n\n📦 Courier: ${o.courierPartner || 'Express'}\nTracking Number: ${o.awbNumber}` : '') +
+                                    (o.awbNumber ? `\n\nCourier Partner: ${o.courierPartner || 'Express'}\nTracking Number: ${o.awbNumber}` : '') +
                                     `\n\nWith love,\nTeam Rass by Riddhima`;
                                   const url = `https://wa.me/${phoneClean.startsWith('91') ? phoneClean : '91' + phoneClean}?text=${encodeURIComponent(message)}`;
                                   window.open(url, '_blank');
@@ -2818,7 +2924,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Certificate & Compliance Footer */}
               <div className="pt-4 border-t border-[#E7E0DA] bg-[#FAF8F5] p-3.5 rounded-lg border text-[10px] text-[#77716F] leading-relaxed">
                 <p className="font-semibold text-[#B49A6C] uppercase tracking-wide mb-1">
-                  ✦ Authenticity Guarantee & Jewellery Care Guide
+                  Authenticity Guarantee & Jewellery Care Guide
                 </p>
                 <p>
                   Handcrafted with heirloom Karigari featuring brass base with premium silver / antique gold micro-polish, dual-tone oxidised silver, semi-precious stones (Kundan, Polki, Onyx, Zircon), and real freshwater & shell pearls. Anti-tarnish protective sealing coated for lasting brilliance.
@@ -3065,18 +3171,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     }}
                     className="w-full px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] cursor-pointer"
                   >
-                    <option value="jhumka">🪷 Jhumka (Bell Domes)</option>
-                    <option value="rings">💍 Rings (Anguthi)</option>
-                    <option value="necklaces">📿 Necklaces &amp; Chokers (Haar)</option>
-                    <option value="western">✨ Western &amp; Daily Wear</option>
-                    <option value="kadas">👑 Kadas &amp; Solid Bangles</option>
-                    <option value="kangan-sets">🌸 Kangan Sets (Pairs)</option>
-                    <option value="kangna">🪞 Kangna (Single)</option>
-                    <option value="earrings">💎 Earrings &amp; Drops (Jhumki)</option>
-                    <option value="accessories">🌿 Earpins &amp; Bugadi Clips</option>
-                    <option value="bracelets">💫 Bracelets &amp; Chains</option>
-                    <option value="tribal">🌙 Tribal &amp; Oxidised Silver</option>
-                    <option value="toran">🏡 Doorway Toran &amp; Decor</option>
+                    <option value="jhumka">Jhumka (Bell Domes)</option>
+                    <option value="rings">Rings (Anguthi)</option>
+                    <option value="necklaces">Necklaces &amp; Chokers (Haar)</option>
+                    <option value="western">Western &amp; Contemporary</option>
+                    <option value="kadas">Kadas &amp; Solid Bangles</option>
+                    <option value="kangan-sets">Kangan Sets (Pairs)</option>
+                    <option value="kangna">Kangna (Single)</option>
+                    <option value="earrings">Earrings &amp; Drops</option>
+                    <option value="accessories">Earpins &amp; Bugadi Clips</option>
+                    <option value="bracelets">Bracelets &amp; Chains</option>
+                    <option value="tribal">Tribal &amp; Oxidised Silver</option>
+                    <option value="toran">Doorway Toran &amp; Decor</option>
                   </select>
                 </div>
 
@@ -3162,7 +3268,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     className="px-5 py-2 rounded-lg bg-[#292624] hover:bg-[#1C1A18] text-white font-bold tracking-wide shadow-sm flex items-center space-x-1.5 cursor-pointer transition-colors"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#B49A6C]" />
-                    <span>✨ Put on Website (Publish Live)</span>
+                    <span>Publish Design to Storefront</span>
                   </button>
                 </div>
               </form>
@@ -3201,7 +3307,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <p className="text-[10.5px] text-[#77716F] text-center mt-3 max-w-[220px]">
-                  ✓ This is exactly how customers will see your design on the shop page.
+                  Real-time client view on storefront.
                 </p>
               </div>
 
@@ -3341,96 +3447,391 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ===================================================================== */}
-      {/* 8. MODAL: CREATE COUPON */}
+      {/* 8. MODAL: INTUITIVE PROMOTIONAL COUPON CREATION                      */}
       {/* ===================================================================== */}
       {isNewCouponModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
-          <div className="relative bg-white rounded-xl max-w-sm w-full border border-[#E7E0DA] shadow-modal p-4 sm:p-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E7E0DA] mb-3">
-              <h3 className="font-semibold text-sm text-[#292624]">Create Coupon</h3>
-              <button onClick={() => setIsNewCouponModalOpen(false)} className="p-1 text-[#77716F] hover:text-[#292624] cursor-pointer transition-colors">
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="relative bg-white rounded-2xl max-w-lg w-full border border-[#E7E0DA] shadow-modal p-6 sm:p-7 max-h-[92vh] overflow-y-auto space-y-5">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-[#E7E0DA]">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-full bg-[#FAF5F9] border border-[#E2D5E5] flex items-center justify-center text-[#A783A2]">
+                  <Tag className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-base font-bold text-[#292624]">
+                    Create Promotional Privilege
+                  </h3>
+                  <p className="text-[11px] text-[#77716F]">
+                    Define storewide discount codes or client-specific celebrations.
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsNewCouponModalOpen(false)} 
+                className="w-7 h-7 rounded-full flex items-center justify-center text-[#77716F] hover:text-[#292624] hover:bg-stone-100 transition-colors cursor-pointer"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCoupon} className="space-y-3 text-xs">
+            {/* Quick Presets for Instant 1-Click Setup */}
+            <div className="space-y-2">
+              <span className="text-[11px] font-semibold text-[#77716F] uppercase tracking-wider block">
+                Quick Presets
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { label: 'Festive 20%', code: 'FESTIVE20', type: 'percentage', val: 20, min: 2999, cap: 10000 },
+                  { label: 'Welcome 10%', code: 'WELCOME10', type: 'percentage', val: 10, min: 1999, cap: 3000 },
+                  { label: 'Flat ₹500', code: 'RASS500', type: 'fixed_amount', val: 500, min: 2500, cap: 500 },
+                  { label: 'VIP ₹5,000', code: 'HEIRLOOM5000', type: 'fixed_amount', val: 5000, min: 50000, cap: 5000 },
+                ].map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => {
+                      setCouponForm({
+                        code: p.code,
+                        discountType: p.type as any,
+                        discountValue: p.val,
+                        minOrderValue: p.min,
+                        maxDiscountCap: p.cap,
+                        maxRedemptions: 250,
+                        maxPerCustomer: 1,
+                      });
+                    }}
+                    className="p-2 rounded-lg border border-[#E7E0DA] hover:border-[#B49A6C] bg-[#FAF8F5] hover:bg-white text-center transition-all cursor-pointer group"
+                  >
+                    <span className="text-xs font-semibold text-[#292624] group-hover:text-[#B49A6C] block">{p.label}</span>
+                    <span className="text-[10px] text-[#77716F] block mt-0.5">Min ₹{p.min.toLocaleString('en-IN')}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveCoupon} className="space-y-4 text-xs">
               <div>
-                <label className="block font-medium text-[#292624] mb-1">Promo Code</label>
+                <label className="block font-semibold text-[#292624] mb-1">
+                  Promotional Code
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. FESTIVE20"
                   value={couponForm.code}
-                  onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
-                  className="w-full px-3 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs font-mono uppercase text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                  onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '') })}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs font-mono font-bold tracking-wider uppercase text-[#292624] focus:outline-none focus:border-[#B49A6C]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-[#292624] mb-1">Type</label>
+                  <label className="block font-semibold text-[#292624] mb-1">Discount Type</label>
                   <select
                     value={couponForm.discountType}
                     onChange={(e) => setCouponForm({ ...couponForm, discountType: e.target.value as any })}
-                    className="w-full px-2 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] cursor-pointer"
                   >
                     <option value="percentage">Percentage (%)</option>
-                    <option value="fixed_amount">Fixed Amount (₹)</option>
+                    <option value="fixed_amount">Flat Amount (INR)</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block font-medium text-[#292624] mb-1">Value</label>
+                  <label className="block font-semibold text-[#292624] mb-1">
+                    {couponForm.discountType === 'percentage' ? 'Rate (%)' : 'Amount (₹)'}
+                  </label>
                   <input
                     type="number"
                     min={1}
+                    max={couponForm.discountType === 'percentage' ? 100 : undefined}
                     required
                     value={couponForm.discountValue}
                     onChange={(e) => setCouponForm({ ...couponForm, discountValue: Number(e.target.value) })}
-                    className="w-full px-3 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    className="w-full px-3.5 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs font-bold text-[#292624] focus:outline-none focus:border-[#B49A6C]"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-medium text-[#292624] mb-1">Min Spend (₹)</label>
+                  <label className="block font-semibold text-[#292624] mb-1">
+                    Minimum Order Value (₹)
+                  </label>
                   <input
                     type="number"
                     min={0}
                     value={couponForm.minOrderValue}
                     onChange={(e) => setCouponForm({ ...couponForm, minOrderValue: Number(e.target.value) })}
-                    className="w-full px-3 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    className="w-full px-3.5 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
                   />
+                  <span className="text-[10px] text-[#77716F] block mt-0.5">0 for no minimum</span>
                 </div>
 
                 <div>
-                  <label className="block font-medium text-[#292624] mb-1">Max Cap (₹)</label>
+                  <label className="block font-semibold text-[#292624] mb-1">
+                    Maximum Discount Cap (₹)
+                  </label>
                   <input
                     type="number"
                     min={0}
                     value={couponForm.maxDiscountCap}
                     onChange={(e) => setCouponForm({ ...couponForm, maxDiscountCap: Number(e.target.value) })}
-                    className="w-full px-3 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    className="w-full px-3.5 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
                   />
+                  <span className="text-[10px] text-[#77716F] block mt-0.5">Maximum deduction limit</span>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-[#E7E0DA] flex justify-end space-x-2">
+              {/* Live Commercial Rule Explanation Box */}
+              <div className="p-3.5 rounded-xl bg-[#FAF8F5] border border-[#E7E0DA] space-y-1">
+                <span className="text-[10.5px] uppercase font-bold tracking-wider text-[#B49A6C] block">
+                  Rule Summary
+                </span>
+                <p className="text-xs text-[#292624]">
+                  Patrons receive{' '}
+                  <strong>
+                    {couponForm.discountType === 'percentage'
+                      ? `${couponForm.discountValue}% OFF`
+                      : `₹${Number(couponForm.discountValue).toLocaleString('en-IN')} OFF`}
+                  </strong>
+                  {couponForm.minOrderValue > 0 ? (
+                    <> whenever their cart reaches at least <strong>₹{Number(couponForm.minOrderValue).toLocaleString('en-IN')}</strong>.</>
+                  ) : (
+                    <> on all order totals.</>
+                  )}
+                  {couponForm.maxDiscountCap > 0 && couponForm.discountType === 'percentage' && (
+                    <> Maximum benefit is capped at ₹{Number(couponForm.maxDiscountCap).toLocaleString('en-IN')}.</>
+                  )}
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-[#E7E0DA] flex items-center justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setIsNewCouponModalOpen(false)}
-                  className="px-3 py-1.5 rounded border border-[#E7E0DA] text-xs font-medium hover:bg-[#FAF8F5] text-[#292624] cursor-pointer transition-colors"
+                  className="px-4 py-2 rounded-lg border border-[#E7E0DA] text-[#77716F] hover:bg-stone-50 font-medium cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded bg-[#292624] text-white text-xs font-medium hover:bg-[#1C1A18] cursor-pointer transition-colors"
+                  className="px-5 py-2 rounded-lg bg-[#292624] text-white font-semibold hover:bg-[#1C1A18] cursor-pointer transition-colors shadow-xs"
                 >
-                  Activate
+                  Create &amp; Activate Promotion
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* 9. MODAL: EFFORTLESS MANUAL ORDER CREATION (CONCIERGE / WHATSAPP)   */}
+      {/* ===================================================================== */}
+      {isManualOrderModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="relative bg-white rounded-2xl max-w-2xl w-full border border-[#E7E0DA] shadow-modal p-6 sm:p-8 max-h-[92vh] overflow-y-auto space-y-6">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-[#E7E0DA]">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-[#FAF5F9] border border-[#E2D5E5] flex items-center justify-center text-[#A783A2]">
+                  <ShoppingCart className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-base sm:text-lg font-bold text-[#292624]">
+                    Create Client Order
+                  </h3>
+                  <p className="text-[11px] text-[#77716F]">
+                    For WhatsApp, Instagram, or phone concierge clients. Automatically issues official tax bill and reserves inventory.
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsManualOrderModalOpen(false)} 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#77716F] hover:text-[#292624] hover:bg-stone-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateManualOrder} className="space-y-6 text-xs">
+              
+              {/* Section 1: Client Information */}
+              <div className="space-y-3">
+                <span className="text-[11px] font-semibold text-[#77716F] uppercase tracking-wider block">
+                  1. Client Details &amp; Destination
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block font-semibold text-[#292624] mb-1">Client Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Radhika Goenka"
+                      value={manualOrderForm.customerName}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, customerName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[#292624] mb-1">Contact Phone / WhatsApp *</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. +91 98201 54321"
+                      value={manualOrderForm.phone}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, phone: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div className="sm:col-span-2">
+                    <label className="block font-semibold text-[#292624] mb-1">Shipping Address</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 14 Jubilee Hills, Road No 36"
+                      value={manualOrderForm.shippingAddress}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, shippingAddress: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[#292624] mb-1">City</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Hyderabad"
+                      value={manualOrderForm.city}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, city: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Jewellery Piece & Commercial Terms */}
+              <div className="space-y-3 pt-3 border-t border-[#E7E0DA]">
+                <span className="text-[11px] font-semibold text-[#77716F] uppercase tracking-wider block">
+                  2. Select Jewellery Piece
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+                  <div className="sm:col-span-8">
+                    <label className="block font-semibold text-[#292624] mb-1">Piece Selection</label>
+                    <select
+                      value={manualOrderForm.productId}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, productId: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] cursor-pointer"
+                    >
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — ₹{p.price.toLocaleString('en-IN')} ({p.categoryDisplay})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-4">
+                    <label className="block font-semibold text-[#292624] mb-1">Quantity</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={manualOrderForm.quantity}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, quantity: Math.max(1, Number(e.target.value)) })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs font-bold text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block font-semibold text-[#292624] mb-1">Privilege Discount (₹)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="0"
+                      value={manualOrderForm.discountAmount}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, discountAmount: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs font-bold text-[#3B5432] focus:outline-none focus:border-[#B49A6C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[#292624] mb-1">Payment Method</label>
+                    <select
+                      value={manualOrderForm.paymentMethod}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, paymentMethod: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    >
+                      <option value="Prepaid UPI / Bank Transfer">Prepaid UPI / Bank Transfer</option>
+                      <option value="Cash on Delivery (Air Express)">Cash on Delivery (COD)</option>
+                      <option value="Credit / Debit Card (Razorpay)">Credit / Debit Card</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-[#292624] mb-1">Payment Status</label>
+                    <select
+                      value={manualOrderForm.paymentStatus}
+                      onChange={(e) => setManualOrderForm({ ...manualOrderForm, paymentStatus: e.target.value as any })}
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    >
+                      <option value="captured">Captured / Paid</option>
+                      <option value="pending">Pending Payment</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-time Order Summary Card */}
+              {(() => {
+                const prod = products.find(p => p.id === manualOrderForm.productId) || products[0];
+                const price = prod?.price || 0;
+                const sub = price * (manualOrderForm.quantity || 1);
+                const disc = Math.min(sub, Number(manualOrderForm.discountAmount || 0));
+                const total = Math.max(0, sub - disc);
+                return (
+                  <div className="p-4 rounded-xl bg-[#FAF8F5] border border-[#E7E0DA] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-[#B49A6C] block">
+                        Commercial Total
+                      </span>
+                      <span className="font-medium text-xs text-[#292624]">
+                        {prod?.name || 'Selected Piece'} (x{manualOrderForm.quantity || 1})
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      {disc > 0 && (
+                        <span className="text-[11px] text-[#3B5432] block">
+                          Discount: -₹{disc.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                      <span className="text-lg font-bold font-mono text-[#292624]">
+                        Total: ₹{total.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <div className="pt-3 border-t border-[#E7E0DA] flex items-center justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setIsManualOrderModalOpen(false)}
+                  className="px-4 py-2.5 rounded-lg border border-[#E7E0DA] text-[#77716F] hover:bg-stone-50 font-medium cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-lg bg-[#292624] text-white font-semibold hover:bg-[#1C1A18] cursor-pointer transition-colors shadow-sm"
+                >
+                  Confirm Order &amp; Open Invoice
+                </button>
+              </div>
+
             </form>
           </div>
         </div>
