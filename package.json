@@ -7,6 +7,8 @@
     "predev": "git pull origin main || echo Running offline",
     "dev": "vite",
     "build": "tsc && vite build",
+    "budget": "node scripts/verify-performance-budget.cjs",
+    "optimize:images": "python scripts/optimize-all-images.py",
     "preview": "vite preview",
     "test": "node -e \"require('esbuild').buildSync({ entryPoints: ['src/tests/backend-verification.ts'], bundle: true, platform: 'node', outfile: 'dist/test-runner.mjs', format: 'esm', external: ['canvas-confetti', '@supabase/supabase-js'] });\" && node dist/test-runner.mjs",
     "test:db": "node -e \"require('esbuild').buildSync({ entryPoints: ['src/tests/database-and-auth-verification.ts'], bundle: true, platform: 'node', outfile: 'dist/db-test-runner.mjs', format: 'esm', external: ['@supabase/supabase-js'] });\" && node dist/db-test-runner.mjs",
