@@ -61,7 +61,8 @@ import {
   ProductStatus,
   ProductPerformance,
   AnalyticsSummary,
-  AdminUser
+  AdminUser,
+  FestiveCampaignConfig
 } from '../types';
 import { storeService } from '../services/storeService';
 import { orderService } from '../services/orderService';
@@ -72,6 +73,7 @@ import { DatabaseDiagnosticsModal } from './DatabaseDiagnosticsModal';
 import { AdminHomeMediaManager } from './AdminHomeMediaManager';
 import { emailService } from '../services/emailService';
 import { ImageService, ImageOptimizationResult } from '../services/imageService';
+import { WelcomeOfferModal } from './WelcomeOfferModal';
 
 type AdminNavTab = 
   | 'overview' 
@@ -150,6 +152,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isNewCouponModalOpen, setIsNewCouponModalOpen] = useState(false);
   const [previewInvoiceOrder, setPreviewInvoiceOrder] = useState<Order | null>(null);
   const [previewCourierSlipOrder, setPreviewCourierSlipOrder] = useState<Order | null>(null);
+  const [festiveCampaign, setFestiveCampaign] = useState<FestiveCampaignConfig>(() => couponService.getFestiveCampaign());
+  const [isPreviewFestiveOpen, setIsPreviewFestiveOpen] = useState(false);
 
   // Direct Inventory Editing State
   const [quickAdjustVariant, setQuickAdjustVariant] = useState<ProductVariant | null>(null);
@@ -176,6 +180,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setVariants(storeService.getVariants());
       setOrders(orderService.getOrders());
       setCoupons(couponService.getCoupons(true));
+      setFestiveCampaign(couponService.getFestiveCampaign());
       setMovements(storeService.getInventoryMovements());
       setMetrics(AnalyticsService.getDashboardMetrics());
       setPerformance(AnalyticsService.getProductPerformance(perfSortBy));
@@ -1956,7 +1961,180 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* ----------------------------------------------------------------- */}
           {activeTab === 'coupons' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              {/* Festive Campaign & Storefront Popup Controller */}
+              <div className="p-5 sm:p-6 bg-white rounded-xl border border-[#A783A2]/40 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E7E0DA] pb-4">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-9 h-9 rounded-full bg-[#FAF5F9] border border-[#A783A2]/30 flex items-center justify-center text-[#8B5E86]">
+                      <Sparkles className="w-4 h-4 text-[#A783A2]" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm text-[#292624] flex items-center gap-2">
+                        <span>Festive Storefront Campaign &amp; Entry Popup</span>
+                        {festiveCampaign.isEnabled ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            ● Live on Storefront
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2EFEA] text-[#77716F] border border-[#E7E0DA]">
+                            Disabled
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-xs text-[#77716F]">
+                        Control the celebratory welcome offer modal that greets site visitors. Select the coupon offer, headline, and festive copy.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsPreviewFestiveOpen(true)}
+                      className="px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-xs font-medium text-[#292624] flex items-center space-x-1.5 cursor-pointer transition-colors shadow-2xs"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-[#77716F]" />
+                      <span>Preview Popup</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !festiveCampaign.isEnabled;
+                        const updated = couponService.saveFestiveCampaign({ isEnabled: next });
+                        setFestiveCampaign(updated);
+                        showNotification(next ? 'Festive storefront popup enabled' : 'Festive storefront popup disabled');
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-2xs ${
+                        festiveCampaign.isEnabled
+                          ? 'bg-[#8F3B30] text-white hover:bg-[#783026]'
+                          : 'bg-[#3B5432] text-white hover:bg-[#2C3F25]'
+                      }`}
+                    >
+                      {festiveCampaign.isEnabled ? 'Turn OFF' : 'Turn ON'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Form Controls */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block font-medium text-[#292624] mb-1">
+                      Link Coupon Offer
+                    </label>
+                    <select
+                      value={festiveCampaign.linkedCouponCode}
+                      onChange={(e) => {
+                        const code = e.target.value;
+                        setFestiveCampaign(prev => ({ ...prev, linkedCouponCode: code }));
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
+                    >
+                      {coupons.map((c) => (
+                        <option key={c.id} value={c.code}>
+                          {c.code} — {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue.toLocaleString('en-IN')} FLAT`} (Min cart ₹{c.minOrderValue})
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-[10px] text-[#77716F] mt-1 block">
+                      When visitors click &quot;Apply&quot;, this coupon code is auto-copied &amp; applied to cart.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-[#292624] mb-1">
+                      Festive Ribbon / Badge Tag
+                    </label>
+                    <input
+                      type="text"
+                      value={festiveCampaign.badgeText}
+                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, badgeText: e.target.value }))}
+                      placeholder="e.g. DIWALI SPECIAL • FESTIVE PRIVILEGE"
+                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
+                    />
+                    <span className="text-[10px] text-[#77716F] mt-1 block">
+                      Upper pill badge on the popup.
+                    </span>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block font-medium text-[#292624] mb-1">
+                      Headline Title
+                    </label>
+                    <input
+                      type="text"
+                      value={festiveCampaign.headline}
+                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, headline: e.target.value }))}
+                      placeholder="e.g. A Little Magic for Your First Rass Creation"
+                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block font-medium text-[#292624] mb-1">
+                      Festive Description / Subtitle
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={festiveCampaign.description}
+                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="e.g. Celebrate in heirloom gold vermeil with 20% off on your order."
+                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-[#292624] mb-1">
+                      Call to Action Button Text
+                    </label>
+                    <input
+                      type="text"
+                      value={festiveCampaign.buttonText}
+                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, buttonText: e.target.value }))}
+                      placeholder="e.g. Apply &amp; Explore Collection"
+                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-[#292624] mb-1">
+                      Popup Delay on Site (Seconds)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      step={0.5}
+                      value={festiveCampaign.delaySeconds}
+                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, delaySeconds: Number(e.target.value) || 2.5 }))}
+                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 flex items-center justify-between pt-2 border-t border-[#E7E0DA]">
+                    <span className="text-[11px] text-[#77716F]">
+                      Changes will take effect immediately on the storefront entry popup.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        couponService.saveFestiveCampaign(festiveCampaign);
+                        showNotification('Festive campaign configuration saved successfully');
+                      }}
+                      className="px-5 py-2 rounded-lg bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+                    >
+                      Save Festive Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-xs text-[#292624] uppercase tracking-wider mb-3">
+                  All Promotional Coupons ({coupons.length})
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {coupons.map((c) => (
                   <div key={c.id} className="p-4 bg-white rounded-lg border border-[#E7E0DA] shadow-subtle flex flex-col justify-between">
                     <div>
@@ -2002,6 +2180,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
             </div>
           )}
 
@@ -3167,6 +3346,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <DatabaseDiagnosticsModal
         isOpen={isDiagnosticsOpen}
         onClose={() => setIsDiagnosticsOpen(false)}
+      />
+
+      {/* Festive Campaign Storefront Popup Preview Dialog */}
+      <WelcomeOfferModal
+        isOpen={isPreviewFestiveOpen}
+        onClose={() => setIsPreviewFestiveOpen(false)}
+        onApplyAndShop={() => setIsPreviewFestiveOpen(false)}
+        campaign={festiveCampaign}
       />
 
     </div>

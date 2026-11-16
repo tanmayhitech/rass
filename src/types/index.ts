@@ -177,6 +177,17 @@ export interface CouponRedemption {
   redeemedAt: string;
 }
 
+export interface FestiveCampaignConfig {
+  isEnabled: boolean;
+  linkedCouponCode: string;
+  badgeText: string;
+  headline: string;
+  description: string;
+  buttonText: string;
+  showConfetti: boolean;
+  delaySeconds: number;
+}
+
 export interface ProductPerformance {
   productId: string;
   productTitle: string;

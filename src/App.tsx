@@ -27,6 +27,7 @@ import { Product, CartItem, Order, ActivePage, ProductCategory, InfoSection, Adm
 import { storeService } from './services/storeService';
 import { orderService } from './services/orderService';
 import { authService } from './services/authService';
+import { couponService } from './services/couponService';
 
 export const App: React.FC = () => {
   // Navigation State
@@ -142,12 +143,16 @@ export const App: React.FC = () => {
 
   // Automatic Welcome Coupon Offer Popup on Starting/Entry
   useEffect(() => {
+    const campaign = couponService.getFestiveCampaign();
+    if (!campaign.isEnabled) return;
+
     const hasSeenOffer = sessionStorage.getItem('rass_welcome_offer_seen');
     if (!hasSeenOffer) {
-      // Reveal popup at 2.6s right as entry splash completes
+      // Reveal popup at configured delay right as entry splash completes
+      const delayMs = (campaign.delaySeconds || 2.5) * 1000;
       const timer = setTimeout(() => {
         setIsWelcomeOfferOpen(true);
-      }, 2600);
+      }, delayMs);
       return () => clearTimeout(timer);
     }
   }, []);

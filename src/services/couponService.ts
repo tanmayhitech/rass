@@ -1,8 +1,20 @@
-import { Coupon, CouponRedemption, ProductCategory } from '../types';
+import { Coupon, CouponRedemption, ProductCategory, FestiveCampaignConfig } from '../types';
 
 const STORAGE_KEYS = {
   COUPONS: 'rass_db_coupons',
   REDEMPTIONS: 'rass_db_coupon_redemptions',
+  FESTIVE_CAMPAIGN: 'rass_festive_campaign_config',
+};
+
+export const DEFAULT_FESTIVE_CAMPAIGN: FestiveCampaignConfig = {
+  isEnabled: true,
+  linkedCouponCode: 'FESTIVE20',
+  badgeText: 'FESTIVE PRIVILEGE • SPECIAL CELEBRATION',
+  headline: 'A Little Magic for Your First Rass Creation',
+  description: 'Enjoy an exclusive 20% discount across our handcrafted demi-fine jewelry collections.',
+  buttonText: 'Apply & Explore Collection',
+  showConfetti: true,
+  delaySeconds: 2.5,
 };
 
 const INITIAL_COUPONS: Coupon[] = [
@@ -70,6 +82,7 @@ const INITIAL_COUPONS: Coupon[] = [
 class CouponService {
   private coupons: Coupon[] = [];
   private redemptions: CouponRedemption[] = [];
+  private festiveCampaign: FestiveCampaignConfig = DEFAULT_FESTIVE_CAMPAIGN;
 
   constructor() {
     this.loadState();
@@ -79,6 +92,7 @@ class CouponService {
     try {
       const storedCoupons = localStorage.getItem(STORAGE_KEYS.COUPONS);
       const storedRedemptions = localStorage.getItem(STORAGE_KEYS.REDEMPTIONS);
+      const storedCampaign = localStorage.getItem(STORAGE_KEYS.FESTIVE_CAMPAIGN);
 
       let loaded = storedCoupons ? JSON.parse(storedCoupons) : INITIAL_COUPONS;
       // Ensure default coupons like FESTIVE20 always exist
@@ -89,9 +103,11 @@ class CouponService {
       });
       this.coupons = loaded;
       this.redemptions = storedRedemptions ? JSON.parse(storedRedemptions) : [];
+      this.festiveCampaign = storedCampaign ? { ...DEFAULT_FESTIVE_CAMPAIGN, ...JSON.parse(storedCampaign) } : DEFAULT_FESTIVE_CAMPAIGN;
     } catch (e) {
       this.coupons = INITIAL_COUPONS;
       this.redemptions = [];
+      this.festiveCampaign = DEFAULT_FESTIVE_CAMPAIGN;
     }
   }
 
@@ -99,6 +115,7 @@ class CouponService {
     try {
       localStorage.setItem(STORAGE_KEYS.COUPONS, JSON.stringify(this.coupons));
       localStorage.setItem(STORAGE_KEYS.REDEMPTIONS, JSON.stringify(this.redemptions));
+      localStorage.setItem(STORAGE_KEYS.FESTIVE_CAMPAIGN, JSON.stringify(this.festiveCampaign));
     } catch (e) {
       console.error('Error saving coupon state:', e);
     }
@@ -111,6 +128,25 @@ class CouponService {
 
   public getCouponByCode(code: string): Coupon | undefined {
     return this.coupons.find((c) => c.code.toUpperCase() === code.trim().toUpperCase());
+  }
+
+  public getFestiveCampaign(): FestiveCampaignConfig {
+    return { ...this.festiveCampaign };
+  }
+
+  public saveFestiveCampaign(config: Partial<FestiveCampaignConfig>): FestiveCampaignConfig {
+    this.festiveCampaign = {
+      ...this.festiveCampaign,
+      ...config,
+    };
+    this.saveState();
+    return { ...this.festiveCampaign };
+  }
+
+  public toggleFestiveCampaign(): boolean {
+    this.festiveCampaign.isEnabled = !this.festiveCampaign.isEnabled;
+    this.saveState();
+    return this.festiveCampaign.isEnabled;
   }
 
   public createCoupon(data: {

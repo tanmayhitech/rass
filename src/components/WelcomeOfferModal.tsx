@@ -1,20 +1,32 @@
 import React, { useState } from 'react';
 import { X, Sparkles, Copy, Check, Gift, ArrowRight, ShieldCheck, Truck } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { FestiveCampaignConfig } from '../types';
+import { couponService } from '../services/couponService';
 
 interface WelcomeOfferModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyAndShop: (couponCode: string) => void;
+  campaign?: FestiveCampaignConfig;
 }
 
 export const WelcomeOfferModal: React.FC<WelcomeOfferModalProps> = ({
   isOpen,
   onClose,
   onApplyAndShop,
+  campaign: propCampaign,
 }) => {
   const [copied, setCopied] = useState(false);
-  const couponCode = 'FESTIVE20';
+
+  // Dynamic campaign configuration from props or CouponService
+  const campaign = propCampaign || couponService.getFestiveCampaign();
+  const couponCode = campaign.linkedCouponCode || 'FESTIVE20';
+  const linkedCoupon = couponService.getCouponByCode(couponCode);
+
+  const discountFormula = linkedCoupon
+    ? `${linkedCoupon.discountType === 'percentage' ? `Flat ${linkedCoupon.discountValue}% OFF` : `Flat ₹${linkedCoupon.discountValue.toLocaleString('en-IN')} OFF`} • ${linkedCoupon.minOrderValue > 0 ? `Min. cart ₹${linkedCoupon.minOrderValue.toLocaleString('en-IN')}` : 'No minimum spend'}`
+    : 'Flat 20% OFF • Min. cart ₹2,999';
 
   if (!isOpen) return null;
 
@@ -24,16 +36,18 @@ export const WelcomeOfferModal: React.FC<WelcomeOfferModalProps> = ({
       navigator.clipboard.writeText(couponCode);
       setCopied(true);
       
-      // Joyful celebratory confetti burst
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#A783A2', '#B49A6C', '#FAF8F5', '#E2D5E5'],
-        });
-      } catch (err) {
-        // Fallback gracefully if confetti fails
+      // Joyful celebratory confetti burst if enabled
+      if (campaign.showConfetti !== false) {
+        try {
+          confetti({
+            particleCount: 50,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#A783A2', '#B49A6C', '#FAF8F5', '#E2D5E5'],
+          });
+        } catch (err) {
+          // Fallback gracefully if confetti fails
+        }
       }
 
       setTimeout(() => setCopied(false), 3000);
@@ -92,20 +106,20 @@ export const WelcomeOfferModal: React.FC<WelcomeOfferModalProps> = ({
           {/* Top Privilege Badge */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FAF5F9] border border-[#A783A2]/30 text-[#8B5E86] text-[10px] sm:text-[11px] uppercase tracking-[0.22em] font-semibold mb-3">
             <Sparkles className="w-3 h-3 text-[#A783A2]" />
-            <span>WELCOME PRIVILEGE • FIRST VISIT</span>
+            <span>{campaign.badgeText || 'FESTIVE PRIVILEGE • SPECIAL CELEBRATION'}</span>
           </div>
 
           {/* Headline with Good Luxury Serif Font */}
           <h2
             id="welcome-offer-title"
-            className="text-[28px] sm:text-[36px] font-normal text-[#292624] tracking-tight leading-[1.2] mb-2"
+            className="text-[26px] sm:text-[34px] font-normal text-[#292624] tracking-tight leading-[1.25] mb-2"
             style={{ fontFamily: '"Cormorant Garamond", "Playfair Display", Georgia, serif' }}
           >
-            A Little Magic for Your<br /><span className="italic font-medium">First Rass Creation</span>
+            {campaign.headline || 'A Little Magic for Your First Rass Creation'}
           </h2>
 
           <p className="font-sans text-[13px] sm:text-[14px] text-[#77716F] leading-relaxed max-w-sm mx-auto mb-5">
-            Enjoy an exclusive <strong>20% discount</strong> across our handcrafted demi-fine jewelry collections.
+            {campaign.description || 'Enjoy an exclusive festive discount across our handcrafted demi-fine jewelry collections.'}
           </p>
 
           {/* Coupon Ticket Voucher Box */}
@@ -124,7 +138,7 @@ export const WelcomeOfferModal: React.FC<WelcomeOfferModalProps> = ({
                   {couponCode}
                 </span>
                 <p className="text-[11px] text-[#77716F] mt-0.5">
-                  Flat 20% OFF • Min. cart ₹2,999
+                  {discountFormula}
                 </p>
               </div>
 
@@ -160,7 +174,7 @@ export const WelcomeOfferModal: React.FC<WelcomeOfferModalProps> = ({
               onClick={handleShopNow}
               className="w-full py-3.5 px-6 rounded-full bg-[#292624] hover:bg-black text-white text-xs font-semibold uppercase tracking-[0.16em] flex items-center justify-center space-x-2 transition-all duration-200 shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-98 cursor-pointer"
             >
-              <span>Apply & Explore Collection</span>
+              <span>{campaign.buttonText || 'Apply & Explore Collection'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
