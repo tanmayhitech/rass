@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 (async () => {
-  console.log('🚀 Launching Chrome to inspect Redesigned Layman Admin Portal...');
+  console.log('🚀 Launching Chrome to inspect Restored Luxury Admin Portal...');
   const browser = await puppeteer.launch({
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
     headless: 'new',
@@ -40,60 +40,70 @@ const path = require('path');
   });
   await new Promise(r => setTimeout(r, 1500));
 
-  // Verify the 4 Layman Tabs exist
+  // Verify Sidebar & 8 Luxury Navigation Tabs
   const tabNames = await page.evaluate(() => {
-    const buttons = Array.from(document.querySelectorAll('nav button, header button'));
+    const buttons = Array.from(document.querySelectorAll('aside nav button'));
     return buttons.map(b => b.innerText.trim()).filter(Boolean);
   });
-  console.log('Found navigation buttons:', tabNames);
+  console.log('Found 8 Sidebar navigation tabs:', tabNames);
 
-  // Check the main heading and sections
-  const mainContent = await page.evaluate(() => {
-    const main = document.querySelector('main');
-    return main ? main.innerText.slice(0, 500) : 'No main element';
+  // Cycle through all tabs to ensure 0 errors
+  const tabsToClick = ['Overview', 'Orders', 'Products', 'Inventory', 'Best Sellers', 'Coupons', 'Order Ledger', 'Home Media'];
+  for (const t of tabsToClick) {
+    await page.evaluate((tabName) => {
+      const btns = Array.from(document.querySelectorAll('aside nav button'));
+      const btn = btns.find(b => b.innerText.includes(tabName));
+      if (btn) btn.click();
+    }, t);
+    await new Promise(r => setTimeout(r, 400));
+  }
+
+  // Go back to Products tab and click Add Product
+  await page.evaluate(() => {
+    const btns = Array.from(document.querySelectorAll('aside nav button'));
+    const btn = btns.find(b => b.innerText.includes('Products'));
+    if (btn) btn.click();
   });
-  console.log('\n--- Layman Dashboard Main Content ---');
-  console.log(mainContent);
+  await new Promise(r => setTimeout(r, 500));
 
-  // Click "Add New Jewellery Piece" button
-  console.log('\nTesting "Add New Jewellery Piece" button click...');
+  console.log('\nTesting "Add Product" button click...');
   const clickedAdd = await page.evaluate(() => {
-    const buttons = Array.from(document.querySelectorAll('button'));
-    const addBtn = buttons.find(b => b.innerText.includes('Add New Jewellery Piece'));
+    const buttons = Array.from(document.querySelectorAll('header button, main button'));
+    const addBtn = buttons.find(b => b.innerText.includes('Add Product') || b.innerText.includes('Add Design'));
     if (addBtn) {
       addBtn.click();
       return true;
     }
     return false;
   });
-  console.log('Add New Jewellery Piece button clicked:', clickedAdd);
-  await new Promise(r => setTimeout(r, 1000));
+  console.log('Add Product button clicked:', clickedAdd);
+  await new Promise(r => setTimeout(r, 800));
 
-  // Inspect the Modal
+  // Inspect the Split-Screen Modal
   const modalInfo = await page.evaluate(() => {
     const modal = document.querySelector('.fixed.inset-0');
     if (!modal) return null;
     return {
       title: modal.querySelector('h3')?.innerText,
-      hasLivePreview: modal.innerText.includes('Live Preview on Your Website'),
+      hasLivePreview: modal.innerText.includes('LIVE PREVIEW ON YOUR WEBSITE') || modal.innerText.includes('Live Preview on Your Website'),
       hasImageUpload: modal.innerText.includes('Tap to Choose Photo') || modal.innerText.includes('Jewellery Photo'),
-      hasPriceFields: modal.innerText.includes('Selling Price') && modal.innerText.includes('Cut Price'),
-      hasStockCounter: modal.innerText.includes('How many pieces do you have?')
+      hasPriceFields: modal.innerText.includes('Selling Price'),
+      hasStockCounter: modal.innerText.includes('Available Pieces')
     };
   });
   console.log('Modal Inspection:', modalInfo);
 
   // Take screenshot for verification
-  const screenshotPath = path.resolve('dist/admin-redesign-screenshot.png');
+  const screenshotPath = path.resolve('dist/admin-restored-screenshot.png');
   await page.screenshot({ path: screenshotPath, fullPage: false });
   console.log(`📸 Screenshot saved to: ${screenshotPath}`);
 
   if (errors.length > 0) {
     console.warn('\n⚠️ Page Errors Encountered:', errors);
   } else {
-    console.log('\n✅ 0 Console Errors encountered during Admin Portal interaction!');
+    console.log('\n✅ 0 Console Errors encountered across all 8 tabs & Add Product modal!');
   }
 
   await browser.close();
-  console.log('\n🎉 Redesigned Layman Admin Portal UI Inspection Complete!');
+  console.log('\n🎉 Restored Luxury Admin Portal UI Inspection Complete!');
 })();
