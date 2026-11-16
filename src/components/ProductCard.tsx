@@ -50,7 +50,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           alt={product.name}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
           loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'low'}
+          {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
           decoding="async"
           onError={(e) => handleImageError(e, rawImage)}
         />

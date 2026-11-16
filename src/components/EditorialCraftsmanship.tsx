@@ -103,7 +103,7 @@ export const EditorialCraftsmanship: React.FC<EditorialCraftsmanshipProps> = ({ 
                 alt={imageAlt}
                 className="w-full h-250px sm:h-[360px] lg:h-[420px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out block"
                 loading="lazy"
-                fetchPriority="low"
+                {...({ fetchpriority: 'low' } as any)}
                 decoding="async"
                 onError={(e) => handleImageError(e, imageSrc)}
               />

@@ -62,7 +62,7 @@ export const EditorialEveryday: React.FC<EditorialEverydayProps> = ({ onExploreC
                   alt={imageAlt}
                   className="w-full h-[320px] sm:h-[370px] lg:h-[400px] object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out block"
                   loading="lazy"
-                  fetchPriority="low"
+                  {...({ fetchpriority: 'low' } as any)}
                   decoding="async"
                   onError={(e) => handleImageError(e, imageSrc)}
                 />

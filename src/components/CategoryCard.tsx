@@ -74,7 +74,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out pointer-events-none"
           loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'low'}
+          {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
           decoding="async"
           onError={(e) => handleImageError(e, '/images/card_bg_jhumka.png')}
         />
@@ -98,7 +98,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
             alt="Jhumka"
             className="w-full h-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.12)]"
             loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'low'}
+            {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
             decoding="async"
             onError={(e) => handleImageError(e, '/images/jhumka_motif_sage_3x.png')}
           />
@@ -124,7 +124,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out pointer-events-none"
           loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'low'}
+          {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
           decoding="async"
           onError={(e) => handleImageError(e, '/images/card_bg_kadas.png')}
         />
@@ -148,7 +148,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
             alt="कड़ा"
             className="w-full h-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.08)]"
             loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'low'}
+            {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
             decoding="async"
             onError={(e) => handleImageError(e, '/images/kada_motif_pink_3x.png')}
           />
@@ -174,7 +174,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
           alt=""
           className="absolute inset-0 w-full h-full object-cover object-center transform group-hover:scale-[1.03] transition-transform duration-700 ease-out pointer-events-none"
           loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'low'}
+          {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
           decoding="async"
           onError={(e) => handleImageError(e, '/images/card_bg_buy4.png')}
         />
@@ -198,7 +198,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
             alt="Buy 4 for ₹999"
             className="max-h-[90%] max-w-[90%] sm:max-h-[84%] sm:max-w-[84%] w-auto h-auto object-contain select-none pointer-events-none drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.12)]"
             loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'low'}
+            {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
             decoding="async"
             onError={(e) => handleImageError(e, '/images/buy4_motif_sage_3x.png')}
           />
@@ -223,7 +223,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         alt={`${title} jewellery collection`}
         className={`w-full h-full object-cover ${id === 'earrings' ? 'object-[56%_48%]' : 'object-center'} transform group-hover:scale-[1.05] transition-transform duration-700 ease-out`}
         loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : 'low'}
+        {...({ fetchpriority: priority ? 'high' : 'low' } as any)}
         decoding="async"
         onError={(e) => handleImageError(e, displayImage)}
       />

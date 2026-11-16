@@ -124,7 +124,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                 alt="Rass by Riddhima"
                 className="h-6 sm:h-7 md:h-8 lg:h-[34px] w-auto object-contain transition-opacity duration-200 group-hover:opacity-85 select-none"
                 loading="eager"
-                fetchPriority="high"
+                {...({ fetchpriority: 'high' } as any)}
                 decoding="async"
                 onError={(e) => handleImageError(e, '/images/Rass by Ridhima Wordmark.png')}
               />
@@ -271,7 +271,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                 alt="Rass by Riddhima"
                 className="h-6 w-auto object-contain"
                 loading="eager"
-                fetchPriority="high"
+                {...({ fetchpriority: 'high' } as any)}
                 decoding="async"
                 onError={(e) => handleImageError(e, '/images/Rass by Ridhima Wordmark.png')}
               />

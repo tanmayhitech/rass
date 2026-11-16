@@ -137,7 +137,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               alt={product.name}
               className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
               loading="eager"
-              fetchPriority="high"
+              {...({ fetchpriority: 'high' } as any)}
               decoding="async"
               onError={(e) => handleImageError(e, product.cleanImage || product.image)}
             />
