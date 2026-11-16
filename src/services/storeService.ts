@@ -925,6 +925,8 @@ class StoreService {
     initialStock?: number;
     lowStockThreshold?: number;
     status?: ProductStatus;
+    isBestseller?: boolean;
+    isNew?: boolean;
   }): Product {
     // Validate unique SKU
     const existingSku = this.variants.some((v) => v.sku.toUpperCase() === data.sku.trim().toUpperCase());
@@ -975,6 +977,8 @@ class StoreService {
       weight: data.weight,
       sku: data.sku.trim().toUpperCase(),
       inStock: stockQty > 0,
+      isBestseller: Boolean(data.isBestseller),
+      isNew: Boolean(data.isNew),
       status: data.status || 'published',
       variants: [newVariant],
       stockCount: stockQty,
