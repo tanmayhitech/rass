@@ -830,6 +830,70 @@ class StoreService {
     return this.products.filter((p) => p.status === 'published');
   }
 
+  /**
+   * Bi-directional synchronization with remote Supabase PostgreSQL catalog
+   */
+  public async syncWithSupabase(): Promise<void> {
+    if (!isSupabaseConfigured) return;
+    try {
+      const { data: remoteProducts, error } = await supabase.from('products').select('*');
+      if (error || !remoteProducts || !remoteProducts.length) return;
+
+      const { data: remoteImages } = await supabase.from('product_images').select('*').eq('is_primary', true);
+      const imageMap = new Map<string, { image_url: string; clean_image_url?: string }>();
+      if (remoteImages) {
+        for (const img of remoteImages) {
+          imageMap.set(img.product_id, { image_url: img.image_url, clean_image_url: img.clean_image_url });
+        }
+      }
+
+      const currentIds = new Set(this.products.map((p) => p.id));
+      let stateChanged = false;
+
+      for (const remote of remoteProducts) {
+        if (!currentIds.has(remote.id)) {
+          const category = (remote.category_id || 'earrings') as ProductCategory;
+          const imgInfo = imageMap.get(remote.id);
+          const newProduct: Product = {
+            id: remote.id,
+            name: remote.title,
+            title: remote.title,
+            slug: remote.slug,
+            category,
+            categoryDisplay: remote.category_id || 'Earrings',
+            price: Number(remote.base_price) || 0,
+            originalPrice: remote.compare_at_price ? Number(remote.compare_at_price) : undefined,
+            costPrice: remote.cost_price ? Number(remote.cost_price) : undefined,
+            image: imgInfo?.image_url || '/images/cat_rings.png',
+            cleanImage: imgInfo?.clean_image_url || imgInfo?.image_url || '/images/clean_cat_rings.png',
+            description: remote.short_description || remote.long_description || '',
+            details: Array.isArray(remote.details) ? remote.details : [],
+            metal: remote.metal_type || '18k Gold Vermeil',
+            gemstones: remote.gemstones || '',
+            dimensions: remote.dimensions || '',
+            weight: remote.weight_grams ? `${remote.weight_grams}g` : '10g',
+            sku: `RASS-SKU-${remote.id.toUpperCase()}`,
+            inStock: remote.status === 'published',
+            status: (remote.status || 'published') as ProductStatus,
+            variants: [],
+            stockCount: 10,
+            lowStockThreshold: 3,
+            createdAt: remote.created_at || new Date().toISOString(),
+            updatedAt: remote.updated_at || new Date().toISOString(),
+          };
+          this.products.push(newProduct);
+          stateChanged = true;
+        }
+      }
+
+      if (stateChanged) {
+        this.saveState();
+      }
+    } catch (err) {
+      console.warn('[StoreService] Cloud product synchronization failed:', err);
+    }
+  }
+
   public getProductById(id: string): Product | undefined {
     return this.products.find((p) => p.id === id);
   }
@@ -936,6 +1000,63 @@ class StoreService {
     }
 
     this.saveState();
+
+    // Asynchronously synchronize new product to Supabase PostgreSQL
+    if (isSupabaseConfigured) {
+      (async () => {
+        try {
+          await supabase.from('products').upsert([{
+            id: newId,
+            category_id: data.category,
+            title: data.name.trim(),
+            slug,
+            short_description: data.description,
+            long_description: data.description,
+            base_price: data.price,
+            compare_at_price: data.originalPrice || null,
+            cost_price: data.costPrice || Math.round(data.price * 0.45),
+            metal_type: data.metal,
+            gemstones: data.gemstones,
+            dimensions: data.dimensions || '',
+            weight_grams: parseFloat(data.weight || '10') || 10,
+            details: data.details || [],
+            status: data.status || 'published',
+            updated_at: new Date().toISOString(),
+          }]);
+
+          await supabase.from('product_variants').upsert([{
+            id: variantId,
+            product_id: newId,
+            sku: data.sku.trim().toUpperCase(),
+            variant_name: 'Standard',
+            option_type: 'Standard',
+            option_value: 'Standard',
+            is_active: true,
+          }]);
+
+          await supabase.from('inventory_items').upsert([{
+            variant_id: variantId,
+            quantity_on_hand: stockQty,
+            quantity_reserved: 0,
+            low_stock_threshold: threshold,
+          }], { onConflict: 'variant_id' });
+
+          if (data.image) {
+            await supabase.from('product_images').insert([{
+              product_id: newId,
+              image_url: data.image,
+              clean_image_url: data.cleanImage || data.image,
+              alt_text: data.name.trim(),
+              display_order: 0,
+              is_primary: true,
+            }]);
+          }
+        } catch (err) {
+          console.warn('[StoreService] Supabase product sync deferred:', err);
+        }
+      })();
+    }
+
     return newProduct;
   }
 

@@ -120,6 +120,7 @@ export interface Order {
   paymentMethod: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
+  razorpaySignature?: string;
   awbNumber?: string;
   courierPartner?: string;
   trackingUrl?: string;

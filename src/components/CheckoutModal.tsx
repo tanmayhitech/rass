@@ -13,12 +13,15 @@ import {
   Loader2,
   MapPin,
   Download,
-  Tag
+  Tag,
+  Copy,
+  Check
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CartItem, Order } from '../types';
 
 import { orderService } from '../services/orderService';
+import { paymentService } from '../services/paymentService';
 import { couponService } from '../services/couponService';
 import { PDFService } from '../services/pdfService';
 import { pincodeService } from '../services/pincodeService';
@@ -98,6 +101,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
   const [showItemSummary, setShowItemSummary] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(false);
+
+  const handleCopyToken = () => {
+    if (completedOrder?.id) {
+      navigator.clipboard.writeText(completedOrder.id);
+      setCopiedToken(true);
+      setTimeout(() => setCopiedToken(false), 2000);
+    }
+  };
 
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0);
 
@@ -196,9 +208,35 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
   };
 
-  const processFinalOrder = async (razorpayPaymentId?: string, razorpayOrderId?: string) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+
+    // Security Gate (ADV-13): Fail safely if Razorpay SDK or public key is unavailable
+    if (typeof (window as any).Razorpay === 'undefined') {
+      alert(
+        'Payment Gateway is temporarily unavailable: The secure Razorpay payment module failed to load. ' +
+        'Please check your internet connection or contact concierge support. Order has NOT been created.'
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!razorpayKey || !razorpayKey.startsWith('rzp_')) {
+      alert(
+        'Payment gateway configuration is missing (Razorpay Key ID not configured). ' +
+        'Transaction cannot proceed safely. Order has NOT been created.'
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 1. Create authoritative pending order in database awaiting payment
+    let pendingOrder: Order;
     try {
-      const newOrder = await orderService.createOrder({
+      pendingOrder = await orderService.createPendingOrder({
         customerName: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -215,86 +253,110 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         total,
         paymentMethod: 'Razorpay Secure (UPI, Cards, NetBanking)',
         appliedCoupon: appliedCouponCode || undefined,
-        razorpayOrderId: razorpayOrderId || `order_test_${Math.random().toString(36).slice(2, 10)}`,
-        razorpayPaymentId: razorpayPaymentId || `pay_test_${Math.random().toString(36).slice(2, 10)}`,
-      });
-
-      if (appliedCouponCode && couponService.getCouponByCode(appliedCouponCode)) {
-        couponService.recordRedemption({
-          couponId: couponService.getCouponByCode(appliedCouponCode)!.id,
-          orderId: newOrder.id,
-          customerEmail: formData.email,
-          discountApplied: discount,
-        });
-      }
-
-      setCompletedOrder(newOrder);
-      onOrderComplete(newOrder);
-      setIsSubmitting(false);
-
-      confetti({
-        particleCount: 130,
-        spread: 90,
-        origin: { y: 0.6 },
-        colors: ['#A783A2', '#C8D4C1', '#B49A6C', '#FAF8F5'],
       });
     } catch (err: any) {
-      alert(`Order creation error: ${err.message}`);
+      alert(`Could not initialize order: ${err.message}`);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 2. Launch Razorpay Checkout with authoritative amount in paise
+    const options = {
+      key: razorpayKey,
+      amount: Math.round(pendingOrder.total * 100), // Authoritative amount in paise
+      currency: 'INR',
+      name: 'Rass by Riddhima',
+      description: 'Luxury Handcrafted Demi-Fine Jewellery',
+      image: '/favicon.svg',
+      order_id: (pendingOrder.razorpayOrderId && !pendingOrder.razorpayOrderId.startsWith('order_sim_'))
+        ? pendingOrder.razorpayOrderId
+        : undefined,
+      prefill: {
+        name: formData.name,
+        email: formData.email,
+        contact: formData.phone,
+      },
+      notes: {
+        address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+        order_id: pendingOrder.id,
+      },
+      theme: {
+        color: '#A783A2',
+      },
+      handler: async function (response: any) {
+        try {
+          const rzpOrderId = response.razorpay_order_id || pendingOrder.razorpayOrderId || `order_${response.razorpay_payment_id}`;
+          const rzpSignature = response.razorpay_signature || `sig_direct_${response.razorpay_payment_id}`;
+
+          // 3. Cryptographic HMAC-SHA256 signature verification
+          const verifyResult = await paymentService.verifyPayment({
+            orderId: pendingOrder.id,
+            razorpayOrderId: rzpOrderId,
+            razorpayPaymentId: response.razorpay_payment_id,
+            razorpaySignature: rzpSignature,
+            paidAmount: pendingOrder.total,
+          });
+
+          if (verifyResult.success && verifyResult.order) {
+            // Apply coupon redemption record upon confirmed payment
+            if (appliedCouponCode && couponService.getCouponByCode(appliedCouponCode)) {
+              couponService.recordRedemption({
+                couponId: couponService.getCouponByCode(appliedCouponCode)!.id,
+                orderId: verifyResult.order.id,
+                customerEmail: formData.email,
+                discountApplied: discount,
+              });
+            }
+
+            setCompletedOrder(verifyResult.order);
+            onOrderComplete(verifyResult.order);
+            setIsSubmitting(false);
+
+            confetti({
+              particleCount: 130,
+              spread: 90,
+              origin: { y: 0.6 },
+              colors: ['#A783A2', '#C8D4C1', '#B49A6C', '#FAF8F5'],
+            });
+          } else {
+            throw new Error(verifyResult.error || 'Payment signature verification failed.');
+          }
+        } catch (err: any) {
+          alert(`Payment verification failed: ${err.message}. Order has NOT been confirmed.`);
+          setIsSubmitting(false);
+        }
+      },
+      modal: {
+        ondismiss: async function () {
+          await paymentService.recordPaymentFailure({
+            orderId: pendingOrder.id,
+            errorDescription: 'Customer closed payment window without completing transaction',
+          });
+          setIsSubmitting(false);
+        },
+      },
+    };
+
+    try {
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', async function (response: any) {
+        await paymentService.recordPaymentFailure({
+          orderId: pendingOrder.id,
+          errorCode: response.error?.code,
+          errorDescription: response.error?.description,
+        });
+        alert(`Payment failed: ${response.error?.description || 'Transaction unsuccessful'}`);
+        setIsSubmitting(false);
+      });
+      rzp.open();
+    } catch (err: any) {
+      await paymentService.recordPaymentFailure({
+        orderId: pendingOrder.id,
+        errorDescription: `Launch error: ${err.message}`,
+      });
+      alert(`Failed to open Razorpay payment interface: ${err.message}`);
       setIsSubmitting(false);
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-
-    // Launch official Razorpay Checkout popup when key and SDK are available
-    if (typeof (window as any).Razorpay !== 'undefined' && razorpayKey && razorpayKey.startsWith('rzp_')) {
-      const options = {
-        key: razorpayKey,
-        amount: Math.round(total * 100), // amount in paise
-        currency: 'INR',
-        name: 'Rass by Riddhima',
-        description: 'Luxury Handcrafted Demi-Fine Jewellery',
-        image: '/favicon.svg',
-        prefill: {
-          name: formData.name,
-          email: formData.email,
-          contact: formData.phone,
-        },
-        notes: {
-          address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
-        },
-        theme: {
-          color: '#A783A2',
-        },
-        handler: function (response: any) {
-          processFinalOrder(response.razorpay_payment_id, response.razorpay_order_id);
-        },
-        modal: {
-          ondismiss: function () {
-            setIsSubmitting(false);
-          },
-        },
-      };
-
-      try {
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function (response: any) {
-          alert(`Payment failed: ${response.error?.description || 'Transaction unsuccessful'}`);
-          setIsSubmitting(false);
-        });
-        rzp.open();
-        return;
-      } catch (err) {
-        console.warn('Failed to open Razorpay modal, falling back to simulated order:', err);
-      }
-    }
-
-    // Fallback if offline or SDK unavailable
-    await processFinalOrder();
   };
 
   return (
@@ -353,36 +415,147 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
 
               {/* Order Receipt Box */}
-              <div className="bg-white p-5 sm:p-6 rounded-[12px] border border-[#E7E0DA] text-left text-xs space-y-3 max-w-lg mx-auto shadow-xs font-sans">
-                <div className="flex justify-between items-center border-b border-[#E7E0DA] pb-2.5">
-                  <span className="text-[#8C827A]">Order Reference:</span>
-                  <span className="font-semibold text-[#292624] bg-[#FAF8F5] px-2.5 py-0.5 rounded border border-[#E7E0DA]">
-                    {completedOrder.id}
-                  </span>
-                </div>
+              {(() => {
+                const orderSnapshots = (completedOrder.itemSnapshots && completedOrder.itemSnapshots.length > 0)
+                  ? completedOrder.itemSnapshots
+                  : (Array.isArray(completedOrder.items) && completedOrder.items.length > 0)
+                    ? completedOrder.items.map(i => ({
+                        productTitle: i?.product?.name || 'Jewellery Design',
+                        sku: i?.product?.sku || 'RASS-SKU',
+                        variantName: i?.selectedSize || 'Standard',
+                        imageUrl: i?.product?.cleanImage || i?.product?.image || '/images/cat_rings.png',
+                        unitPrice: i?.product?.price || 0,
+                        quantity: i?.quantity || 1,
+                        lineSubtotal: (i?.product?.price || 0) * (i?.quantity || 1),
+                      }))
+                    : [];
 
-                <div className="flex justify-between items-center border-b border-[#E7E0DA] pb-2.5">
-                  <span className="text-[#8C827A]">Estimated Dispatch:</span>
-                  <span className="font-semibold text-emerald-800 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>Within 24–48 Business Hours</span>
-                  </span>
-                </div>
+                return (
+                  <div className="bg-white p-5 sm:p-6 rounded-[14px] border border-[#E7E0DA] text-left text-xs space-y-3.5 max-w-lg mx-auto shadow-sm font-sans">
+                    {/* Token & Status */}
+                    <div className="flex justify-between items-center border-b border-[#E7E0DA] pb-3">
+                      <div>
+                        <span className="text-[#8C827A] text-[11px] font-medium block">Order Reference Token</span>
+                        <div className="flex items-center space-x-1.5 mt-0.5">
+                          <span className="font-mono font-bold text-[#292624] bg-[#FAF8F5] px-2.5 py-0.5 rounded border border-[#E7E0DA] text-[13px]">
+                            {completedOrder.id}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleCopyToken}
+                            className="p-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[#77716F] hover:text-[#292624] transition-colors cursor-pointer inline-flex items-center gap-1"
+                            title="Copy Order Token"
+                          >
+                            {copiedToken ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-[10px] text-emerald-700 font-medium">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span className="text-[10px]">Copy</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
 
-                <div className="flex justify-between items-start border-b border-[#E7E0DA] pb-2.5">
-                  <span className="text-[#8C827A]">Deliver To:</span>
-                  <span className="font-medium text-[#292624] text-right max-w-[240px]">
-                    {completedOrder.customerName}, {completedOrder.shippingAddress}, {completedOrder.city} - {completedOrder.pincode}
-                  </span>
-                </div>
+                      <div className="text-right">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
+                          Payment Confirmed
+                        </span>
+                        {completedOrder.razorpayPaymentId && (
+                          <span className="block font-mono text-[9.5px] text-[#8C827A] mt-0.5">
+                            {completedOrder.razorpayPaymentId}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="flex justify-between items-center pt-1">
-                  <span className="text-[#8C827A]">Total Amount Paid:</span>
-                  <span className="font-sans text-[16px] font-bold text-[#292624]">
-                    ₹{completedOrder.total.toLocaleString('en-IN')}
-                  </span>
-                </div>
-              </div>
+                    {/* Patron Details */}
+                    <div className="flex justify-between items-start border-b border-[#E7E0DA] pb-3">
+                      <div>
+                        <span className="text-[#8C827A] text-[11px] font-medium block">Client Details:</span>
+                        <span className="font-semibold text-[#292624] text-[12.5px] block">{completedOrder.customerName}</span>
+                        <span className="text-[11px] text-[#77716F] block">{completedOrder.phone}</span>
+                        <span className="text-[11px] text-[#77716F] block">{completedOrder.email}</span>
+                      </div>
+                      <div className="text-right max-w-[220px]">
+                        <span className="text-[#8C827A] text-[11px] font-medium block">Delivering To:</span>
+                        <span className="text-[#292624] text-[11px] leading-snug block">
+                          {completedOrder.shippingAddress}, {completedOrder.city}, {completedOrder.state} - {completedOrder.pincode}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Purchased Products Snapshot */}
+                    <div className="border-b border-[#E7E0DA] pb-3 space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#8C827A] font-semibold text-[11px] uppercase tracking-wider">
+                          Purchased Pieces ({orderSnapshots.length})
+                        </span>
+                        <span className="text-[#8C827A] text-[10.5px]">Price &amp; Details</span>
+                      </div>
+
+                      <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                        {orderSnapshots.map((snap, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-[#FAF8F5] border border-[#E7E0DA]/80">
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <img
+                                src={snap.imageUrl || '/images/cat_rings.png'}
+                                alt={snap.productTitle}
+                                className="w-10 h-10 rounded object-cover border border-[#E7E0DA] bg-white shrink-0"
+                              />
+                              <div className="text-left min-w-0">
+                                <p className="font-semibold text-[#292624] text-[11.5px] truncate max-w-[200px]">
+                                  {snap.productTitle}
+                                </p>
+                                <p className="text-[10px] text-[#77716F] truncate">
+                                  SKU: {snap.sku} • {snap.variantName} • Qty: {snap.quantity}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="font-semibold text-[#292624] text-xs font-mono shrink-0 ml-2">
+                              ₹{snap.lineSubtotal.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Financial Summary */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex justify-between items-center text-[#77716F] text-[11.5px]">
+                        <span>Merchandise Subtotal:</span>
+                        <span className="font-mono text-[#292624]">₹{completedOrder.subtotal.toLocaleString('en-IN')}</span>
+                      </div>
+
+                      {completedOrder.discount > 0 && (
+                        <div className="flex justify-between items-center text-emerald-800 text-[11.5px]">
+                          <span>Discount Applied ({completedOrder.appliedCoupon || 'Promotion'}):</span>
+                          <span className="font-mono font-medium">-₹{completedOrder.discount.toLocaleString('en-IN')}</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center text-[#77716F] text-[11.5px]">
+                        <span>Insured Express Shipping:</span>
+                        <span className="font-mono text-emerald-800 font-medium">
+                          {completedOrder.shippingFee === 0 ? 'COMPLIMENTARY' : `₹${completedOrder.shippingFee}`}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t border-[#E7E0DA]">
+                        <span className="text-[13px] font-bold text-[#292624]">Total Amount Paid:</span>
+                        <span className="font-sans text-[17px] font-bold text-[#292624] font-mono">
+                          ₹{completedOrder.total.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Reassurance */}
               <div className="text-[11.5px] text-[#8C827A] flex items-center justify-center gap-2">

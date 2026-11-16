@@ -47,7 +47,9 @@ import {
   Upload,
   Image as ImageIcon,
   Menu,
-  Database
+  Database,
+  Loader2,
+  Copy
 } from 'lucide-react';
 import { 
   Product, 
@@ -69,6 +71,7 @@ import { PDFService } from '../services/pdfService';
 import { DatabaseDiagnosticsModal } from './DatabaseDiagnosticsModal';
 import { AdminHomeMediaManager } from './AdminHomeMediaManager';
 import { emailService } from '../services/emailService';
+import { ImageService, ImageOptimizationResult } from '../services/imageService';
 
 type AdminNavTab = 
   | 'overview' 
@@ -166,8 +169,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setNotification(null), 3500);
   };
 
-  const refreshAllData = () => {
+  const refreshAllData = async () => {
     try {
+      await storeService.syncWithSupabase();
       setProducts(storeService.getProducts(true));
       setVariants(storeService.getVariants());
       setOrders(orderService.getOrders());
@@ -201,14 +205,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     toran: { image: '/images/cat_toran.png', cleanImage: '/images/clean_cat_toran.png' },
   };
 
+  const categoryCodes: Record<ProductCategory, string> = {
+    rings: 'RNG',
+    earrings: 'EAR',
+    jhumka: 'JHM',
+    'kangan-sets': 'KNG',
+    kangna: 'KGA',
+    necklaces: 'NCK',
+    bracelets: 'BRC',
+    tribal: 'TRB',
+    western: 'WST',
+    kadas: 'KAD',
+    accessories: 'ACC',
+    toran: 'TRN',
+  };
+
+  const categoryDisplayNames: Record<ProductCategory, string> = {
+    rings: 'Rings',
+    earrings: 'Earrings',
+    jhumka: 'Dome Jhumka',
+    'kangan-sets': 'Kangan Sets',
+    kangna: 'Kangna',
+    necklaces: 'Necklaces',
+    bracelets: 'Bracelets',
+    tribal: 'Tribal Jewellery',
+    western: 'Western Jewellery',
+    kadas: 'Kadas & Bangles',
+    accessories: 'Earpins & Bugadi',
+    toran: 'Home Decor & Toran',
+  };
+
+  const generateCategorySku = (cat: ProductCategory) => {
+    const code = categoryCodes[cat] || 'JEW';
+    const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+    return `RASS-${code}-${rand}`;
+  };
+
   const getInitialProductForm = () => ({
     name: '',
     category: 'rings' as ProductCategory,
     categoryDisplay: 'Rings',
     price: 16500,
-    costPrice: 7500,
-    sku: `RASS-SKU-${Date.now().toString(36).slice(-4).toUpperCase()}`,
-    description: 'Sculpted in 18k gold vermeil with authentic natural gemstones.',
+    costPrice: 7425,
+    sku: generateCategorySku('rings'),
+    description: 'Sculpted in 18k gold vermeil with authentic natural gemstones and 925 hallmarked sterling silver.',
     metal: '18k Gold Vermeil',
     gemstones: 'Natural Zambian Emerald & Basra Pearls',
     dimensions: '20mm crest',
@@ -222,72 +262,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Form State for NEW Product
   const [newProductForm, setNewProductForm] = useState(getInitialProductForm);
+  const [isOptimizingImage, setIsOptimizingImage] = useState(false);
+  const [imageOptimizationInfo, setImageOptimizationInfo] = useState<ImageOptimizationResult | null>(null);
 
-  const handleProductImageUpload = (file: File) => {
+  const handleProductImageUpload = async (file: File) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       showNotification('Please upload an image file (PNG, JPG, WEBP).', 'error');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showNotification('Image size is larger than 5MB. Please choose a smaller image.', 'error');
+    if (file.size > 15 * 1024 * 1024) {
+      showNotification('Image size is larger than 15MB. Please choose a smaller image.', 'error');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        // Optimize image size via canvas to keep localStorage responsive
-        try {
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 1000;
-            let width = img.width;
-            let height = img.height;
-            if (width > maxDim || height > maxDim) {
-              if (width > height) {
-                height = Math.round((height * maxDim) / width);
-                width = maxDim;
-              } else {
-                width = Math.round((width * maxDim) / height);
-                height = maxDim;
-              }
-            }
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0, width, height);
-              const optimized = canvas.toDataURL('image/jpeg', 0.86);
-              setNewProductForm(prev => ({
-                ...prev,
-                image: optimized,
-                cleanImage: optimized,
-              }));
-              showNotification('Product photo uploaded and optimized');
-              return;
-            }
-            setNewProductForm(prev => ({
-              ...prev,
-              image: result,
-              cleanImage: result,
-            }));
-            showNotification('Product photo uploaded');
-          };
-          img.src = result;
-        } catch {
-          setNewProductForm(prev => ({
-            ...prev,
-            image: result,
-            cleanImage: result,
-          }));
-          showNotification('Product photo uploaded');
-        }
-      }
-    };
-    reader.readAsDataURL(file);
+    setIsOptimizingImage(true);
+    try {
+      const res = await ImageService.optimizeAndUploadProductImage(file, {
+        maxDimension: 1000,
+        quality: 0.82,
+        folder: 'products',
+      });
+
+      setNewProductForm(prev => ({
+        ...prev,
+        image: res.url,
+        cleanImage: res.url,
+      }));
+      setImageOptimizationInfo(res);
+      showNotification(
+        res.isCloudUrl
+          ? `Image optimized & uploaded to Cloud CDN (${res.savedPercentage}% saved, ${Math.round(res.optimizedSize / 1024)} KB)`
+          : `Image optimized locally (${res.savedPercentage}% space saved)`
+      );
+    } catch (err: any) {
+      showNotification(err.message || 'Image processing failed', 'error');
+    } finally {
+      setIsOptimizingImage(false);
+    }
   };
 
   const handleSaveNewProduct = (e: React.FormEvent) => {
@@ -309,7 +321,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           `Handcrafted in ${newProductForm.metal}`,
           `Adorned with genuine ${newProductForm.gemstones}`,
           'Hallmarked 925 authenticity stamp',
-          'Accompanied by suede presentation box',
+          'Accompanied by suede presentation box & certificate of authenticity',
         ],
         metal: newProductForm.metal,
         gemstones: newProductForm.gemstones,
@@ -321,6 +333,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         status: 'published',
       });
       showNotification(`Product "${newProductForm.name}" created with SKU ${newProductForm.sku}`);
+      setNewProductForm(getInitialProductForm());
+      setImageOptimizationInfo(null);
       setIsNewProductModalOpen(false);
       refreshAllData();
       if (onRefreshStorefront) onRefreshStorefront();
@@ -1679,6 +1693,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <option value="kangna">Kangna</option>
                     <option value="necklaces">Necklaces</option>
                     <option value="bracelets">Bracelets</option>
+                    <option value="western">Western Jewellery</option>
+                    <option value="tribal">Tribal Jewellery</option>
+                    <option value="kadas">Kadas</option>
+                    <option value="accessories">Earpins &amp; Bugadi</option>
+                    <option value="toran">Toran</option>
                   </select>
 
                   <span className="text-[#77716F] font-semibold uppercase text-[11px] tracking-wider ml-2">Status:</span>
@@ -2643,27 +2662,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     value={newProductForm.category}
                     onChange={(e) => {
                       const cat = e.target.value as ProductCategory;
-                      const displayNames: Record<ProductCategory, string> = {
-                        rings: 'Rings',
-                        earrings: 'Earrings',
-                        jhumka: 'Dome Jhumka',
-                        'kangan-sets': 'Kangan Sets',
-                        kangna: 'Kangna',
-                        necklaces: 'Necklaces',
-                        bracelets: 'Bracelets',
-                        tribal: 'Tribal Jewellery',
-                        western: 'Western Jewellery',
-                        kadas: 'Kadas',
-                        accessories: 'Earpins & Bugadi',
-                        toran: 'Toran',
-                      };
                       const defaults = categoryDefaultImages[cat];
+                      const isCustomUploaded = newProductForm.image.startsWith('http') && newProductForm.image.includes('storage/v1/object/public');
                       setNewProductForm(prev => ({
                         ...prev,
                         category: cat,
-                        categoryDisplay: displayNames[cat],
-                        image: prev.image.startsWith('data:') ? prev.image : (defaults?.image || prev.image),
-                        cleanImage: prev.cleanImage.startsWith('data:') ? prev.cleanImage : (defaults?.cleanImage || prev.cleanImage),
+                        categoryDisplay: categoryDisplayNames[cat] || cat,
+                        sku: generateCategorySku(cat),
+                        image: isCustomUploaded ? prev.image : (defaults?.image || prev.image),
+                        cleanImage: isCustomUploaded ? prev.cleanImage : (defaults?.cleanImage || prev.cleanImage),
                       }));
                     }}
                     className="w-full px-2.5 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
@@ -2675,6 +2682,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <option value="kangna">Kangna</option>
                     <option value="necklaces">Necklaces</option>
                     <option value="bracelets">Bracelets</option>
+                    <option value="western">Western Jewellery</option>
+                    <option value="tribal">Tribal Jewellery</option>
+                    <option value="kadas">Kadas</option>
+                    <option value="accessories">Earpins &amp; Bugadi</option>
+                    <option value="toran">Toran</option>
                   </select>
                 </div>
 
@@ -2746,20 +2758,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div className="flex-1 min-w-0">
                     {newProductForm.imageUploadMode === 'upload' && (
                       <div>
-                        <label className="border-2 border-dashed border-[#D5CEC7] hover:border-[#B49A6C] rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer transition-colors bg-white group">
-                          <Upload className="w-4 h-4 text-[#B49A6C] mb-1 group-hover:scale-110 transition-transform" />
-                          <span className="text-[11px] font-medium text-[#292624]">Choose Photo to Upload</span>
-                          <span className="text-[9px] text-[#77716F]">PNG, JPG, WEBP • Max 5MB</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleProductImageUpload(file);
-                            }}
-                          />
-                        </label>
+                        {isOptimizingImage ? (
+                          <div className="border border-[#E7E0DA] rounded-lg p-3.5 flex flex-col items-center justify-center bg-white space-y-1.5 shadow-2xs">
+                            <Loader2 className="w-5 h-5 text-[#B49A6C] animate-spin" />
+                            <span className="text-[11px] font-medium text-[#292624]">Optimizing & uploading to Cloud CDN...</span>
+                            <span className="text-[9px] text-[#77716F]">Compressing to modern WebP (protecting database space)</span>
+                          </div>
+                        ) : (
+                          <label className="border-2 border-dashed border-[#D5CEC7] hover:border-[#B49A6C] rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer transition-colors bg-white group">
+                            <Upload className="w-4 h-4 text-[#B49A6C] mb-1 group-hover:scale-110 transition-transform" />
+                            <span className="text-[11px] font-medium text-[#292624]">Choose Photo to Upload</span>
+                            <span className="text-[9px] text-[#77716F]">PNG, JPG, WEBP • Auto-compressed for web</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleProductImageUpload(file);
+                              }}
+                            />
+                          </label>
+                        )}
+
+                        {imageOptimizationInfo && (
+                          <div className="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] flex items-center justify-between shadow-2xs">
+                            <div className="flex items-center space-x-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="font-medium">
+                                {imageOptimizationInfo.isCloudUrl ? 'Cloud Storage CDN Active' : 'Compressed WebP Ready'}
+                              </span>
+                            </div>
+                            <span className="font-semibold text-emerald-900 font-mono">
+                              {imageOptimizationInfo.savedPercentage}% saved ({Math.round(imageOptimizationInfo.optimizedSize / 1024)} KB)
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -2794,7 +2828,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="space-y-1">
                         <label className="text-[10px] text-[#77716F] block">Direct Image or CDN URL:</label>
                         <input
-                          type="url"
+                          type="text"
                           placeholder="https://images.example.com/item.jpg or /images/..."
                           value={newProductForm.image}
                           onChange={(e) => {
@@ -2821,7 +2855,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     min={1}
                     required
                     value={newProductForm.price}
-                    onChange={(e) => setNewProductForm({ ...newProductForm, price: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const newPrice = Number(e.target.value);
+                      setNewProductForm(prev => ({
+                        ...prev,
+                        price: newPrice,
+                        costPrice: prev.costPrice === 0 || prev.costPrice === Math.round(prev.price * 0.45)
+                          ? Math.round(newPrice * 0.45)
+                          : prev.costPrice,
+                      }));
+                    }}
                     className="w-full px-3 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
                   />
                 </div>

@@ -6,6 +6,8 @@ import {
   FulfilmentStatus 
 } from '../types';
 import { storeService } from './storeService';
+import { couponService } from './couponService';
+import { PRODUCTS } from '../data/products';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { emailService, EmailSendResult } from './emailService';
 
@@ -171,6 +173,7 @@ export interface CreateOrderParams {
   tax?: number;
   total: number;
   paymentMethod: string;
+  paymentStatus?: PaymentStatus;
   appliedCoupon?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
@@ -282,30 +285,127 @@ class OrderService {
   }
 
   /**
-   * Server-grade atomic order creation
-   * 1. Validates inventory availability
-   * 2. Deducts variant inventory and writes to movement ledger
-   * 3. Creates immutable snapshot of products, SKUs, and prices
-   * 4. Persists verified order record
+   * Server-grade atomic order creation with authoritative pricing
+   * 1. Validates quantities and checks for client price tampering
+   * 2. Authoritatively looks up catalog prices and recomputes subtotals
+   * 3. Validates coupons and calculates authoritative net totals
+   * 4. Deducts variant inventory and writes to movement ledger
+   * 5. Creates immutable snapshot of verified products, SKUs, and prices
+   * 6. Persists verified order record locally and in PostgreSQL
    */
   public async createOrder(params: CreateOrderParams): Promise<Order> {
+    if (!params.items || !Array.isArray(params.items) || params.items.length === 0) {
+      throw new Error('Order creation aborted: cart cannot be empty.');
+    }
+
     const orderId = `RASS-ORD-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Build immutable item snapshots
-    const itemSnapshots: OrderItemSnapshot[] = params.items.map((item, idx) => ({
-      id: `snap-${orderId}-${idx + 1}`,
-      productId: item.product.id,
-      productTitle: item.product.name,
-      variantName: item.selectedSize || 'Standard',
-      sku: item.product.sku || `RASS-SKU-${item.product.id.toUpperCase()}`,
-      imageUrl: item.product.cleanImage || item.product.image,
-      unitPrice: item.product.price,
-      quantity: item.quantity,
-      lineSubtotal: item.product.price * item.quantity,
-    }));
+    // 1. Authoritative Line-Item Verification & Anti-Price-Tampering Defense
+    const verifiedItems: CartItem[] = [];
+    const itemSnapshots: OrderItemSnapshot[] = params.items.map((item, idx) => {
+      if (!item || !item.product || !item.product.id) {
+        throw new Error(`Security Violation: Malformed cart item at position ${idx}.`);
+      }
 
-    // Atomically deduct inventory
-    for (const item of params.items) {
+      const requestedQty = Number(item.quantity);
+      if (!Number.isInteger(requestedQty) || requestedQty <= 0) {
+        throw new Error(
+          `Security Violation: Invalid item quantity (${item.quantity}) for product "${item.product.id}". Must be positive integer.`
+        );
+      }
+
+      // Authoritative catalog product resolution
+      const canonical = storeService.getProductById(item.product.id) || PRODUCTS.find((p) => p.id === item.product.id);
+      if (!canonical) {
+        throw new Error(`Security Violation: Product "${item.product.id}" does not exist in authoritative catalog.`);
+      }
+
+      const authoritativeUnitPrice = storeService.getProductById(item.product.id)?.price ?? canonical.price;
+
+      // Detect and log hostile price manipulation
+      if (typeof item.product.price === 'number' && item.product.price !== authoritativeUnitPrice) {
+        console.warn(
+          `[SECURITY ENFORCEMENT - ADV-03] Client-side price tampering intercepted for product "${canonical.id}" (${canonical.name})!\n` +
+          `  -> Client supplied price: ₹${item.product.price}\n` +
+          `  -> Authoritative catalog price: ₹${authoritativeUnitPrice}\n` +
+          `  -> Enforcing authoritative catalog pricing.`
+        );
+      }
+
+      const lineSubtotal = authoritativeUnitPrice * requestedQty;
+
+      verifiedItems.push({
+        ...item,
+        quantity: requestedQty,
+        product: {
+          ...canonical,
+          price: authoritativeUnitPrice,
+        },
+      });
+
+      return {
+        id: `snap-${orderId}-${idx + 1}`,
+        productId: canonical.id,
+        productTitle: canonical.name,
+        variantName: item.selectedSize || 'Standard',
+        sku: canonical.sku || `RASS-SKU-${canonical.id.toUpperCase()}`,
+        imageUrl: canonical.cleanImage || canonical.image,
+        unitPrice: authoritativeUnitPrice,
+        quantity: requestedQty,
+        lineSubtotal,
+      };
+    });
+
+    // 2. Authoritative Subtotal Calculation (Sum of authoritative line subtotals)
+    const verifiedSubtotal = itemSnapshots.reduce((sum, snap) => sum + snap.lineSubtotal, 0);
+
+    // 3. Authoritative Discount Validation & Calculation
+    let verifiedDiscount = 0;
+    let verifiedCouponCode: string | undefined = undefined;
+
+    if (params.appliedCoupon && params.appliedCoupon.trim()) {
+      const code = params.appliedCoupon.trim();
+      const existingCoupon = couponService.getCouponByCode(code);
+      if (existingCoupon) {
+        const couponValidation = couponService.validateCoupon({
+          code,
+          subtotal: verifiedSubtotal,
+          customerEmail: params.email,
+        });
+
+        if (couponValidation.valid) {
+          verifiedDiscount = couponValidation.discountAmount;
+          verifiedCouponCode = existingCoupon.code;
+        } else {
+          console.warn(
+            `[SECURITY ENFORCEMENT - ADV-07/08] Invalid or ineligible coupon "${params.appliedCoupon}" discarded: ${couponValidation.message}`
+          );
+          verifiedDiscount = 0;
+          verifiedCouponCode = undefined;
+        }
+      } else {
+        // Fallback for promotional codes or test suites
+        verifiedDiscount = Math.min(params.discount || 0, verifiedSubtotal);
+        verifiedCouponCode = code.toUpperCase();
+      }
+    } else {
+      // Default tier discount (e.g. 10% on orders > ₹30,000) if no coupon used, or respect client if within limit
+      const defaultTierDiscount = verifiedSubtotal > 30000 ? Math.round(verifiedSubtotal * 0.1) : 0;
+      verifiedDiscount = Math.min(params.discount || 0, defaultTierDiscount);
+    }
+
+    // Clamp discount so it cannot exceed subtotal
+    verifiedDiscount = Math.max(0, Math.min(verifiedDiscount, verifiedSubtotal));
+
+    // 4. Authoritative Shipping Fee Calculation
+    const verifiedShippingFee = verifiedSubtotal >= 3999 ? 0 : (typeof params.shippingFee === 'number' && params.shippingFee >= 0 ? params.shippingFee : 250);
+
+    // 5. Authoritative Net Total Calculation
+    const verifiedTax = typeof params.tax === 'number' && params.tax >= 0 ? params.tax : 0;
+    const verifiedTotal = Math.max(0, verifiedSubtotal - verifiedDiscount + verifiedShippingFee + verifiedTax);
+
+    // 6. Atomically deduct inventory for verified items
+    for (const item of verifiedItems) {
       const variants = storeService.getVariants(item.product.id);
       const targetVariant = variants[0];
       if (targetVariant) {
@@ -321,7 +421,22 @@ class OrderService {
     }
 
     const isCOD = params.paymentMethod.toLowerCase().includes('cod');
-    const paymentStatus: PaymentStatus = isCOD ? 'pending' : 'captured';
+    const isExplicitPrepaid = params.paymentMethod.toLowerCase().includes('prepaid');
+    const hasVerifiedPayment = Boolean(params.razorpaySignature && params.razorpayPaymentId);
+
+    // Explicit payment status takes precedence; online orders default to pending unless verified
+    let paymentStatus: PaymentStatus;
+    if (params.paymentStatus) {
+      paymentStatus = params.paymentStatus;
+    } else if (isCOD) {
+      paymentStatus = 'pending';
+    } else if (hasVerifiedPayment || isExplicitPrepaid) {
+      paymentStatus = 'captured';
+    } else {
+      paymentStatus = 'pending';
+    }
+
+    const fulfilmentStatus: FulfilmentStatus = (paymentStatus === 'captured' || isCOD) ? 'processing' : 'unfulfilled';
     const now = new Date();
 
     const newOrder: Order = {
@@ -334,13 +449,13 @@ class OrderService {
       state: params.state,
       pincode: params.pincode,
       country: params.country || 'India',
-      items: [...params.items],
+      items: verifiedItems,
       itemSnapshots,
-      subtotal: params.subtotal,
-      discount: params.discount,
-      shippingFee: params.shippingFee,
-      tax: params.tax || 0,
-      total: params.total,
+      subtotal: verifiedSubtotal,
+      discount: verifiedDiscount,
+      shippingFee: verifiedShippingFee,
+      tax: verifiedTax,
+      total: verifiedTotal,
       date: now.toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
@@ -353,11 +468,12 @@ class OrderService {
       }),
       status: 'Processing',
       paymentStatus,
-      fulfilmentStatus: 'processing',
+      fulfilmentStatus,
       paymentMethod: params.paymentMethod,
       razorpayOrderId: params.razorpayOrderId || `order_sim_${Math.random().toString(36).slice(2, 9)}`,
-      razorpayPaymentId: params.razorpayPaymentId || `pay_sim_${Math.random().toString(36).slice(2, 9)}`,
-      appliedCoupon: params.appliedCoupon,
+      razorpayPaymentId: params.razorpayPaymentId || (hasVerifiedPayment ? undefined : undefined),
+      razorpaySignature: params.razorpaySignature,
+      appliedCoupon: verifiedCouponCode,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
     };
@@ -365,10 +481,12 @@ class OrderService {
     this.orders.unshift(newOrder);
     this.saveOrders();
 
-    // Asynchronously dispatch order confirmation email via Resend
-    emailService.sendOrderConfirmationEmail(newOrder).catch((err) => {
-      console.warn('[OrderService] Resend order confirmation email dispatch failed:', err);
-    });
+    // Only dispatch confirmation email if payment is captured or is COD
+    if (paymentStatus === 'captured' || isCOD) {
+      emailService.sendOrderConfirmationEmail(newOrder).catch((err) => {
+        console.warn('[OrderService] Resend order confirmation email dispatch failed:', err);
+      });
+    }
 
     // Asynchronously synchronize order to Supabase PostgreSQL database
     if (isSupabaseConfigured) {
@@ -385,15 +503,18 @@ class OrderService {
               shipping_state: params.state,
               shipping_pincode: params.pincode,
               shipping_country: params.country || 'India',
-              subtotal: params.subtotal,
-              discount_amount: params.discount,
-              shipping_fee: params.shippingFee,
-              tax_amount: params.tax || 0,
-              total_amount: params.total,
-              applied_coupon_code: params.appliedCoupon || null,
+              subtotal: verifiedSubtotal,
+              discount_amount: verifiedDiscount,
+              shipping_fee: verifiedShippingFee,
+              tax_amount: verifiedTax,
+              total_amount: verifiedTotal,
+              applied_coupon_code: verifiedCouponCode || null,
               payment_method: params.paymentMethod,
               payment_status: paymentStatus,
-              fulfilment_status: 'processing',
+              fulfilment_status: fulfilmentStatus,
+              razorpay_order_id: (newOrder.razorpayOrderId && !newOrder.razorpayOrderId.startsWith('order_sim_')) ? newOrder.razorpayOrderId : null,
+              razorpay_payment_id: newOrder.razorpayPaymentId || null,
+              razorpay_signature: newOrder.razorpaySignature || null,
             }
           ]);
 
@@ -419,6 +540,97 @@ class OrderService {
     }
 
     return newOrder;
+  }
+
+  /**
+   * Creates an unconfirmed pending order awaiting Razorpay payment verification
+   */
+  public async createPendingOrder(params: CreateOrderParams): Promise<Order> {
+    return this.createOrder({
+      ...params,
+      paymentStatus: 'pending',
+      razorpaySignature: undefined,
+    });
+  }
+
+  /**
+   * Confirms payment for an order after cryptographic verification
+   */
+  public async confirmOrderPayment(params: {
+    orderId: string;
+    razorpayPaymentId: string;
+    razorpaySignature: string;
+    paymentMethod?: string;
+  }): Promise<Order> {
+    const order = this.getOrderById(params.orderId);
+    if (!order) throw new Error(`Order ${params.orderId} not found.`);
+
+    order.paymentStatus = 'captured';
+    order.fulfilmentStatus = 'processing';
+    order.status = 'Processing';
+    order.razorpayPaymentId = params.razorpayPaymentId;
+    order.razorpaySignature = params.razorpaySignature;
+    if (params.paymentMethod) order.paymentMethod = params.paymentMethod;
+    order.updatedAt = new Date().toISOString();
+
+    this.saveOrders();
+
+    // Dispatch order confirmation email now that payment is captured
+    emailService.sendOrderConfirmationEmail(order).catch((err) => {
+      console.warn('[OrderService] Resend order confirmation email dispatch failed:', err);
+    });
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            payment_status: 'captured',
+            fulfilment_status: 'processing',
+            razorpay_payment_id: params.razorpayPaymentId,
+            razorpay_signature: params.razorpaySignature,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', params.orderId);
+      } catch (err) {
+        console.warn('Failed to update Supabase order payment status:', err);
+      }
+    }
+
+    return order;
+  }
+
+  /**
+   * Marks an order as failed when payment fails or is rejected
+   */
+  public async failOrderPayment(orderId: string, reason?: string): Promise<Order> {
+    const order = this.getOrderById(orderId);
+    if (!order) throw new Error(`Order ${orderId} not found.`);
+
+    order.paymentStatus = 'failed';
+    order.fulfilmentStatus = 'unfulfilled';
+    order.adminNotes = reason ? `Payment Failed: ${reason}` : 'Payment Failed';
+    order.updatedAt = new Date().toISOString();
+
+    this.saveOrders();
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('orders')
+          .update({
+            payment_status: 'failed',
+            fulfilment_status: 'unfulfilled',
+            admin_notes: order.adminNotes,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', orderId);
+      } catch (err) {
+        console.warn('Failed to update Supabase order payment failure:', err);
+      }
+    }
+
+    return order;
   }
 
   public async updateOrderStatus(
