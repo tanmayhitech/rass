@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "predev": "git pull origin main || echo Running offline",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",

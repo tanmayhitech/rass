@@ -1,0 +1,53 @@
+name: Keep Supabase Project Active
+
+# This workflow prevents the Supabase free-tier project from pausing after 7 days of inactivity.
+# It runs automatically every 3 days and executes a lightweight query against the database.
+
+on:
+  schedule:
+    # Runs at 06:00 UTC every 3 days (well within the 7-day inactivity pause window)
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions dashboard
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase Database
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ukgjkmjhhxtaedxyhaeu.supabase.co' }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'sb_publishable_aQvzTF6diderDC1UqoMROQ_DXBGZaNg' }}
+
+    steps:
+      - name: Send Activity Ping to Supabase REST API
+        run: |
+          echo "=========================================================="
+          echo "Sending keep-alive ping to Supabase: $SUPABASE_URL"
+          echo "Timestamp: $(date -u)"
+          echo "=========================================================="
+
+          # Ping 1: Check Database REST endpoint
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/categories?select=id&limit=1" || echo "000")
+
+          echo "REST API Categories endpoint response code: $HTTP_STATUS"
+
+          # Ping 2: Check Auth service health endpoint
+          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            "$SUPABASE_URL/auth/v1/health" || echo "000")
+
+          echo "Auth Service health check response code: $AUTH_STATUS"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ SUCCESS: Supabase project is ACTIVE and responsive."
+            echo "Inactivity timer reset successfully."
+          elif [ "$AUTH_STATUS" -ge 200 ] && [ "$AUTH_STATUS" -lt 400 ]; then
+            echo "✅ SUCCESS: Supabase Auth service is ACTIVE and responsive."
+            echo "Inactivity timer reset successfully."
+          else
+            echo "⚠️ WARNING: Supabase returned status $HTTP_STATUS (Auth: $AUTH_STATUS)."
+            echo "If the project is currently paused, please unpause it from https://supabase.com/dashboard/project/ukgjkmjhhxtaedxyhaeu"
+            exit 1
+          fi
