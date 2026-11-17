@@ -3,6 +3,7 @@ import { AnnouncementBar } from './components/AnnouncementBar';
 import { SiteHeader } from './components/SiteHeader';
 import { ToranDecoration } from './components/ToranDecoration';
 import { CategoryGallery } from './components/CategoryGallery';
+import { FeaturedCreationsCarousel } from './components/FeaturedCreationsCarousel';
 import { EditorialCraftsmanship } from './components/EditorialCraftsmanship';
 import { EditorialEveryday } from './components/EditorialEveryday';
 import { NewsletterSection } from './components/NewsletterSection';
@@ -369,6 +370,20 @@ export const App: React.FC = () => {
           <>
             {/* 4. Asymmetric Jewellery Category Gallery */}
             <CategoryGallery onSelectCategory={handleSelectCategory} />
+
+            {/* 4B. Featured Tribal Creations Carousel */}
+            <FeaturedCreationsCarousel
+              products={products}
+              wishlistIds={wishlistIds}
+              onToggleWishlist={handleToggleWishlist}
+              onSelectProduct={setSelectedProduct}
+              onAddToCart={handleAddToCart}
+              onExploreAll={() => {
+                setSelectedCategory('tribal');
+                setActivePage('shop');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
 
             {/* 5. Editorial Section A: Craftsmanship */}
             <EditorialCraftsmanship
