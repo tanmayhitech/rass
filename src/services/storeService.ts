@@ -1080,58 +1080,78 @@ class StoreService {
 
     this.saveState();
 
-    // Asynchronously synchronize new product to Supabase PostgreSQL
-    if (isSupabaseConfigured) {
+    // Asynchronously synchronize new product to Supabase Cloud Database
+    if (typeof window !== 'undefined') {
       (async () => {
         try {
-          await supabase.from('products').upsert([{
-            id: newId,
-            category_id: data.category,
-            title: data.name.trim(),
-            slug,
-            short_description: data.description,
-            long_description: data.description,
-            base_price: data.price,
-            compare_at_price: data.originalPrice || null,
-            cost_price: data.costPrice || Math.round(data.price * 0.45),
-            metal_type: data.metal,
-            gemstones: data.gemstones,
-            dimensions: data.dimensions || '',
-            weight_grams: parseFloat(data.weight || '10') || 10,
-            details: data.details || [],
-            status: data.status || 'published',
-            updated_at: new Date().toISOString(),
-          }]);
-
-          await supabase.from('product_variants').upsert([{
-            id: variantId,
-            product_id: newId,
-            sku: data.sku.trim().toUpperCase(),
-            variant_name: 'Standard',
-            option_type: 'Standard',
-            option_value: 'Standard',
-            is_active: true,
-          }]);
-
-          await supabase.from('inventory_items').upsert([{
-            variant_id: variantId,
-            quantity_on_hand: stockQty,
-            quantity_reserved: 0,
-            low_stock_threshold: threshold,
-          }], { onConflict: 'variant_id' });
-
-          if (data.image) {
-            await supabase.from('product_images').insert([{
-              product_id: newId,
-              image_url: data.image,
-              clean_image_url: data.cleanImage || data.image,
-              alt_text: data.name.trim(),
-              display_order: 0,
-              is_primary: true,
-            }]);
+          const apiResp = await fetch('/api/catalog', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'create_product',
+              product: newProduct,
+            }),
+          });
+          if (apiResp.ok) {
+            console.log('[StoreService] Product successfully synced to Supabase via serverless API');
+            return;
           }
-        } catch (err) {
-          console.warn('[StoreService] Supabase product sync deferred:', err);
+        } catch (apiErr) {
+          console.warn('[StoreService] Serverless catalog sync error, attempting direct client fallback:', apiErr);
+        }
+
+        // Client-side fallback if API route unavailable
+        if (isSupabaseConfigured) {
+          try {
+            await supabase.from('products').upsert([{
+              id: newId,
+              category_id: data.category,
+              title: data.name.trim(),
+              slug,
+              short_description: data.description,
+              long_description: data.description,
+              base_price: data.price,
+              compare_at_price: data.originalPrice || null,
+              cost_price: data.costPrice || Math.round(data.price * 0.45),
+              metal_type: data.metal,
+              gemstones: data.gemstones,
+              dimensions: data.dimensions || '',
+              weight_grams: parseFloat(data.weight || '10') || 10,
+              details: data.details || [],
+              status: data.status || 'published',
+              updated_at: new Date().toISOString(),
+            }]);
+
+            await supabase.from('product_variants').upsert([{
+              id: variantId,
+              product_id: newId,
+              sku: data.sku.trim().toUpperCase(),
+              variant_name: 'Standard',
+              option_type: 'Standard',
+              option_value: 'Standard',
+              is_active: true,
+            }]);
+
+            await supabase.from('inventory_items').upsert([{
+              variant_id: variantId,
+              quantity_on_hand: stockQty,
+              quantity_reserved: 0,
+              low_stock_threshold: threshold,
+            }], { onConflict: 'variant_id' });
+
+            if (data.image) {
+              await supabase.from('product_images').insert([{
+                product_id: newId,
+                image_url: data.image,
+                clean_image_url: data.cleanImage || data.image,
+                alt_text: data.name.trim(),
+                display_order: 0,
+                is_primary: true,
+              }]);
+            }
+          } catch (err) {
+            console.warn('[StoreService] Direct Supabase product sync deferred:', err);
+          }
         }
       })();
     }
@@ -1164,6 +1184,16 @@ class StoreService {
   }
 
   public setProductStatus(id: string, status: ProductStatus): Product {
+    if (typeof window !== 'undefined') {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_status', productId: id, status }),
+      }).catch((err) => {
+        console.warn('[StoreService] Cloud status sync deferred:', err);
+      });
+    }
+
     return this.updateProduct(id, {
       status,
       inStock: status === 'published' ? (this.getProductById(id)?.stockCount ?? 0) > 0 : false,
@@ -1203,6 +1233,17 @@ class StoreService {
     this.products = this.products.filter((p) => p.id !== id);
     this.variants = this.variants.filter((v) => v.productId !== id);
     this.saveState();
+
+    // Asynchronously delete from Supabase via serverless API
+    if (typeof window !== 'undefined') {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_product', productId: id }),
+      }).catch((err) => {
+        console.warn('[StoreService] Cloud delete sync deferred:', err);
+      });
+    }
 
     return {
       success: true,
@@ -1281,6 +1322,22 @@ class StoreService {
 
     this.movements.unshift(movement);
     this.saveState();
+
+    // Asynchronously push stock adjustment to Supabase via serverless API
+    if (typeof window !== 'undefined') {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'adjust_stock',
+          variantId: params.variantId,
+          quantityChange: params.quantityChange,
+          notes: params.notes,
+        }),
+      }).catch((err) => {
+        console.warn('[StoreService] Cloud stock sync deferred:', err);
+      });
+    }
 
     return { variant, movement };
   }

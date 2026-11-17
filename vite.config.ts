@@ -70,6 +70,125 @@ export default defineConfig(({ mode }) => {
           return;
         }
 
+        if (req.url === '/api/catalog' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk: any) => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const { createClient } = await import('@supabase/supabase-js');
+              const supabase = createClient(supabaseUrl, serviceKey);
+              const data = JSON.parse(body);
+              const { action, product, productId, variantId, quantityChange, notes, status } = data;
+
+              if (action === 'create_product') {
+                const pId = product.id;
+                const vId = product.variants?.[0]?.id || `var-${pId}-std`;
+                const stock = product.stockCount ?? 10;
+                const threshold = product.lowStockThreshold ?? 3;
+                const sku = (product.sku || `RASS-SKU-${pId}`).trim().toUpperCase();
+
+                await supabase.from('products').upsert([{
+                  id: pId,
+                  category_id: product.category || 'western',
+                  title: (product.name || product.title).trim(),
+                  slug: product.slug || pId,
+                  short_description: product.description || '',
+                  long_description: product.description || '',
+                  base_price: product.price || 0,
+                  compare_at_price: product.originalPrice || null,
+                  cost_price: product.costPrice || Math.round((product.price || 0) * 0.45),
+                  metal_type: product.metal || '18k Gold Vermeil',
+                  gemstones: product.gemstones || '',
+                  dimensions: product.dimensions || '',
+                  weight_grams: parseFloat(product.weight || '10') || 10,
+                  details: Array.isArray(product.details) ? product.details : [],
+                  status: product.status || 'published',
+                  updated_at: new Date().toISOString(),
+                }]);
+
+                await supabase.from('product_variants').upsert([{
+                  id: vId,
+                  product_id: pId,
+                  sku,
+                  variant_name: 'Standard',
+                  option_type: 'Standard',
+                  option_value: 'Standard',
+                  is_active: true,
+                }]);
+
+                await supabase.from('inventory_items').upsert([{
+                  variant_id: vId,
+                  quantity_on_hand: stock,
+                  quantity_reserved: 0,
+                  low_stock_threshold: threshold,
+                }], { onConflict: 'variant_id' });
+
+                if (product.image) {
+                  await supabase.from('product_images').insert([{
+                    product_id: pId,
+                    image_url: product.image,
+                    clean_image_url: product.cleanImage || product.image,
+                    alt_text: product.name || product.title,
+                    display_order: 0,
+                    is_primary: true,
+                  }]);
+                }
+
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, message: 'Product saved to Supabase.' }));
+                return;
+              }
+
+              if (action === 'delete_product') {
+                const { data: variants } = await supabase.from('product_variants').select('id').eq('product_id', productId);
+                if (variants && variants.length > 0) {
+                  const vIds = variants.map((v: any) => v.id);
+                  await supabase.from('inventory_movements').delete().in('variant_id', vIds);
+                  await supabase.from('inventory_items').delete().in('variant_id', vIds);
+                  await supabase.from('product_variants').delete().eq('product_id', productId);
+                }
+                await supabase.from('product_images').delete().eq('product_id', productId);
+                await supabase.from('products').delete().eq('id', productId);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, message: 'Product deleted.' }));
+                return;
+              }
+
+              if (action === 'update_status') {
+                await supabase.from('products').update({ status, updated_at: new Date().toISOString() }).eq('id', productId);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, message: 'Status updated.' }));
+                return;
+              }
+
+              if (action === 'adjust_stock') {
+                const { data: inv } = await supabase.from('inventory_items').select('quantity_on_hand').eq('variant_id', variantId).single();
+                const currentQty = inv?.quantity_on_hand || 0;
+                const newQty = Math.max(0, currentQty + Number(quantityChange));
+                await supabase.from('inventory_items').update({ quantity_on_hand: newQty }).eq('variant_id', variantId);
+                await supabase.from('inventory_movements').insert([{
+                  variant_id: variantId,
+                  movement_type: quantityChange >= 0 ? 'purchase_receipt' : 'inventory_adjustment',
+                  quantity_change: Number(quantityChange),
+                  quantity_after: newQty,
+                  notes: notes || 'Admin inventory adjustment',
+                  created_at: new Date().toISOString(),
+                }]);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, newQuantity: newQty }));
+                return;
+              }
+
+              res.statusCode = 400;
+              res.end(JSON.stringify({ success: false, message: 'Invalid action' }));
+            } catch (e: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ success: false, message: e.message }));
+            }
+          });
+          return;
+        }
+
         if (req.url === '/api/sync-home-media') {
           if (req.method === 'POST') {
             let body = '';
