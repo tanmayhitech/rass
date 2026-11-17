@@ -1564,26 +1564,9 @@ export const PRODUCTS: Product[] = [
     weight: '4.6g (pair)',
     sku: 'RASS-PIN-024',
     stockCount: 4
-  }
-];
+  },
 
-export const CATEGORIES_CONFIG = [
-  { id: 'western', name: 'WESTERN', count: 31, path: '/shop/western' },
-  { id: 'earrings', name: 'EARRINGS', count: 0, path: '/shop/earrings' },
-  { id: 'jhumka', name: 'JHUMKA', count: 1, path: '/shop/jhumka' },
-  { id: 'tribal', name: 'TRIBAL', count: 1, path: '/shop/tribal' },
-  { id: 'rings', name: 'RINGS', count: 0, path: '/shop/rings' },
-  { id: 'kadas', name: 'KADAS', count: 0, path: '/shop/kadas' },
-  { id: 'accessories', name: 'EARPINS & BUGADI', count: 24, path: '/shop/accessories' },
-  { id: 'toran', name: 'TORAN', count: 0, path: '/shop/toran' },
-  { id: 'kangan-sets', name: 'KANGAN SETS', count: 0, path: '/shop/kangan-sets' },
-  { id: 'kangna', name: 'KANGNA', count: 0, path: '/shop/kangna' },
-  { id: 'necklaces', name: 'NECKLACES', count: 0, path: '/shop/necklaces' },
-  { id: 'bracelets', name: 'BRACELETS', count: 0, path: '/shop/bracelets' },
-,
-
-  // Tribal 1. Durga Hasali Collar Necklace
-  {
+{
     id: 'rass-trb-01',
     name: 'Durga Hasali Collar Necklace',
     category: 'tribal',
@@ -2271,4 +2254,19 @@ export const CATEGORIES_CONFIG = [
     sku: 'RASS-TRB-023',
     stockCount: 1
   }
+];
+
+export const CATEGORIES_CONFIG = [
+  { id: 'western', name: 'WESTERN', count: 32, path: '/shop/western' },
+  { id: 'earrings', name: 'EARRINGS', count: 0, path: '/shop/earrings' },
+  { id: 'jhumka', name: 'JHUMKA', count: 1, path: '/shop/jhumka' },
+  { id: 'tribal', name: 'TRIBAL', count: 23, path: '/shop/tribal' },
+  { id: 'rings', name: 'RINGS', count: 0, path: '/shop/rings' },
+  { id: 'kadas', name: 'KADAS', count: 0, path: '/shop/kadas' },
+  { id: 'accessories', name: 'EARPINS & BUGADI', count: 24, path: '/shop/accessories' },
+  { id: 'toran', name: 'TORAN', count: 0, path: '/shop/toran' },
+  { id: 'kangan-sets', name: 'KANGAN SETS', count: 0, path: '/shop/kangan-sets' },
+  { id: 'kangna', name: 'KANGNA', count: 0, path: '/shop/kangna' },
+  { id: 'necklaces', name: 'NECKLACES', count: 0, path: '/shop/necklaces' },
+  { id: 'bracelets', name: 'BRACELETS', count: 0, path: '/shop/bracelets' },
 ];

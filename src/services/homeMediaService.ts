@@ -19,7 +19,7 @@ export interface HomeMediaItem {
   lastUpdated?: string;
 }
 
-const STORAGE_KEY = 'rass_home_media_v27';
+const STORAGE_KEY = 'rass_home_media_v28';
 const CLOUD_CONFIG_URL = 'https://ukgjkmjhhxtaedxyhaeu.supabase.co/storage/v1/object/public/product-images/home-media-config.json';
 
 export const INITIAL_HOME_MEDIA: HomeMediaItem[] = [
@@ -77,13 +77,13 @@ export const INITIAL_HOME_MEDIA: HomeMediaItem[] = [
   },
 
   // --- COLUMN 2 (Center Column) ---
-  // Slot 2 (Top) → 2. Necklaces
+  // Slot 2 (Top) → 2. Tribal Jewellery (Hasalis & Chokers)
   {
     id: 'cat-necklaces',
-    title: 'NECKLACES',
-    subtitle: 'Royal Chokers & Layered Rani Haars',
+    title: 'TRIBAL JEWELLERY',
+    subtitle: 'Hasalis, Chokers & Silver Malas',
     section: 'category',
-    categoryKey: 'necklaces',
+    categoryKey: 'tribal',
     column: 2,
     order: 1,
     heightClass: 'aspect-[1/1.30]',
@@ -255,8 +255,9 @@ class HomeMediaService {
                 currentImage: found.currentImage || def.currentImage,
                 cleanImage: isCustom ? undefined : (found.cleanImage ?? def.cleanImage),
                 isVisible: found.isVisible !== undefined ? found.isVisible : def.isVisible,
-                title: found.title || def.title,
-                subtitle: found.subtitle !== undefined ? found.subtitle : def.subtitle,
+                categoryKey: def.categoryKey,
+                title: isCustom && found.title ? found.title : def.title,
+                subtitle: isCustom && found.subtitle ? found.subtitle : def.subtitle,
                 altText: found.altText || def.altText,
               };
             }
