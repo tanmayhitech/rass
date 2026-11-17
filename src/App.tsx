@@ -84,6 +84,9 @@ export const App: React.FC = () => {
     }).catch((err) => {
       console.warn('[App] Supabase catalog sync deferred:', err);
     });
+    couponService.syncWithSupabase().catch((err) => {
+      console.warn('[App] Supabase coupon sync deferred:', err);
+    });
   }, []);
 
   // Cart State (Initialized with 1 item for immediate delight)

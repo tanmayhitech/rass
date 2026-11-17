@@ -121,13 +121,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
   }, [initialCoupon, subtotal]);
 
-  const handleApplyCoupon = (codeToApply: string) => {
+  const handleApplyCoupon = async (codeToApply: string) => {
     if (!codeToApply.trim()) return;
-    const res = couponService.validateCoupon({
+    let res = couponService.validateCoupon({
       code: codeToApply,
       subtotal,
       customerEmail: formData.email,
     });
+
+    // If not found in cache, attempt immediate cloud sync to fetch latest coupons
+    if (!res.valid) {
+      try {
+        await couponService.syncWithSupabase();
+        res = couponService.validateCoupon({
+          code: codeToApply,
+          subtotal,
+          customerEmail: formData.email,
+        });
+      } catch {
+        // ignore sync error
+      }
+    }
 
     if (res.valid) {
       setAppliedCouponCode(res.coupon?.code || codeToApply.toUpperCase());
