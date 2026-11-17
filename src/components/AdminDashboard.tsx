@@ -43,6 +43,7 @@ import {
   Sparkles,
   Activity,
   BarChart3,
+  PieChart,
   ArrowUpRight,
   ArrowRight,
   CheckCircle2,
@@ -180,6 +181,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [festiveCampaign, setFestiveCampaign] = useState<FestiveCampaignConfig>(() => couponService.getFestiveCampaign());
   const [isPreviewFestiveOpen, setIsPreviewFestiveOpen] = useState(false);
   const [festivePreviewDevice, setFestivePreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [bestsellerChartMode, setBestsellerChartMode] = useState<'revenue' | 'units'>('revenue');
 
   // Direct Inventory Editing State
   const [quickAdjustVariant, setQuickAdjustVariant] = useState<ProductVariant | null>(null);
@@ -282,10 +284,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     costPrice: 650,
     sku: generateCategorySku('western'),
     description: 'Handcrafted contemporary jewellery sculpted with artisan precision, anti-tarnish protective coating and skin-safe finish.',
-    metal: 'Solid Brass with 18k Gold Plating',
+    metal: 'Solid Brass with 18k Micro Gold Polish',
     gemstones: 'Cubic Zirconia & Crystal',
     dimensions: '42cm length + 5cm extender',
     weight: '7.5g',
+    details: [
+      '100% Hypoallergenic & Skin-safe (Lead & Nickel Free)',
+      'Triple micro-plated for enduring high-luster shine',
+      'Artisan crafted with protective anti-tarnish seal'
+    ],
     initialStock: 5,
     lowStockThreshold: 1,
     image: '/images/cat_western.png',
@@ -363,12 +370,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         image: finalImg,
         cleanImage: finalClean,
         description: newProductForm.description,
-        details: [
-          `Handcrafted in ${newProductForm.metal}`,
-          `Adorned with genuine ${newProductForm.gemstones}`,
-          'Hallmarked 925 authenticity stamp',
-          'Accompanied by suede presentation box & certificate of authenticity',
-        ],
+        details: Array.isArray(newProductForm.details) && newProductForm.details.length > 0
+          ? newProductForm.details
+          : [
+              `Handcrafted in ${newProductForm.metal}`,
+              `Adorned with genuine ${newProductForm.gemstones}`,
+              '100% Hypoallergenic & Skin-safe (Lead & Nickel Free)',
+              'Accompanied by suede presentation box & certificate of authenticity',
+            ],
         metal: newProductForm.metal,
         gemstones: newProductForm.gemstones,
         dimensions: newProductForm.dimensions,
@@ -1492,20 +1501,165 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN (1 Col): Top Creation & Quick Shortcuts */}
-                <div className="space-y-5">
+                {/* RIGHT COLUMN (1 Col): Dynamic Operations Pulse & Atelier Command */}
+                <div className="space-y-4">
                   
-                  {/* Top Selling Design Card */}
+                  {/* 1. ACTION REQUIRED: Real-Time Order Operations */}
+                  {(() => {
+                    const pendingDispatch = orders.filter(
+                      o => o.status === 'Processing' || (o.paymentStatus === 'captured' && o.fulfilmentStatus !== 'delivered' && o.fulfilmentStatus !== 'cancelled')
+                    );
+                    const pendingPayment = orders.filter(o => o.paymentStatus === 'pending');
+                    const hasAction = pendingDispatch.length > 0 || pendingPayment.length > 0;
+
+                    return (
+                      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-4.5 space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
+                          <div className="flex items-center space-x-1.5">
+                            <span className={`w-2 h-2 rounded-full ${hasAction ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
+                            <span className="text-[10.5px] uppercase font-bold tracking-wider text-[#18181B]">
+                              Action Required
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab('orders');
+                              setOrderStatusFilter('Processing');
+                            }}
+                            className="text-[11px] font-semibold text-[#64748B] hover:text-[#18181B] cursor-pointer"
+                          >
+                            Orders Console →
+                          </button>
+                        </div>
+
+                        {hasAction ? (
+                          <div className="space-y-2">
+                            {pendingDispatch.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveTab('orders');
+                                  setOrderStatusFilter('Processing');
+                                }}
+                                className="w-full p-2.5 rounded-xl border border-amber-200/80 bg-amber-50/60 hover:bg-amber-50 text-left transition-all cursor-pointer flex items-center justify-between group"
+                              >
+                                <div className="flex items-center space-x-2.5 min-w-0">
+                                  <Truck className="w-4 h-4 text-amber-600 shrink-0" />
+                                  <div className="truncate">
+                                    <span className="font-semibold text-xs text-[#18181B] block">
+                                      {pendingDispatch.length} Orders Need Dispatch
+                                    </span>
+                                    <span className="text-[10.5px] text-[#64748B] block truncate">
+                                      Payment confirmed • Package & ship
+                                    </span>
+                                  </div>
+                                </div>
+                                <span className="text-[10.5px] font-bold text-amber-700 bg-white px-2 py-0.5 rounded-md border border-amber-200 shrink-0">
+                                  Ship Now
+                                </span>
+                              </button>
+                            )}
+                            {pendingPayment.length > 0 && (
+                              <div className="p-2 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between text-[11px] text-[#64748B]">
+                                <span>{pendingPayment.length} Orders pending payment</span>
+                                <span className="font-mono font-medium text-[#18181B]">Awaiting patron</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100 flex items-center space-x-2.5 text-xs text-emerald-800">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <div>
+                              <span className="font-semibold block text-[11.5px]">All Dispatches Clear</span>
+                              <span className="text-[10.5px] text-emerald-700">All customer orders have been fulfilled.</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* 2. LOWEST STOCK: Restock Radar */}
+                  {(() => {
+                    const sortedByStock = [...products].sort((a, b) => (a.stockCount ?? 0) - (b.stockCount ?? 0));
+                    const lowestPiece = sortedByStock[0];
+                    const criticalCount = products.filter(p => (p.stockCount ?? 0) <= (p.lowStockThreshold ?? 1)).length;
+                    const stockRemaining = lowestPiece ? (lowestPiece.stockCount ?? 0) : 0;
+
+                    return (
+                      <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-4.5 space-y-3">
+                        <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
+                          <div className="flex items-center space-x-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                            <span className="text-[10.5px] uppercase font-bold tracking-wider text-[#18181B]">
+                              Lowest Stock Radar
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab('products');
+                              setProductSortBy('stock_asc');
+                            }}
+                            className="text-[11px] font-semibold text-[#64748B] hover:text-[#18181B] cursor-pointer"
+                          >
+                            Manage Stock →
+                          </button>
+                        </div>
+
+                        {lowestPiece ? (
+                          <div className="space-y-2.5">
+                            <div className="flex items-center space-x-3 p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                              <img
+                                src={getOptimizedImageUrl(lowestPiece.image)}
+                                alt={lowestPiece.name}
+                                className="w-11 h-11 rounded-lg object-cover bg-white border border-[#E2E8F0] shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <span className="font-semibold text-xs text-[#18181B] block truncate">
+                                  {lowestPiece.name}
+                                </span>
+                                <span className="text-[10.5px] text-[#64748B] block truncate">
+                                  {lowestPiece.categoryDisplay} • ₹{lowestPiece.price.toLocaleString('en-IN')}
+                                </span>
+                                <div className="flex items-center space-x-2 pt-0.5">
+                                  <span className={`text-[10.5px] font-bold font-mono px-1.5 py-0.5 rounded ${stockRemaining <= 1 ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-800'}`}>
+                                    {stockRemaining === 0 ? 'Out of Stock' : `Only ${stockRemaining} left`}
+                                  </span>
+                                  <span className="text-[10px] text-[#64748B]">
+                                    (Threshold: {lowestPiece.lowStockThreshold ?? 1})
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            {criticalCount > 1 && (
+                              <p className="text-[10.5px] text-[#64748B] text-center">
+                                <span className="font-semibold text-[#18181B]">{criticalCount - 1} other pieces</span> nearing depletion threshold.
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-[#64748B]">Inventory balances healthy across catalog.</p>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* 3. MOST SOLD: Velocity Leader */}
                   {performance && performance[0] && (
-                    <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 space-y-3.5">
-                      <div className="flex items-center justify-between pb-2.5 border-b border-[#F2ECE5]">
-                        <span className="text-[10px] uppercase font-bold tracking-wider text-[#B49A6C]">
-                          #1 Customer Favorite
-                        </span>
+                    <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-4.5 space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
+                        <div className="flex items-center space-x-1.5">
+                          <TrendingUp className="w-3.5 h-3.5 text-[#B49A6C]" />
+                          <span className="text-[10.5px] uppercase font-bold tracking-wider text-[#18181B]">
+                            #1 Most Sold Creation
+                          </span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => setActiveTab('performance')}
-                          className="text-[11px] font-semibold text-[#77716F] hover:text-[#292624] cursor-pointer"
+                          className="text-[11px] font-semibold text-[#64748B] hover:text-[#18181B] cursor-pointer"
                         >
                           Rankings →
                         </button>
@@ -1515,117 +1669,118 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <img
                           src={getOptimizedImageUrl(performance[0].imageUrl)}
                           alt={performance[0].productTitle}
-                          className="w-14 h-14 rounded-xl object-cover bg-stone-100 border border-[#E7E0DA] shrink-0"
+                          className="w-13 h-13 rounded-xl object-cover bg-stone-100 border border-[#E2E8F0] shrink-0"
                         />
-                        <div className="space-y-0.5 truncate">
-                          <span className="font-semibold text-xs text-[#292624] block truncate">
+                        <div className="space-y-0.5 truncate flex-1 min-w-0">
+                          <span className="font-semibold text-xs text-[#18181B] block truncate">
                             {performance[0].productTitle}
                           </span>
-                          <span className="text-[11px] text-[#77716F] capitalize block">
+                          <span className="text-[11px] text-[#64748B] capitalize block truncate">
                             {performance[0].category.replace('-', ' ')}
                           </span>
-                          <span className="font-mono font-bold text-xs text-[#292624] block">
-                            ₹{performance[0].netRevenue.toLocaleString('en-IN')}
-                            <span className="text-[10px] font-normal text-[#77716F] ml-1">
-                              ({performance[0].unitsSold} sold)
+                          <div className="flex items-center justify-between pt-0.5">
+                            <span className="font-mono font-bold text-xs text-[#18181B]">
+                              ₹{performance[0].netRevenue.toLocaleString('en-IN')}
                             </span>
-                          </span>
+                            <span className="text-[10.5px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 font-mono">
+                              {performance[0].unitsSold} sold
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Atelier Quick Actions Panel */}
-                  <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 space-y-3">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#77716F] block pb-2 border-b border-[#F2ECE5]">
-                      Atelier Quick Actions
+                  {/* 4. ATELIER QUICK ACTIONS: Charcoal & White Clean Shortcuts */}
+                  <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-4.5 space-y-3">
+                    <span className="text-[10.5px] uppercase font-bold tracking-wider text-[#18181B] block pb-2 border-b border-[#F1F5F9]">
+                      Atelier Quick Shortcuts
                     </span>
-                    <div className="space-y-2 text-xs">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
                       
-                      {/* Action 1: Products & Stock */}
+                      {/* Shortcut 1: + Add New Creation */}
                       <button
                         type="button"
                         onClick={() => {
-                          setActiveTab('products');
-                          setProductSortBy('stock_asc');
+                          setNewProductForm(getInitialProductForm());
+                          setIsNewProductModalOpen(true);
                         }}
-                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
+                        className="p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-left transition-all cursor-pointer flex flex-col justify-between space-y-1.5 group hover:border-[#18181B] hover:shadow-2xs"
                       >
-                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
-                          <Package className="w-4 h-4" />
+                        <div className="w-7 h-7 rounded-lg bg-neutral-900 text-white flex items-center justify-center shrink-0">
+                          <Plus className="w-3.5 h-3.5" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
-                            Products &amp; Stock
+                        <div>
+                          <span className="font-semibold text-[#18181B] block text-[11.5px] group-hover:text-black">
+                            + Add Creation
                           </span>
-                          <span className="text-[11px] text-[#77716F] block truncate">
-                            Manage prices, photos &amp; {stockValuation.totalUnits} pieces
+                          <span className="text-[10px] text-[#64748B] block truncate">
+                            Publish new piece
                           </span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
                       </button>
 
-                      {/* Action 2: Welcome Offer & Popup */}
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('coupons')}
-                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
-                          <Tag className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
-                            Welcome Offer &amp; Popup
-                          </span>
-                          <span className="text-[11px] text-[#77716F] block truncate">
-                            Edit live popup discount &amp; banner
-                          </span>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
-                      </button>
-
-                      {/* Action 3: Create Manual Order */}
+                      {/* Shortcut 2: + Create Client Order */}
                       <button
                         type="button"
                         onClick={() => {
                           setManualOrderForm(prev => ({ ...prev, productId: products[0]?.id || '' }));
                           setIsManualOrderModalOpen(true);
                         }}
-                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
+                        className="p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-left transition-all cursor-pointer flex flex-col justify-between space-y-1.5 group hover:border-[#18181B] hover:shadow-2xs"
                       >
-                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
-                          <Plus className="w-4 h-4" />
+                        <div className="w-7 h-7 rounded-lg bg-neutral-900 text-white flex items-center justify-center shrink-0">
+                          <ShoppingCart className="w-3.5 h-3.5" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
-                            + Create Manual Order
+                        <div>
+                          <span className="font-semibold text-[#18181B] block text-[11.5px] group-hover:text-black">
+                            + Client Order
                           </span>
-                          <span className="text-[11px] text-[#77716F] block truncate">
-                            For WhatsApp &amp; phone concierge
+                          <span className="text-[10px] text-[#64748B] block truncate">
+                            WhatsApp concierge
                           </span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
                       </button>
 
-                      {/* Action 4: Sales Ledger CSV */}
+                      {/* Shortcut 3: Products & Stock */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('products');
+                          setProductSortBy('stock_asc');
+                        }}
+                        className="p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-left transition-all cursor-pointer flex flex-col justify-between space-y-1.5 group hover:border-[#18181B] hover:shadow-2xs"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-[#E2E8F0] text-[#18181B] flex items-center justify-center shrink-0">
+                          <Package className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-[#18181B] block text-[11.5px] group-hover:text-black">
+                            Stock Balances
+                          </span>
+                          <span className="text-[10px] text-[#64748B] block truncate">
+                            {stockValuation.totalUnits} pieces
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* Shortcut 4: Export Ledger CSV */}
                       <button
                         type="button"
                         onClick={() => AnalyticsService.downloadLedgerCSV(orders)}
-                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
+                        className="p-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white text-left transition-all cursor-pointer flex flex-col justify-between space-y-1.5 group hover:border-[#18181B] hover:shadow-2xs"
                       >
-                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
-                          <Download className="w-4 h-4" />
+                        <div className="w-7 h-7 rounded-lg bg-[#E2E8F0] text-[#18181B] flex items-center justify-center shrink-0">
+                          <Download className="w-3.5 h-3.5" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
-                            Export Sales Ledger
+                        <div>
+                          <span className="font-semibold text-[#18181B] block text-[11.5px] group-hover:text-black">
+                            Export Ledger
                           </span>
-                          <span className="text-[11px] text-[#77716F] block truncate">
-                            Instant tax &amp; accounting Excel/CSV
+                          <span className="text-[10px] text-[#64748B] block truncate">
+                            Instant tax Excel/CSV
                           </span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
                       </button>
 
                     </div>
@@ -2550,155 +2705,247 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Visual Sales & Revenue Performance Chart Panel */}
+              {/* Visual Sales & Revenue Performance Chart Suite */}
               {(() => {
                 const topChartItems = performance
                   .filter(p => perfCategoryFilter === 'all' || p.category === perfCategoryFilter)
                   .slice(0, 5);
 
                 const totalPerfRevenue = performance.reduce((s, p) => s + p.netRevenue, 0);
+                const totalPerfUnits = performance.reduce((s, p) => s + p.unitsSold, 0);
 
-                const categoryMap = performance.reduce((acc, p) => {
-                  acc[p.category] = (acc[p.category] || 0) + p.netRevenue;
-                  return acc;
-                }, {} as Record<string, number>);
+                const catRevenueMap: Record<string, number> = {};
+                const catUnitsMap: Record<string, number> = {};
 
-                const categoryBreakdown = Object.entries(categoryMap)
-                  .filter(([_, rev]) => rev > 0)
+                for (const p of performance) {
+                  catRevenueMap[p.category] = (catRevenueMap[p.category] || 0) + p.netRevenue;
+                  catUnitsMap[p.category] = (catUnitsMap[p.category] || 0) + p.unitsSold;
+                }
+
+                const isRevenueMode = bestsellerChartMode === 'revenue';
+                const totalMetric = isRevenueMode ? totalPerfRevenue : totalPerfUnits;
+                const activeMap = isRevenueMode ? catRevenueMap : catUnitsMap;
+
+                const categoryBreakdown = Object.entries(activeMap)
+                  .filter(([_, val]) => val > 0)
                   .sort((a, b) => b[1] - a[1])
-                  .map(([cat, rev]) => ({
+                  .map(([cat, val]) => ({
                     category: cat,
-                    label: cat.replace('-', ' '),
-                    revenue: rev,
-                    percentage: totalPerfRevenue > 0 ? Math.max(1, Math.round((rev / totalPerfRevenue) * 100)) : 0,
+                    label: categoryDisplayNames[cat as ProductCategory] || cat.replace('-', ' '),
+                    value: val,
+                    percentage: totalMetric > 0 ? (val / totalMetric) * 100 : 0,
                   }));
 
+                const sliceColors = [
+                  '#B49A6C', // Gold
+                  '#18181B', // Charcoal
+                  '#A783A2', // Mauve
+                  '#869E7B', // Sage Forest
+                  '#8F3B30', // Rust
+                  '#475569', // Slate
+                  '#D97706', // Amber
+                  '#0D9488', // Teal
+                ];
+
+                const radius = 38;
+                const circumference = 2 * Math.PI * radius;
+                let accumulatedPercent = 0;
+
+                const donutSegments = categoryBreakdown.map((item, idx) => {
+                  const strokeDasharray = `${(item.percentage / 100) * circumference} ${circumference}`;
+                  const strokeDashoffset = -((accumulatedPercent / 100) * circumference);
+                  accumulatedPercent += item.percentage;
+                  const color = sliceColors[idx % sliceColors.length];
+                  return {
+                    ...item,
+                    strokeDasharray,
+                    strokeDashoffset,
+                    color,
+                  };
+                });
+
                 return (
-                  <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 sm:p-6 space-y-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#F2ECE5]">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    
+                    {/* LEFT CARD (6 cols): Modern Interactive Donut / Pie Chart */}
+                    <div className="lg:col-span-6 bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-5 sm:p-6 flex flex-col justify-between space-y-4">
                       <div>
-                        <span className="text-[10px] uppercase font-bold tracking-[0.16em] text-[#B49A6C] block">
-                          Visual Leaderboard Chart
-                        </span>
-                        <h4 className="font-serif text-base sm:text-lg font-bold text-[#292624] mt-0.5">
-                          Top Performing Creations ({perfSortBy === 'netRevenue' ? 'By Revenue' : 'By Units Sold'})
-                        </h4>
-                      </div>
-                      <div className="text-[11px] text-[#77716F]">
-                        Ranked by {perfSortBy === 'netRevenue' ? 'net captured revenue' : 'sales volume'}
-                      </div>
-                    </div>
+                        <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+                          <div className="flex items-center space-x-2">
+                            <PieChart className="w-4 h-4 text-[#B49A6C]" />
+                            <h4 className="font-semibold text-xs sm:text-sm text-[#18181B]">
+                              Category Distribution
+                            </h4>
+                          </div>
+                          
+                          {/* Revenue vs Units Mode Switcher */}
+                          <div className="flex items-center space-x-1 border border-[#E2E8F0] rounded-lg p-0.5 text-xs bg-[#F8FAFC]">
+                            <button
+                              type="button"
+                              onClick={() => setBestsellerChartMode('revenue')}
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                                isRevenueMode ? 'bg-[#18181B] text-white shadow-2xs' : 'text-[#64748B] hover:text-[#18181B]'
+                              }`}
+                            >
+                              Revenue (₹)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBestsellerChartMode('units')}
+                              className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                                !isRevenueMode ? 'bg-[#18181B] text-white shadow-2xs' : 'text-[#64748B] hover:text-[#18181B]'
+                              }`}
+                            >
+                              Units (Pcs)
+                            </button>
+                          </div>
+                        </div>
 
-                    {/* Top Comparative Bar Chart */}
-                    <div className="space-y-3.5">
-                      {topChartItems.length === 0 ? (
-                        <p className="text-xs text-[#77716F] py-4 text-center">No sales data for selected category.</p>
-                      ) : (
-                        topChartItems.map((item, idx) => {
-                          const maxVal = topChartItems[0]
-                            ? (perfSortBy === 'netRevenue' ? topChartItems[0].netRevenue : topChartItems[0].unitsSold)
-                            : 1;
-                          const currentVal = perfSortBy === 'netRevenue' ? item.netRevenue : item.unitsSold;
-                          const pct = maxVal > 0 ? Math.max(10, Math.round((currentVal / maxVal) * 100)) : 10;
-
-                          return (
-                            <div key={item.productId} className="space-y-1.5">
-                              <div className="flex items-center justify-between text-xs">
-                                <div className="flex items-center space-x-2.5 truncate pr-2">
-                                  <span className="w-5 text-center font-mono font-bold text-[#B49A6C] text-[11px]">
-                                    0{idx + 1}
-                                  </span>
-                                  <img
-                                    src={getOptimizedImageUrl(item.imageUrl)}
-                                    alt={item.productTitle}
-                                    className="w-7 h-7 rounded-lg object-cover bg-stone-100 border border-[#E7E0DA] shrink-0"
+                        {/* Donut Chart & Legend Visual Suite */}
+                        {categoryBreakdown.length === 0 ? (
+                          <p className="text-xs text-[#64748B] py-8 text-center">No category sales recorded yet.</p>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-5">
+                            {/* SVG Donut Circle */}
+                            <div className="relative w-44 h-44 shrink-0 flex items-center justify-center">
+                              <svg viewBox="0 0 100 100" className="w-44 h-44 -rotate-90 transform shrink-0">
+                                <circle cx="50" cy="50" r={radius} className="stroke-[#F1F5F9]" strokeWidth="11" fill="transparent" />
+                                {donutSegments.map((seg) => (
+                                  <circle
+                                    key={seg.category}
+                                    cx="50"
+                                    cy="50"
+                                    r={radius}
+                                    stroke={seg.color}
+                                    strokeWidth="11"
+                                    fill="transparent"
+                                    strokeDasharray={seg.strokeDasharray}
+                                    strokeDashoffset={seg.strokeDashoffset}
+                                    strokeLinecap="butt"
+                                    className="transition-all duration-500 hover:opacity-85 cursor-pointer"
                                   />
-                                  <span className="font-semibold text-[#292624] truncate">
-                                    {item.productTitle}
-                                  </span>
-                                  <span className="text-[10.5px] text-[#77716F] uppercase hidden md:inline font-mono">
-                                    ({item.category.replace('-', ' ')})
-                                  </span>
-                                </div>
-                                
-                                <div className="text-right shrink-0 flex items-center space-x-2 font-mono">
-                                  <span className="text-xs font-bold text-[#292624]">
-                                    {perfSortBy === 'netRevenue' ? `₹${item.netRevenue.toLocaleString('en-IN')}` : `${item.unitsSold} pcs`}
-                                  </span>
-                                  <span className="text-[10px] text-[#77716F] hidden sm:inline">
-                                    {perfSortBy === 'netRevenue' ? `(${item.unitsSold} sold)` : `(₹${item.netRevenue.toLocaleString('en-IN')})`}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Luxury Bar Track */}
-                              <div className="w-full h-3 bg-[#FAF8F5] rounded-full overflow-hidden border border-[#E7E0DA]/70 p-0.5">
-                                <div
-                                  className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#B49A6C] to-[#8F3B30]"
-                                  style={{ width: `${pct}%` }}
-                                />
+                                ))}
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-2">
+                                <span className="font-mono font-bold text-sm sm:text-base text-[#18181B]">
+                                  {isRevenueMode ? `₹${totalMetric.toLocaleString('en-IN')}` : `${totalMetric} pcs`}
+                                </span>
+                                <span className="text-[9px] uppercase tracking-wider text-[#64748B] font-semibold">
+                                  {isRevenueMode ? 'Total Revenue' : 'Total Units'}
+                                </span>
                               </div>
                             </div>
-                          );
-                        })
-                      )}
+
+                            {/* Crisp Luxury Legend */}
+                            <div className="flex-1 w-full space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                              {donutSegments.map((seg) => (
+                                <div
+                                  key={seg.category}
+                                  className="flex items-center justify-between text-xs p-1.5 rounded-lg hover:bg-[#F8FAFC] transition-colors"
+                                >
+                                  <div className="flex items-center space-x-2 truncate pr-2">
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: seg.color }}
+                                    />
+                                    <span className="font-medium text-[#18181B] truncate text-[11.5px]">
+                                      {seg.label}
+                                    </span>
+                                  </div>
+                                  <div className="text-right shrink-0 font-mono text-[11px]">
+                                    <span className="font-bold text-[#18181B]">
+                                      {isRevenueMode ? `₹${seg.value.toLocaleString('en-IN')}` : `${seg.value} pcs`}
+                                    </span>
+                                    <span className="text-[10px] text-[#64748B] ml-1.5">
+                                      ({Math.round(seg.percentage)}%)
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-2.5 border-t border-[#F1F5F9] text-[10.5px] text-[#64748B] flex items-center justify-between">
+                        <span>{categoryBreakdown.length} Active Categories</span>
+                        <span className="font-mono">Rass Atelier Analytics</span>
+                      </div>
                     </div>
 
-                    {/* Category Sales Share Multi-Segment Bar */}
-                    {categoryBreakdown.length > 0 && (
-                      <div className="pt-4 border-t border-[#F2ECE5] space-y-2.5">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-semibold text-[#77716F] uppercase tracking-wider text-[10px]">
-                            Category Revenue Distribution
-                          </span>
-                          <span className="text-[#77716F] font-mono font-medium">
-                            Total: ₹{totalPerfRevenue.toLocaleString('en-IN')}
+                    {/* RIGHT CARD (6 cols): Leaderboard Rankings */}
+                    <div className="lg:col-span-6 bg-white rounded-2xl border border-[#E2E8F0] shadow-2xs p-5 sm:p-6 flex flex-col justify-between space-y-4">
+                      <div>
+                        <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+                          <div className="flex items-center space-x-2">
+                            <BarChart3 className="w-4 h-4 text-[#B49A6C]" />
+                            <h4 className="font-semibold text-xs sm:text-sm text-[#18181B]">
+                              Top Performing Creations ({perfSortBy === 'netRevenue' ? 'By Revenue' : 'By Units Sold'})
+                            </h4>
+                          </div>
+                          <span className="text-[10.5px] text-[#64748B]">
+                            {perfSortBy === 'netRevenue' ? 'Net Captured' : 'Sales Volume'}
                           </span>
                         </div>
 
-                        {/* Segment Bar */}
-                        <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-stone-200 shadow-2xs">
-                          {categoryBreakdown.map((cat, idx) => {
-                            const colors = [
-                              'bg-[#B49A6C]', // Gold
-                              'bg-[#292624]', // Charcoal
-                              'bg-[#A783A2]', // Mauve
-                              'bg-[#3B5432]', // Forest
-                              'bg-[#8F3B30]', // Rust
-                            ];
-                            const colorClass = colors[idx % colors.length];
-                            return (
-                              <div
-                                key={cat.category}
-                                className={`${colorClass} transition-all duration-300`}
-                                style={{ width: `${cat.percentage}%` }}
-                                title={`${cat.label}: ₹${cat.revenue.toLocaleString('en-IN')} (${cat.percentage}%)`}
-                              />
-                            );
-                          })}
-                        </div>
+                        {/* Top Comparative Bar Chart */}
+                        <div className="space-y-3 pt-3">
+                          {topChartItems.length === 0 ? (
+                            <p className="text-xs text-[#64748B] py-6 text-center">No sales data recorded yet.</p>
+                          ) : (
+                            topChartItems.map((item, idx) => {
+                              const maxVal = topChartItems[0]
+                                ? (perfSortBy === 'netRevenue' ? topChartItems[0].netRevenue : topChartItems[0].unitsSold)
+                                : 1;
+                              const currentVal = perfSortBy === 'netRevenue' ? item.netRevenue : item.unitsSold;
+                              const pct = maxVal > 0 ? Math.max(8, Math.round((currentVal / maxVal) * 100)) : 8;
 
-                        {/* Legend */}
-                        <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-[#77716F]">
-                          {categoryBreakdown.map((cat, idx) => {
-                            const dotColors = [
-                              'bg-[#B49A6C]',
-                              'bg-[#292624]',
-                              'bg-[#A783A2]',
-                              'bg-[#3B5432]',
-                              'bg-[#8F3B30]',
-                            ];
-                            return (
-                              <div key={cat.category} className="flex items-center space-x-1.5">
-                                <span className={`w-2 h-2 rounded-full ${dotColors[idx % dotColors.length]}`} />
-                                <span className="font-medium text-[#292624] capitalize">{cat.label}</span>
-                                <span className="font-mono text-[10.5px]">({cat.percentage}%)</span>
-                              </div>
-                            );
-                          })}
+                              return (
+                                <div key={item.productId} className="space-y-1">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center space-x-2.5 truncate pr-2">
+                                      <span className="w-5 text-center font-mono font-bold text-[#18181B] text-[11px]">
+                                        0{idx + 1}
+                                      </span>
+                                      <img
+                                        src={getOptimizedImageUrl(item.imageUrl)}
+                                        alt={item.productTitle}
+                                        className="w-7 h-7 rounded-lg object-cover bg-stone-100 border border-[#E2E8F0] shrink-0"
+                                      />
+                                      <span className="font-semibold text-[#18181B] truncate text-[11.5px]">
+                                        {item.productTitle}
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="text-right shrink-0 flex items-center space-x-2 font-mono">
+                                      <span className="text-xs font-bold text-[#18181B]">
+                                        {perfSortBy === 'netRevenue' ? `₹${item.netRevenue.toLocaleString('en-IN')}` : `${item.unitsSold} pcs`}
+                                      </span>
+                                      <span className="text-[10px] text-[#64748B] hidden sm:inline">
+                                        {perfSortBy === 'netRevenue' ? `(${item.unitsSold} sold)` : `(₹${item.netRevenue.toLocaleString('en-IN')})`}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Charcoal & Gold Track */}
+                                  <div className="w-full h-2 bg-[#F1F5F9] rounded-full overflow-hidden p-0.5">
+                                    <div
+                                      className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#18181B] to-[#B49A6C]"
+                                      style={{ width: `${pct}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
                       </div>
-                    )}
+
+                      <div className="pt-2.5 border-t border-[#F1F5F9] text-[10.5px] text-[#64748B] flex items-center justify-between">
+                        <span>Ranked by verified checkout capture</span>
+                        <span className="font-mono">Top 5 Leaders</span>
+                      </div>
+                    </div>
 
                   </div>
                 );
@@ -3280,33 +3527,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ===================================================================== */}
-      {/* 5. MODAL: ADD PRODUCT (EDITING REMOVED AS REQUESTED) */}
-      {/* ===================================================================== */}
-      {/* ===================================================================== */}
       {/* 5. MODAL: SPLIT-SCREEN ADD PRODUCT WITH LIVE STOREFRONT PREVIEW      */}
+      {/* CHARCOAL, BLACK & WHITE EYE-FRIENDLY LUXURY SUITE                   */}
       {/* ===================================================================== */}
       {isNewProductModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="relative bg-white rounded-2xl max-w-4xl w-full border border-[#E7E0DA] shadow-modal overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-fadeIn">
+          <div className="relative bg-white rounded-2xl max-w-5xl w-full border border-[#E2E8F0] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
             
-            {/* Modal Header */}
-            <div className="px-5 py-3.5 border-b border-[#E7E0DA] flex items-center justify-between bg-[#FAF8F5] shrink-0">
-              <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#FAF5F9] border border-[#E2D5E5] flex items-center justify-center text-[#A783A2]">
-                  <Sparkles className="w-4 h-4" />
+            {/* Modal Header: Crisp Charcoal & White */}
+            <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-white shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-xl bg-[#18181B] text-white flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-[#B49A6C]" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-sm sm:text-base font-bold text-[#292624]">
-                    Add New Jewellery Piece to Store
+                  <h3 className="font-semibold text-sm sm:text-base text-[#18181B]">
+                    Publish New Creation to Storefront
                   </h3>
-                  <p className="text-[11px] text-[#77716F]">
-                    Fill in the quick details below — see customer card preview on the right in real time.
+                  <p className="text-[11px] text-[#64748B]">
+                    Input core details and artisan specifications. Preview updates live on the right.
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsNewProductModalOpen(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[#77716F] hover:text-[#292624] hover:bg-stone-200 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#64748B] hover:text-[#18181B] hover:bg-neutral-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -3315,35 +3561,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Split Screen Grid: Form (7 cols) + Live Preview (5 cols) */}
             <div className="grid grid-cols-1 md:grid-cols-12 flex-1 overflow-y-auto">
               
-              {/* LEFT COLUMN: GUIDED 5-FIELD FORM */}
-              <form onSubmit={handleSaveNewProduct} className="p-5 md:col-span-7 space-y-3.5 text-xs border-r border-[#E7E0DA]">
+              {/* LEFT COLUMN: GUIDED CHARCOAL & WHITE SPECIFICATIONS FORM */}
+              <form onSubmit={handleSaveNewProduct} className="p-6 md:col-span-7 space-y-4 text-xs border-r border-[#E2E8F0] bg-white">
                 
                 {/* 1. Photo Dropzone */}
                 <div>
-                  <label className="font-semibold text-[#292624] block mb-1">
-                    1. Jewellery Photo
+                  <label className="font-semibold text-[#18181B] block mb-1">
+                    1. Creation Photography *
                   </label>
                   {isOptimizingImage ? (
-                    <div className="p-4 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] flex items-center justify-center space-x-2 text-[#A783A2]">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                    <div className="p-4 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-center space-x-2 text-[#18181B]">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#B49A6C]" />
                       <span className="font-medium text-[11px]">Auto-compressing to lightweight WebP...</span>
                     </div>
                   ) : (
-                    <label className="flex items-center space-x-3 p-2.5 rounded-xl border-2 border-dashed border-[#D5CEC7] hover:border-[#A783A2] bg-[#FAF8F5]/60 hover:bg-[#FAF8F5] transition-all cursor-pointer group">
+                    <label className="flex items-center space-x-3 p-3 rounded-xl border-2 border-dashed border-[#CBD5E1] hover:border-[#18181B] bg-[#F8FAFC] hover:bg-white transition-all cursor-pointer group">
                       <img
                         src={getOptimizedImageUrl(newProductForm.image)}
                         alt="Preview"
-                        className="w-12 h-12 rounded-lg object-cover bg-white border border-[#E7E0DA] shrink-0"
+                        className="w-12 h-12 rounded-lg object-cover bg-white border border-[#E2E8F0] shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#A783A2] transition-colors">
-                          Tap to Choose Photo from Phone/Computer
+                        <span className="font-semibold text-[#18181B] block text-xs group-hover:text-black transition-colors">
+                          Choose Photo from Device
                         </span>
-                        <span className="text-[10px] text-[#77716F] block mt-0.5">
-                          Any photo works • Auto-compressed to lightweight WebP
+                        <span className="text-[10.5px] text-[#64748B] block mt-0.5">
+                          High resolution • Auto-optimized to lightweight WebP
                         </span>
                       </div>
-                      <Upload className="w-4 h-4 text-[#A783A2] shrink-0 mr-1" />
+                      <Upload className="w-4 h-4 text-[#18181B] shrink-0 mr-1" />
                       <input
                         type="file"
                         accept="image/*"
@@ -3359,23 +3605,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 {/* 2. Design Title */}
                 <div>
-                  <label className="font-semibold text-[#292624] block mb-1">
-                    2. Jewellery Name / Title
+                  <label className="font-semibold text-[#18181B] block mb-1">
+                    2. Jewellery Title / Name *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Royal Kundan Jhumka with Pearl Drops"
+                    placeholder="e.g. Royal Kundan Meenakari Dome Jhumka"
                     value={newProductForm.name}
                     onChange={(e) => setNewProductForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                   />
                 </div>
 
                 {/* 3. Category Selector */}
                 <div>
-                  <label className="font-semibold text-[#292624] block mb-1">
-                    3. Category
+                  <label className="font-semibold text-[#18181B] block mb-1">
+                    3. Collection Category *
                   </label>
                   <select
                     value={newProductForm.category}
@@ -3392,7 +3638,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         cleanImage: isCustomUploaded ? prev.cleanImage : (defaults?.cleanImage || prev.cleanImage),
                       }));
                     }}
-                    className="w-full px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] cursor-pointer"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10 cursor-pointer"
                   >
                     <option value="jhumka">Jhumka (Bell Domes)</option>
                     <option value="rings">Rings (Anguthi)</option>
@@ -3409,11 +3655,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </select>
                 </div>
 
-                {/* 4. Pricing (Selling Price vs Cut Price MRP) */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* 4. Commercial Pricing */}
+                <div className="grid grid-cols-2 gap-3.5">
                   <div>
-                    <label className="font-semibold text-[#292624] block mb-1">
-                      4. Selling Price (₹)
+                    <label className="font-semibold text-[#18181B] block mb-1">
+                      4. Selling Price (₹) *
                     </label>
                     <input
                       type="number"
@@ -3422,14 +3668,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       placeholder="e.g. 2490"
                       value={newProductForm.price}
                       onChange={(e) => setNewProductForm(prev => ({ ...prev, price: Number(e.target.value) }))}
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white text-xs font-bold text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs font-bold font-mono text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
-                    <span className="text-[10px] text-[#77716F] block mt-0.5">What the customer pays</span>
+                    <span className="text-[10px] text-[#64748B] block mt-0.5">Authoritative patron checkout price</span>
                   </div>
 
                   <div>
-                    <label className="font-semibold text-[#292624] block mb-1">
-                      Cut Price / MRP (₹)
+                    <label className="font-semibold text-[#18181B] block mb-1">
+                      Cut Price / Struck MRP (₹)
                     </label>
                     <input
                       type="number"
@@ -3441,96 +3687,254 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           setNewProductForm(prev => ({ ...prev, costPrice: Math.round(newProductForm.price * 0.45) }));
                         }
                       }}
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#77716F] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs font-mono text-[#64748B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
-                    <span className="text-[10px] text-[#77716F] block mt-0.5">
-                      Optional struck-through price
+                    <span className="text-[10px] text-[#64748B] block mt-0.5">
+                      Optional struck-through display price
                     </span>
                   </div>
                 </div>
 
-                {/* 5. Stock Quantity */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* 5. Inventory & SKU */}
+                <div className="grid grid-cols-2 gap-3.5">
                   <div>
-                    <label className="font-semibold text-[#292624] block mb-1">
-                      5. Available Pieces (Stock)
+                    <label className="font-semibold text-[#18181B] block mb-1">
+                      5. Initial Available Stock *
                     </label>
                     <input
                       type="number"
                       min={1}
                       value={newProductForm.initialStock}
                       onChange={(e) => setNewProductForm(prev => ({ ...prev, initialStock: Number(e.target.value) }))}
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white text-xs font-bold text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs font-bold font-mono text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
                   </div>
 
                   <div>
-                    <label className="font-semibold text-[#292624] block mb-1">
-                      Product Code (SKU)
+                    <label className="font-semibold text-[#18181B] block mb-1">
+                      System SKU Code
                     </label>
                     <input
                       type="text"
                       readOnly
                       value={newProductForm.sku}
-                      className="w-full px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-[#FAF8F5] text-xs font-mono text-[#77716F]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-xs font-mono text-[#64748B]"
+                    />
+                  </div>
+                </div>
+
+                {/* 6. ARTISAN SPECIFICATIONS & CRAFTSMANSHIP (EXPANDED SUITE) */}
+                <div className="pt-3 border-t border-[#E2E8F0] space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-[#18181B] uppercase tracking-wider block">
+                      6. Artisan Specifications &amp; Materials
+                    </span>
+                    <span className="text-[10px] text-[#64748B] font-medium">Surfaces on Product Page</span>
+                  </div>
+
+                  {/* Metal Purity & Plating */}
+                  <div>
+                    <label className="font-semibold text-[#18181B] block mb-1">
+                      Base Metal &amp; Plating
+                    </label>
+                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                      {[
+                        'Solid Brass with 18k Micro Gold Polish',
+                        'Anti-Tarnish Stainless Steel',
+                        'Oxidised 925 Silver Finish',
+                        'Dual-Tone Gold & Silver',
+                      ].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setNewProductForm(prev => ({ ...prev, metal: preset }))}
+                          className={`text-[10px] px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                            newProductForm.metal === preset
+                              ? 'bg-[#18181B] text-white border-[#18181B] font-semibold'
+                              : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:text-[#18181B]'
+                          }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      value={newProductForm.metal}
+                      onChange={(e) => setNewProductForm(prev => ({ ...prev, metal: e.target.value }))}
+                      className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
+
+                  {/* Gemstones & Embellishments */}
+                  <div>
+                    <label className="font-semibold text-[#18181B] block mb-1">
+                      Gemstones &amp; Embellishments
+                    </label>
+                    <div className="flex flex-wrap gap-1.5 mb-1.5">
+                      {[
+                        'Kundan & Pearls',
+                        'AAA Cubic Zirconia',
+                        'Uncut Polki & Hydro Beads',
+                        'Meenakari Enamel',
+                        'Pure Metal (No Stone)',
+                      ].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setNewProductForm(prev => ({ ...prev, gemstones: preset }))}
+                          className={`text-[10px] px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                            newProductForm.gemstones === preset
+                              ? 'bg-[#18181B] text-white border-[#18181B] font-semibold'
+                              : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:text-[#18181B]'
+                          }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      value={newProductForm.gemstones}
+                      onChange={(e) => setNewProductForm(prev => ({ ...prev, gemstones: e.target.value }))}
+                      className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
+                    />
+                  </div>
+
+                  {/* Dimensions & Weight Grid */}
+                  <div className="grid grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="font-semibold text-[#18181B] block mb-1">
+                        Dimensions &amp; Fit
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 42cm length + 5cm extender"
+                        value={newProductForm.dimensions}
+                        onChange={(e) => setNewProductForm(prev => ({ ...prev, dimensions: e.target.value }))}
+                        className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
+                      />
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {['45cm + 5cm Extender', 'Drop: 5cm', 'Adjustable Free Size'].map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setNewProductForm(prev => ({ ...prev, dimensions: d }))}
+                            className="text-[9.5px] px-1.5 py-0.5 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#18181B] cursor-pointer"
+                          >
+                            {d}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-semibold text-[#18181B] block mb-1">
+                        Net Weight (grams)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 7.5g"
+                        value={newProductForm.weight}
+                        onChange={(e) => setNewProductForm(prev => ({ ...prev, weight: e.target.value }))}
+                        className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
+                      />
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {['5.0g (Light)', '8.5g', '15.0g', '28.0g'].map((w) => (
+                          <button
+                            key={w}
+                            type="button"
+                            onClick={() => setNewProductForm(prev => ({ ...prev, weight: w }))}
+                            className="text-[9.5px] px-1.5 py-0.5 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#18181B] cursor-pointer"
+                          >
+                            {w}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Editorial Description */}
+                  <div>
+                    <label className="font-semibold text-[#18181B] block mb-1">
+                      Artisan Story &amp; Description
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={newProductForm.description}
+                      onChange={(e) => setNewProductForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10 resize-none"
                     />
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="pt-3 border-t border-[#E7E0DA] flex items-center justify-end space-x-2">
+                <div className="pt-4 border-t border-[#E2E8F0] flex items-center justify-end space-x-3">
                   <button
                     type="button"
                     onClick={() => setIsNewProductModalOpen(false)}
-                    className="px-3.5 py-2 rounded-lg border border-[#E7E0DA] text-[#77716F] hover:bg-stone-50 font-medium cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-[#64748B] hover:text-[#18181B] hover:bg-neutral-50 font-medium cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-lg bg-[#292624] hover:bg-[#1C1A18] text-white font-bold tracking-wide shadow-sm flex items-center space-x-1.5 cursor-pointer transition-colors"
+                    className="px-6 py-2.5 rounded-xl bg-[#18181B] hover:bg-black text-white font-bold tracking-wide shadow-sm flex items-center space-x-2 cursor-pointer transition-colors"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#B49A6C]" />
-                    <span>Publish Design to Storefront</span>
+                    <span>Publish Creation to Storefront</span>
                   </button>
                 </div>
               </form>
 
-              {/* RIGHT COLUMN: LIVE STOREFRONT CARD PREVIEW */}
-              <div className="p-6 md:col-span-5 bg-[#FAF8F5] flex flex-col items-center justify-center border-t md:border-t-0 border-[#E7E0DA]">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-[#B49A6C] block mb-3">
-                  Live Preview on Your Website
+              {/* RIGHT COLUMN: LIVE STOREFRONT CARD PREVIEW (CHARCOAL & WHITE) */}
+              <div className="p-6 md:col-span-5 bg-[#F8FAFC] flex flex-col items-center justify-center border-t md:border-t-0 border-[#E2E8F0]">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-[#18181B] block mb-3">
+                  Live Storefront Preview
                 </span>
 
                 {/* Replica Product Card */}
-                <div className="w-full max-w-[240px] bg-white rounded-xl border border-[#E7E0DA] shadow-card overflow-hidden">
-                  <div className="relative aspect-[4/5] bg-[#F4F1EC] overflow-hidden">
+                <div className="w-full max-w-[250px] bg-white rounded-2xl border border-[#E2E8F0] shadow-card overflow-hidden">
+                  <div className="relative aspect-[4/5] bg-[#F1F5F9] overflow-hidden">
                     <img
                       src={getOptimizedImageUrl(newProductForm.image)}
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
-                    <span className="absolute top-2 left-2 bg-[#292624] text-white text-[8.5px] font-bold px-1.5 py-0.5 rounded-full shadow-2xs">
+                    <span className="absolute top-2.5 left-2.5 bg-[#18181B] text-white text-[8.5px] font-bold px-2 py-0.5 rounded-full shadow-xs">
                       NEW PIECE
                     </span>
                   </div>
-                  <div className="p-3 space-y-1">
-                    <span className="text-[9px] uppercase tracking-wider text-[#A783A2] font-semibold block">
+                  <div className="p-3.5 space-y-1.5">
+                    <span className="text-[9.5px] uppercase tracking-wider text-[#B49A6C] font-bold block">
                       {categoryDisplayNames[newProductForm.category] || 'Jewellery'}
                     </span>
-                    <h4 className="font-medium text-[#292624] text-xs truncate">
+                    <h4 className="font-semibold text-[#18181B] text-xs truncate">
                       {newProductForm.name || 'Your Jewellery Title Here'}
                     </h4>
+
+                    {/* Specifications Chip in Live Card */}
+                    <div className="pt-0.5 pb-1">
+                      <span className="text-[9.5px] font-medium text-[#64748B] bg-[#F8FAFC] px-1.5 py-0.5 rounded border border-[#E2E8F0] block truncate">
+                        ✦ {newProductForm.metal} • {newProductForm.gemstones}
+                      </span>
+                    </div>
+
                     <div className="flex items-baseline space-x-1.5 pt-0.5">
-                      <span className="font-bold text-sm text-[#292624]">
+                      <span className="font-bold font-mono text-sm text-[#18181B]">
                         ₹{Number(newProductForm.price || 0).toLocaleString('en-IN')}
                       </span>
+                      {newProductForm.costPrice ? (
+                        <span className="text-[10.5px] font-mono text-[#94A3B8] line-through">
+                          ₹{Math.round(newProductForm.price * 1.35).toLocaleString('en-IN')}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
 
-                <p className="text-[10.5px] text-[#77716F] text-center mt-3 max-w-[220px]">
-                  Real-time client view on storefront.
+                <p className="text-[10.5px] text-[#64748B] text-center mt-3 max-w-[220px]">
+                  Exact replica seen by patrons upon publication.
                 </p>
               </div>
 
@@ -3854,102 +4258,103 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       {/* ===================================================================== */}
       {/* 9. MODAL: EFFORTLESS MANUAL ORDER CREATION (CONCIERGE / WHATSAPP)   */}
+      {/* CHARCOAL, BLACK & WHITE EYE-FRIENDLY LUXURY SUITE                   */}
       {/* ===================================================================== */}
       {isManualOrderModalOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="relative bg-white rounded-2xl max-w-2xl w-full border border-[#E7E0DA] shadow-modal p-6 sm:p-8 max-h-[92vh] overflow-y-auto space-y-6">
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn">
+          <div className="relative bg-white rounded-2xl max-w-2xl w-full border border-[#E2E8F0] shadow-2xl p-6 sm:p-8 max-h-[92vh] overflow-y-auto space-y-6">
             
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-[#E7E0DA]">
+            {/* Header: Crisp Charcoal & White */}
+            <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-[#FAF5F9] border border-[#E2D5E5] flex items-center justify-center text-[#A783A2]">
-                  <ShoppingCart className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-[#18181B] text-white flex items-center justify-center">
+                  <ShoppingCart className="w-5 h-5 text-[#B49A6C]" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-base sm:text-lg font-bold text-[#292624]">
+                  <h3 className="font-semibold text-base sm:text-lg text-[#18181B]">
                     Create Client Order
                   </h3>
-                  <p className="text-[11px] text-[#77716F]">
-                    For WhatsApp, Instagram, or phone concierge clients. Automatically issues official tax bill and reserves inventory.
+                  <p className="text-[11px] text-[#64748B]">
+                    For WhatsApp, Instagram, or phone concierge clients. Issues official tax bill &amp; reserves stock.
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsManualOrderModalOpen(false)} 
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#77716F] hover:text-[#292624] hover:bg-stone-100 transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[#64748B] hover:text-[#18181B] hover:bg-neutral-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateManualOrder} className="space-y-6 text-xs">
+            <form onSubmit={handleCreateManualOrder} className="space-y-5 text-xs">
               
               {/* Section 1: Client Information */}
               <div className="space-y-3">
-                <span className="text-[11px] font-semibold text-[#77716F] uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-[#18181B] uppercase tracking-wider block">
                   1. Client Details &amp; Destination
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block font-semibold text-[#292624] mb-1">Client Full Name *</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Client Full Name *</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Radhika Goenka"
                       value={manualOrderForm.customerName}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, customerName: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-[#292624] mb-1">Contact Phone / WhatsApp *</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Contact Phone / WhatsApp *</label>
                     <input
                       type="tel"
                       required
                       placeholder="e.g. +91 98201 54321"
                       value={manualOrderForm.phone}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, phone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                   <div className="sm:col-span-2">
-                    <label className="block font-semibold text-[#292624] mb-1">Shipping Address</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Shipping Address</label>
                     <input
                       type="text"
                       placeholder="e.g. 14 Jubilee Hills, Road No 36"
                       value={manualOrderForm.shippingAddress}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, shippingAddress: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-[#292624] mb-1">City</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">City</label>
                     <input
                       type="text"
                       placeholder="e.g. Hyderabad"
                       value={manualOrderForm.city}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, city: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-4 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Section 2: Jewellery Piece & Commercial Terms */}
-              <div className="space-y-3 pt-3 border-t border-[#E7E0DA]">
-                <span className="text-[11px] font-semibold text-[#77716F] uppercase tracking-wider block">
+              {/* Section 2: Jewellery Piece Selection */}
+              <div className="space-y-3 pt-3 border-t border-[#E2E8F0]">
+                <span className="text-[11px] font-bold text-[#18181B] uppercase tracking-wider block">
                   2. Select Jewellery Piece
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
                   <div className="sm:col-span-8">
-                    <label className="block font-semibold text-[#292624] mb-1">Piece Selection</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Piece Selection</label>
                     <select
                       value={manualOrderForm.productId}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, productId: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] cursor-pointer"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10 cursor-pointer"
                     >
                       {products.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -3959,35 +4364,67 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </select>
                   </div>
                   <div className="sm:col-span-4">
-                    <label className="block font-semibold text-[#292624] mb-1">Quantity</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Quantity</label>
                     <input
                       type="number"
                       min={1}
                       value={manualOrderForm.quantity}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, quantity: Math.max(1, Number(e.target.value)) })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs font-bold text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs font-bold font-mono text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                {/* Visual Confirmation Card for Selected Piece */}
+                {(() => {
+                  const selectedPiece = products.find(p => p.id === manualOrderForm.productId) || products[0];
+                  if (!selectedPiece) return null;
+                  return (
+                    <div className="flex items-center space-x-3 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                      <img
+                        src={getOptimizedImageUrl(selectedPiece.image)}
+                        alt={selectedPiece.name}
+                        className="w-12 h-12 rounded-lg object-cover bg-white border border-[#E2E8F0] shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-semibold text-xs text-[#18181B] block truncate">
+                          {selectedPiece.name}
+                        </span>
+                        <span className="text-[10.5px] text-[#64748B] block truncate">
+                          {selectedPiece.categoryDisplay} • SKU: {selectedPiece.sku}
+                        </span>
+                        <div className="flex items-center space-x-2 pt-0.5">
+                          <span className="font-mono font-bold text-xs text-[#18181B]">
+                            ₹{selectedPiece.price.toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-[10px] text-[#64748B]">
+                            (Stock: {selectedPiece.stockCount} units available)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Commercial Terms */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
                   <div>
-                    <label className="block font-semibold text-[#292624] mb-1">Privilege Discount (₹)</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Privilege Discount (₹)</label>
                     <input
                       type="number"
                       min={0}
                       placeholder="0"
                       value={manualOrderForm.discountAmount}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, discountAmount: Number(e.target.value) })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs font-bold text-[#3B5432] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs font-bold font-mono text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-[#292624] mb-1">Payment Method</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Payment Method</label>
                     <select
                       value={manualOrderForm.paymentMethod}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, paymentMethod: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10 cursor-pointer"
                     >
                       <option value="Prepaid UPI / Bank Transfer">Prepaid UPI / Bank Transfer</option>
                       <option value="Cash on Delivery (Air Express)">Cash on Delivery (COD)</option>
@@ -3995,11 +4432,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block font-semibold text-[#292624] mb-1">Payment Status</label>
+                    <label className="block font-semibold text-[#18181B] mb-1">Payment Status</label>
                     <select
                       value={manualOrderForm.paymentStatus}
                       onChange={(e) => setManualOrderForm({ ...manualOrderForm, paymentStatus: e.target.value as any })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#18181B] focus:outline-none focus:border-[#18181B] focus:ring-2 focus:ring-black/10 cursor-pointer"
                     >
                       <option value="captured">Captured / Paid</option>
                       <option value="pending">Pending Payment</option>
@@ -4008,7 +4445,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Real-time Order Summary Card */}
+              {/* Matte Charcoal Summary Box */}
               {(() => {
                 const prod = products.find(p => p.id === manualOrderForm.productId) || products[0];
                 const price = prod?.price || 0;
@@ -4016,22 +4453,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 const disc = Math.min(sub, Number(manualOrderForm.discountAmount || 0));
                 const total = Math.max(0, sub - disc);
                 return (
-                  <div className="p-4 rounded-xl bg-[#FAF8F5] border border-[#E7E0DA] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="p-4.5 rounded-2xl bg-[#18181B] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                     <div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-[#B49A6C] block">
-                        Commercial Total
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-[#B49A6C] block">
+                        Commercial Total Breakdown
                       </span>
-                      <span className="font-medium text-xs text-[#292624]">
+                      <span className="font-medium text-xs text-stone-200">
                         {prod?.name || 'Selected Piece'} (x{manualOrderForm.quantity || 1})
                       </span>
                     </div>
                     <div className="text-right">
                       {disc > 0 && (
-                        <span className="text-[11px] text-[#3B5432] block">
+                        <span className="text-[11px] text-emerald-400 block font-mono">
                           Discount: -₹{disc.toLocaleString('en-IN')}
                         </span>
                       )}
-                      <span className="text-lg font-bold font-mono text-[#292624]">
+                      <span className="text-xl font-bold font-mono text-white">
                         Total: ₹{total.toLocaleString('en-IN')}
                       </span>
                     </div>
@@ -4039,17 +4476,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 );
               })()}
 
-              <div className="pt-3 border-t border-[#E7E0DA] flex items-center justify-end space-x-3">
+              <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setIsManualOrderModalOpen(false)}
-                  className="px-4 py-2.5 rounded-lg border border-[#E7E0DA] text-[#77716F] hover:bg-stone-50 font-medium cursor-pointer transition-colors"
+                  className="px-5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-[#64748B] hover:text-[#18181B] hover:bg-neutral-50 font-medium cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-lg bg-[#292624] text-white font-semibold hover:bg-[#1C1A18] cursor-pointer transition-colors shadow-sm"
+                  className="px-6 py-2.5 rounded-xl bg-[#18181B] hover:bg-black text-white font-semibold cursor-pointer transition-colors shadow-sm"
                 >
                   Confirm Order &amp; Open Invoice
                 </button>
