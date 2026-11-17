@@ -1566,7 +1566,9 @@ export const PRODUCTS: Product[] = [
     stockCount: 4
   },
 
-  // Tribal 1. Royal Grand Silver Choker
+  // Tribal 1. Royal Grand Silver Choker,
+
+  // Tribal 1 [Sage]. Royal Grand Silver Choker
   {
     id: 'rass-trb-11',
     name: 'Royal Grand Silver Choker',
@@ -1596,7 +1598,7 @@ export const PRODUCTS: Product[] = [
     stockCount: 1
   },
 
-  // Tribal 2. Heritage Long Silver Mala Necklace
+  // Tribal 2 [Floral]. Heritage Long Silver Mala Necklace
   {
     id: 'rass-trb-09',
     name: 'Heritage Long Silver Mala Necklace',
@@ -1626,7 +1628,7 @@ export const PRODUCTS: Product[] = [
     stockCount: 1
   },
 
-  // Tribal 3. Wired Torque Hasali Necklace
+  // Tribal 3 [Mauve]. Wired Torque Hasali Necklace
   {
     id: 'rass-trb-10',
     name: 'Wired Torque Hasali Necklace',
@@ -1656,187 +1658,7 @@ export const PRODUCTS: Product[] = [
     stockCount: 1
   },
 
-  // Tribal 4. Ornate Filigree Silver Choker
-  {
-    id: 'rass-trb-16',
-    name: 'Ornate Filigree Silver Choker',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2850,
-    originalPrice: 3750,
-    costPrice: 1250,
-    image: '/images/tribal/ornate-filigree-silver-choker.webp',
-    cleanImage: '/images/tribal/ornate-filigree-silver-choker.webp',
-    description: "Delicate gossamer-thin filigree wire woven like lacework into a regal choker collar, finished with miniature silver jhumka bells along the hem.",
-    details: [
-          "Fine wire filigree work crafted by master silversmiths",
-          "Miniature jhumka bells offering delicate chime and movement",
-          "Comfort-molded back ensuring a plush, snug fit at the throat",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Solid Brass with Antique Silver Finish',
-    gemstones: 'Lace Filigree Scrollwork & Dome Drops',
-    inStock: true,
-    isBestseller: false,
-    isNew: true,
-    dimensions: '38cm neck curve + 7cm extender',
-    weight: '53.8g',
-    sku: 'RASS-TRB-016',
-    stockCount: 1
-  },
-
-  // Tribal 5. Royal Floral Long Pendant Necklace
-  {
-    id: 'rass-trb-07',
-    name: 'Royal Floral Long Pendant Necklace',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 3450,
-    originalPrice: 4500,
-    costPrice: 1550,
-    image: '/images/tribal/royal-floral-long-pendant-necklace.webp',
-    cleanImage: '/images/tribal/royal-floral-long-pendant-necklace.webp',
-    description: "A majestic long tribal mala featuring a heavy statement floral medallion suspended from an ornate double-link chain with swinging ghungroo clusters.",
-    details: [
-          "Magnificent 65mm dimensional floral pendant with radial filigree petals",
-          "Sturdy hand-assembled double link chain designed for dramatic layering",
-          "Rich antique tribal patina sealed with tarnish-resistant coating",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Oxidised Silver Plating on Solid Brass',
-    gemstones: 'Carved Floral Medallion & Suspended Ghungroos',
-    inStock: true,
-    isBestseller: true,
-    isNew: true,
-    dimensions: '68cm chain drop; 65mm pendant diameter',
-    weight: '72.0g',
-    sku: 'RASS-TRB-007',
-    stockCount: 1
-  },
-
-  // Tribal 6. Dual-Tone Tribal Collar Necklace
-  {
-    id: 'rass-trb-03',
-    name: 'Dual-Tone Tribal Collar Necklace',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2950,
-    originalPrice: 3850,
-    costPrice: 1300,
-    image: '/images/tribal/dual-tone-tribal-collar-necklace.webp',
-    cleanImage: '/images/tribal/dual-tone-tribal-collar-necklace.webp',
-    description: "A striking blend of warm artisanal gold brass and cool oxidised silver, punctuated with architectural diamond medallions and musical ghungroo drops.",
-    details: [
-          "Striking dual-tone metal palette uniting antique gold and oxidised silver",
-          "Cascading drop medallions with soft kinetic movement and chime",
-          "Protective e-coat preventing oxidation and tarnish",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Dual-Tone Brass & Sterling Silver Polish',
-    gemstones: 'Kundan Accents & Kinetic Silver Bell Tassels',
-    inStock: true,
-    isBestseller: true,
-    isNew: true,
-    dimensions: '42cm choker curve + 6cm extender',
-    weight: '58.0g',
-    sku: 'RASS-TRB-003',
-    stockCount: 1
-  },
-
-  // Tribal 7. Durga Hasali Collar Necklace
-  {
-    id: 'rass-trb-01',
-    name: 'Durga Hasali Collar Necklace',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2150,
-    originalPrice: 2850,
-    costPrice: 950,
-    image: '/images/tribal/durga-hasali-necklace.webp',
-    cleanImage: '/images/tribal/durga-hasali-necklace.webp',
-    description: "An auspicious tribal statement hasali featuring an intricately sculpted Maa Durga medallion flanked by radiant filigree spikes and antique oxidised silver bead tassels.",
-    details: [
-          "Sacred Maa Durga central medallion hand-cast by heritage Bengal karigars",
-          "Solid brass construction with deep oxidised silver patina & protective lacquer",
-          "Traditional rigid torque collar with soft adjustable silk cord for bespoke fit",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive heirloom creation (1 piece only)"
-    ],
-    metal: 'Solid Brass with Antique Silver Oxidised Polish',
-    gemstones: 'Embossed Maa Durga Talisman & Filigree Drops',
-    inStock: true,
-    isBestseller: true,
-    isNew: true,
-    dimensions: '14.5cm collar diameter + adjustable dori cord',
-    weight: '48.5g',
-    sku: 'RASS-TRB-001',
-    stockCount: 1
-  },
-
-  // Tribal 8. Layered Silver Long Necklace
-  {
-    id: 'rass-trb-15',
-    name: 'Layered Silver Long Necklace',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2450,
-    originalPrice: 3250,
-    costPrice: 1100,
-    image: '/images/tribal/layered-silver-long-necklace.webp',
-    cleanImage: '/images/tribal/layered-silver-long-necklace.webp',
-    description: "Cascading tiers of oxidised silver beads create instant dimension and boho sophistication, flowing effortlessly with your movements.",
-    details: [
-          "Multi-tier cascading structure providing layered styling in one single clasp",
-          "Feather-light hollow beads ensuring zero strain on neck muscles",
-          "Anti-tarnish protective lacquer for everyday longevity",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Oxidised Silver Plating on Solid Brass',
-    gemstones: 'Tiered Tribal Beads & Crescent Droplets',
-    inStock: true,
-    isBestseller: false,
-    isNew: true,
-    dimensions: '58cm drop length',
-    weight: '49.1g',
-    sku: 'RASS-TRB-015',
-    stockCount: 1
-  },
-
-  // Tribal 9. Kamal Sutra Hasali Necklace
-  {
-    id: 'rass-trb-02',
-    name: 'Kamal Sutra Hasali Necklace',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2150,
-    originalPrice: 2850,
-    costPrice: 950,
-    image: '/images/tribal/kamal-sutra-hasali-necklace.webp',
-    cleanImage: '/images/tribal/kamal-sutra-hasali-necklace.webp',
-    description: "Embodying purity and renewal, this torque collar hasali showcases blooming lotus motifs sculpted in relief along a hand-twisted silver wire silhouette.",
-    details: [
-          "Sculptural blooming lotus (Kamal) center flanked by temple prayer beads",
-          "Antique silver finish with dual anti-tarnish protective sealing",
-          "Ergonomic contouring designed to rest gracefully along the collarbone",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Solid Brass with Oxidised Antique Silver Finish',
-    gemstones: 'Sacred Lotus Floral Carvings & Temple Beads',
-    inStock: true,
-    isBestseller: true,
-    isNew: true,
-    dimensions: '14.8cm collar diameter + adjustable dori tie',
-    weight: '46.2g',
-    sku: 'RASS-TRB-002',
-    stockCount: 1
-  },
-
-  // Tribal 10. Grand Silver Statement Neckpiece
+  // Tribal 4 [Sage]. Grand Silver Statement Neckpiece
   {
     id: 'rass-trb-05',
     name: 'Grand Silver Statement Neckpiece',
@@ -1866,217 +1688,157 @@ export const PRODUCTS: Product[] = [
     stockCount: 1
   },
 
-  // Tribal 11. Artisan Long Pendant Necklace
+  // Tribal 5 [Floral]. Kamal Sutra Hasali Necklace
   {
-    id: 'rass-trb-13',
-    name: 'Artisan Long Pendant Necklace',
+    id: 'rass-trb-02',
+    name: 'Kamal Sutra Hasali Necklace',
     category: 'tribal',
     categoryDisplay: 'Tribal Jewellery',
-    price: 2850,
-    originalPrice: 3750,
-    costPrice: 1250,
-    image: '/images/tribal/artisan-long-pendant-necklace.webp',
-    cleanImage: '/images/tribal/artisan-long-pendant-necklace.webp',
-    description: "Centered on an ancient sunburst amulet, this long-line tribal necklace balances bold geometry with artisan oxidisation and articulated drops.",
+    price: 2150,
+    originalPrice: 2850,
+    costPrice: 950,
+    image: '/images/tribal/kamal-sutra-hasali-necklace.webp',
+    cleanImage: '/images/tribal/kamal-sutra-hasali-necklace.webp',
+    description: "Embodying purity and renewal, this torque collar hasali showcases blooming lotus motifs sculpted in relief along a hand-twisted silver wire silhouette.",
     details: [
-          "Radial sunburst symbol signifying inner vitality and strength",
-          "Interlocking textured cable links providing superior tensile strength",
-          "Antiqued matte silver finish that will not peel or discolour",
+          "Sculptural blooming lotus (Kamal) center flanked by temple prayer beads",
+          "Antique silver finish with dual anti-tarnish protective sealing",
+          "Ergonomic contouring designed to rest gracefully along the collarbone",
           "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
           "Single exclusive creation (1 piece only)"
     ],
-    metal: 'Oxidised Silver on Brass',
-    gemstones: 'Geometric Sunburst Talisman Pendant',
+    metal: 'Solid Brass with Oxidised Antique Silver Finish',
+    gemstones: 'Sacred Lotus Floral Carvings & Temple Beads',
     inStock: true,
-    isBestseller: false,
+    isBestseller: true,
     isNew: true,
-    dimensions: '60cm chain length; 52mm pendant',
-    weight: '56.0g',
-    sku: 'RASS-TRB-013',
+    dimensions: '14.8cm collar diameter + adjustable dori tie',
+    weight: '46.2g',
+    sku: 'RASS-TRB-002',
     stockCount: 1
   },
 
-  // Tribal 12. Kiyaara Coin Drop Choker
+  // Tribal 6 [Mauve]. Durga Hasali Collar Necklace
   {
-    id: 'rass-trb-04',
-    name: 'Kiyaara Coin Drop Choker',
+    id: 'rass-trb-01',
+    name: 'Durga Hasali Collar Necklace',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 2150,
+    originalPrice: 2850,
+    costPrice: 950,
+    image: '/images/tribal/durga-hasali-necklace.webp',
+    cleanImage: '/images/tribal/durga-hasali-necklace.webp',
+    description: "An auspicious tribal statement hasali featuring an intricately sculpted Maa Durga medallion flanked by radiant filigree spikes and antique oxidised silver bead tassels.",
+    details: [
+          "Sacred Maa Durga central medallion hand-cast by heritage Bengal karigars",
+          "Solid brass construction with deep oxidised silver patina & protective lacquer",
+          "Traditional rigid torque collar with soft adjustable silk cord for bespoke fit",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive heirloom creation (1 piece only)"
+    ],
+    metal: 'Solid Brass with Antique Silver Oxidised Polish',
+    gemstones: 'Embossed Maa Durga Talisman & Filigree Drops',
+    inStock: true,
+    isBestseller: true,
+    isNew: true,
+    dimensions: '14.5cm collar diameter + adjustable dori cord',
+    weight: '48.5g',
+    sku: 'RASS-TRB-001',
+    stockCount: 1
+  },
+
+  // Tribal 7 [Sage]. Layered Silver Long Necklace
+  {
+    id: 'rass-trb-15',
+    name: 'Layered Silver Long Necklace',
     category: 'tribal',
     categoryDisplay: 'Tribal Jewellery',
     price: 2450,
     originalPrice: 3250,
     costPrice: 1100,
-    image: '/images/tribal/kiyaara-coin-drop-choker.webp',
-    cleanImage: '/images/tribal/kiyaara-coin-drop-choker.webp',
-    description: "Inspired by ancient royal treasury currencies, the Kiyaara choker arrays delicately stamped coin medallions with soft brushed oxidisation.",
+    image: '/images/tribal/layered-silver-long-necklace.webp',
+    cleanImage: '/images/tribal/layered-silver-long-necklace.webp',
+    description: "Cascading tiers of oxidised silver beads create instant dimension and boho sophistication, flowing effortlessly with your movements.",
     details: [
-          "Authentic antique coin replicas with embossed dynastic crests",
-          "High-grade skin-safe alloy with anti-tarnish micro lacquer",
-          "Comfort-fit links that articulate fluidly with neck movement",
+          "Multi-tier cascading structure providing layered styling in one single clasp",
+          "Feather-light hollow beads ensuring zero strain on neck muscles",
+          "Anti-tarnish protective lacquer for everyday longevity",
           "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
           "Single exclusive creation (1 piece only)"
     ],
-    metal: 'Oxidised German Silver Plating',
-    gemstones: 'Embossed Regal Coin Motifs',
+    metal: 'Oxidised Silver Plating on Solid Brass',
+    gemstones: 'Tiered Tribal Beads & Crescent Droplets',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '58cm drop length',
+    weight: '49.1g',
+    sku: 'RASS-TRB-015',
+    stockCount: 1
+  },
+
+  // Tribal 8 [Floral]. Ornate Filigree Silver Choker
+  {
+    id: 'rass-trb-16',
+    name: 'Ornate Filigree Silver Choker',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 2850,
+    originalPrice: 3750,
+    costPrice: 1250,
+    image: '/images/tribal/ornate-filigree-silver-choker.webp',
+    cleanImage: '/images/tribal/ornate-filigree-silver-choker.webp',
+    description: "Delicate gossamer-thin filigree wire woven like lacework into a regal choker collar, finished with miniature silver jhumka bells along the hem.",
+    details: [
+          "Fine wire filigree work crafted by master silversmiths",
+          "Miniature jhumka bells offering delicate chime and movement",
+          "Comfort-molded back ensuring a plush, snug fit at the throat",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Solid Brass with Antique Silver Finish',
+    gemstones: 'Lace Filigree Scrollwork & Dome Drops',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '38cm neck curve + 7cm extender',
+    weight: '53.8g',
+    sku: 'RASS-TRB-016',
+    stockCount: 1
+  },
+
+  // Tribal 9 [Mauve]. Royal Floral Long Pendant Necklace
+  {
+    id: 'rass-trb-07',
+    name: 'Royal Floral Long Pendant Necklace',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 3450,
+    originalPrice: 4500,
+    costPrice: 1550,
+    image: '/images/tribal/royal-floral-long-pendant-necklace.webp',
+    cleanImage: '/images/tribal/royal-floral-long-pendant-necklace.webp',
+    description: "A majestic long tribal mala featuring a heavy statement floral medallion suspended from an ornate double-link chain with swinging ghungroo clusters.",
+    details: [
+          "Magnificent 65mm dimensional floral pendant with radial filigree petals",
+          "Sturdy hand-assembled double link chain designed for dramatic layering",
+          "Rich antique tribal patina sealed with tarnish-resistant coating",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Oxidised Silver Plating on Solid Brass',
+    gemstones: 'Carved Floral Medallion & Suspended Ghungroos',
     inStock: true,
     isBestseller: true,
     isNew: true,
-    dimensions: '38cm choker + 7cm extender',
-    weight: '52.4g',
-    sku: 'RASS-TRB-004',
+    dimensions: '68cm chain drop; 65mm pendant diameter',
+    weight: '72.0g',
+    sku: 'RASS-TRB-007',
     stockCount: 1
   },
 
-  // Tribal 13. Pachi Kundan Pink Stone Hasali
-  {
-    id: 'rass-trb-06',
-    name: 'Pachi Kundan Pink Stone Hasali',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2150,
-    originalPrice: 2850,
-    costPrice: 950,
-    image: '/images/tribal/pachi-kundan-pink-stone-hasali.webp',
-    cleanImage: '/images/tribal/pachi-kundan-pink-stone-hasali.webp',
-    description: "Raw Jaipur Pachi Kundan stones in soft rose quartz hues set into antique silver prong bezels along an artisanal torque collar.",
-    details: [
-          "Authentic Pachi Kundan setting with radiant faceted pink stones",
-          "Sturdy yet lightweight torque silhouette with adjustable dori",
-          "Contrast between rough-luxe oxidised metal and luminous gemstone sparkle",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Antique Oxidised Silver with Gold Foil Bezels',
-    gemstones: 'Raw-Cut Pink Tourmaline Quartz & Pachi Kundan Stones',
-    inStock: true,
-    isBestseller: false,
-    isNew: true,
-    dimensions: '14.5cm collar diameter + dori tie',
-    weight: '44.0g',
-    sku: 'RASS-TRB-006',
-    stockCount: 1
-  },
-
-  // Tribal 14. Pachi Kundan Black Stone Hasali
-  {
-    id: 'rass-trb-08',
-    name: 'Pachi Kundan Black Stone Hasali',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2150,
-    originalPrice: 2850,
-    costPrice: 950,
-    image: '/images/tribal/pachi-kundan-black-stone-hasali.webp',
-    cleanImage: '/images/tribal/pachi-kundan-black-stone-hasali.webp',
-    description: "Dramatic midnight black Kundan stones hand-set into vintage silver claw mounts, creating an edgy yet regal high-contrast collar piece.",
-    details: [
-          "Faceted jet-black stones capturing ambient light with dark allure",
-          "Protective e-coat preventing moisture damage and oxidation",
-          "Flexible back dori cord accommodating various neck sizes comfortably",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Antique Oxidised Silver with Gold Leaf Accents',
-    gemstones: 'Midnight Black Onyx Pachi Kundan Stones',
-    inStock: true,
-    isBestseller: false,
-    isNew: true,
-    dimensions: '14.5cm collar diameter + dori tie',
-    weight: '45.1g',
-    sku: 'RASS-TRB-008',
-    stockCount: 1
-  },
-
-  // Tribal 15. Leher Wave Hasali
-  {
-    id: 'rass-trb-12',
-    name: 'Leher Wave Hasali',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 1450,
-    originalPrice: 1950,
-    costPrice: 650,
-    image: '/images/tribal/leher-wave-hasali.webp',
-    cleanImage: '/images/tribal/leher-wave-hasali.webp',
-    description: "Modern minimalism meets tribal heritage in this streamlined hasali, featuring undulating hammer marks that catch the light like sunlit water.",
-    details: [
-          "Subtle hammered ripples created by hand with silversmith forging hammer",
-          "Featherlight feel for all-day comfort without neck fatigue",
-          "Understated statement styling for both fusion and traditional silhouettes",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Solid Brass with Silver Patina',
-    gemstones: 'Hand-Hammered Wave Undulations',
-    inStock: true,
-    isBestseller: false,
-    isNew: true,
-    dimensions: '14.0cm collar diameter + cord',
-    weight: '34.2g',
-    sku: 'RASS-TRB-012',
-    stockCount: 1
-  },
-
-  // Tribal 16. Magnificent Tribal Choker
-  {
-    id: 'rass-trb-14',
-    name: 'Magnificent Tribal Choker',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 3250,
-    originalPrice: 4250,
-    costPrice: 1450,
-    image: '/images/tribal/magnificent-tribal-choker.webp',
-    cleanImage: '/images/tribal/magnificent-tribal-choker.webp',
-    description: "A heavyweight heirloom collar featuring embossed tribal chevron plates linked in harmony, finished with rhythmic chiming drop charms.",
-    details: [
-          "Interlocking chevron plates sculpted with Rajasthani tribal motifs",
-          "Substantial heirloom heft with velvety smooth skin-contact backing",
-          "Durable dual clasp with security extender chain",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Heavy Oxidised Brass & Silver Plating',
-    gemstones: 'Sculpted Diamond Medallions & Rhythmic Tassels',
-    inStock: true,
-    isBestseller: true,
-    isNew: true,
-    dimensions: '41cm choker line + 5cm extender',
-    weight: '66.4g',
-    sku: 'RASS-TRB-014',
-    stockCount: 1
-  },
-
-  // Tribal 17. Oxidised Silver Pendant Necklace
-  {
-    id: 'rass-trb-17',
-    name: 'Oxidised Silver Pendant Necklace',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 2150,
-    originalPrice: 2850,
-    costPrice: 950,
-    image: '/images/tribal/oxidised-silver-pendant-necklace.webp',
-    cleanImage: '/images/tribal/oxidised-silver-pendant-necklace.webp',
-    description: "An everyday statement talisman centered on an ornate tribal medallion, framed by hanging bead drops on an artisanal chain.",
-    details: [
-          "Intricately embossed central talisman with high-relief depth",
-          "Medium-length chain ideal for v-neck kurtas, sarees, and dresses",
-          "Long-lasting dual coat protection against oxidation",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Antique Oxidised Silver on Brass',
-    gemstones: 'Embossed Floral Medallion & Beaded Fringe',
-    inStock: true,
-    isBestseller: false,
-    isNew: true,
-    dimensions: '52cm chain; 45mm pendant drop',
-    weight: '41.3g',
-    sku: 'RASS-TRB-017',
-    stockCount: 1
-  },
-
-  // Tribal 18. Heritage Coin Tribal Choker
+  // Tribal 10 [Sage]. Heritage Coin Tribal Choker
   {
     id: 'rass-trb-18',
     name: 'Heritage Coin Tribal Choker',
@@ -2106,97 +1868,67 @@ export const PRODUCTS: Product[] = [
     stockCount: 1
   },
 
-  // Tribal 19. Tribal Textured Choker (Edition II)
+  // Tribal 11 [Floral]. Pachi Kundan Pink Stone Hasali
   {
-    id: 'rass-trb-19',
-    name: 'Tribal Textured Choker (Edition II)',
+    id: 'rass-trb-06',
+    name: 'Pachi Kundan Pink Stone Hasali',
     category: 'tribal',
     categoryDisplay: 'Tribal Jewellery',
-    price: 1850,
-    originalPrice: 2450,
-    costPrice: 800,
-    image: '/images/tribal/tribal-textured-choker-edition-2.webp',
-    cleanImage: '/images/tribal/tribal-textured-choker-edition-2.webp',
-    description: "A companion edition featuring deeper chiseled chevron grooves and darker smoky oxidisation for an authentic tribal bohemian allure.",
+    price: 2150,
+    originalPrice: 2850,
+    costPrice: 950,
+    image: '/images/tribal/pachi-kundan-pink-stone-hasali.webp',
+    cleanImage: '/images/tribal/pachi-kundan-pink-stone-hasali.webp',
+    description: "Raw Jaipur Pachi Kundan stones in soft rose quartz hues set into antique silver prong bezels along an artisanal torque collar.",
     details: [
-          "Hand-chiseled textured bands displaying raw artisanal charisma",
-          "Smoky dark patina accentuating geometric light reflection",
-          "Smooth hand-finished edges for comfortable wear",
+          "Authentic Pachi Kundan setting with radiant faceted pink stones",
+          "Sturdy yet lightweight torque silhouette with adjustable dori",
+          "Contrast between rough-luxe oxidised metal and luminous gemstone sparkle",
           "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
           "Single exclusive creation (1 piece only)"
     ],
-    metal: 'Solid Brass with Dark Antique Patina',
-    gemstones: 'Chiseled Chevron Bands & Drop Beads',
+    metal: 'Antique Oxidised Silver with Gold Foil Bezels',
+    gemstones: 'Raw-Cut Pink Tourmaline Quartz & Pachi Kundan Stones',
     inStock: true,
     isBestseller: false,
     isNew: true,
-    dimensions: '38cm neck curve + 6cm extender',
-    weight: '42.9g',
-    sku: 'RASS-TRB-019',
+    dimensions: '14.5cm collar diameter + dori tie',
+    weight: '44.0g',
+    sku: 'RASS-TRB-006',
     stockCount: 1
   },
 
-  // Tribal 20. Dual Brass & Silver Choker
+  // Tribal 12 [Mauve]. Artisan Long Pendant Necklace
   {
-    id: 'rass-trb-21',
-    name: 'Dual Brass & Silver Choker',
+    id: 'rass-trb-13',
+    name: 'Artisan Long Pendant Necklace',
     category: 'tribal',
     categoryDisplay: 'Tribal Jewellery',
-    price: 1450,
-    originalPrice: 1950,
-    costPrice: 650,
-    image: '/images/tribal/dual-brass-silver-choker.webp',
-    cleanImage: '/images/tribal/dual-brass-silver-choker.webp',
-    description: "An eclectic two-tone choker intertwining golden brass warmth with cool silver oxidisation, effortlessly matching both gold and silver accessories.",
+    price: 2850,
+    originalPrice: 3750,
+    costPrice: 1250,
+    image: '/images/tribal/artisan-long-pendant-necklace.webp',
+    cleanImage: '/images/tribal/artisan-long-pendant-necklace.webp',
+    description: "Centered on an ancient sunburst amulet, this long-line tribal necklace balances bold geometry with artisan oxidisation and articulated drops.",
     details: [
-          "Seamless two-tone palette easily paired with diverse jewellery styles",
-          "Streamlined modern tribal aesthetic for everyday casual wear",
-          "Anti-oxidation protective sealing ensuring lasting luster",
+          "Radial sunburst symbol signifying inner vitality and strength",
+          "Interlocking textured cable links providing superior tensile strength",
+          "Antiqued matte silver finish that will not peel or discolour",
           "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
           "Single exclusive creation (1 piece only)"
     ],
-    metal: 'Dual-Finish Antique Brass & Silver Polish',
-    gemstones: 'Two-Tone Geometric Textured Plates',
+    metal: 'Oxidised Silver on Brass',
+    gemstones: 'Geometric Sunburst Talisman Pendant',
     inStock: true,
     isBestseller: false,
     isNew: true,
-    dimensions: '37cm neck curve + 5cm extender',
-    weight: '36.5g',
-    sku: 'RASS-TRB-021',
+    dimensions: '60cm chain length; 52mm pendant',
+    weight: '56.0g',
+    sku: 'RASS-TRB-013',
     stockCount: 1
   },
 
-  // Tribal 21. Classic Tribal Bell Choker
-  {
-    id: 'rass-trb-20',
-    name: 'Classic Tribal Bell Choker',
-    category: 'tribal',
-    categoryDisplay: 'Tribal Jewellery',
-    price: 1650,
-    originalPrice: 2150,
-    costPrice: 720,
-    image: '/images/tribal/classic-tribal-bell-choker.webp',
-    cleanImage: '/images/tribal/classic-tribal-bell-choker.webp',
-    description: "Rhythmic and playful, this classic tribal choker features a neat ribbon of silver bells that create a subtle, melodious whisper with every movement.",
-    details: [
-          "A continuous fringe of hollow musical ghungroo bells",
-          "Subtle musical presence ideal for festive celebrations and dandiya",
-          "Hypoallergenic, nickel-free alloy with skin-friendly polish",
-          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
-          "Single exclusive creation (1 piece only)"
-    ],
-    metal: 'Solid Brass with Silver Polish',
-    gemstones: 'Artisan Ghungroo Bell Fringe',
-    inStock: true,
-    isBestseller: false,
-    isNew: true,
-    dimensions: '36cm collar line + 6cm extender',
-    weight: '39.0g',
-    sku: 'RASS-TRB-020',
-    stockCount: 1
-  },
-
-  // Tribal 22. Padma Filigree Choker
+  // Tribal 13 [Sage]. Padma Filigree Choker
   {
     id: 'rass-trb-22',
     name: 'Padma Filigree Choker',
@@ -2226,7 +1958,157 @@ export const PRODUCTS: Product[] = [
     stockCount: 1
   },
 
-  // Tribal 23. Aarohi Tribal Choker
+  // Tribal 14 [Floral]. Pachi Kundan Black Stone Hasali
+  {
+    id: 'rass-trb-08',
+    name: 'Pachi Kundan Black Stone Hasali',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 2150,
+    originalPrice: 2850,
+    costPrice: 950,
+    image: '/images/tribal/pachi-kundan-black-stone-hasali.webp',
+    cleanImage: '/images/tribal/pachi-kundan-black-stone-hasali.webp',
+    description: "Dramatic midnight black Kundan stones hand-set into vintage silver claw mounts, creating an edgy yet regal high-contrast collar piece.",
+    details: [
+          "Faceted jet-black stones capturing ambient light with dark allure",
+          "Protective e-coat preventing moisture damage and oxidation",
+          "Flexible back dori cord accommodating various neck sizes comfortably",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Antique Oxidised Silver with Gold Leaf Accents',
+    gemstones: 'Midnight Black Onyx Pachi Kundan Stones',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '14.5cm collar diameter + dori tie',
+    weight: '45.1g',
+    sku: 'RASS-TRB-008',
+    stockCount: 1
+  },
+
+  // Tribal 15 [Mauve]. Dual-Tone Tribal Collar Necklace
+  {
+    id: 'rass-trb-03',
+    name: 'Dual-Tone Tribal Collar Necklace',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 2950,
+    originalPrice: 3850,
+    costPrice: 1300,
+    image: '/images/tribal/dual-tone-tribal-collar-necklace.webp',
+    cleanImage: '/images/tribal/dual-tone-tribal-collar-necklace.webp',
+    description: "A striking blend of warm artisanal gold brass and cool oxidised silver, punctuated with architectural diamond medallions and musical ghungroo drops.",
+    details: [
+          "Striking dual-tone metal palette uniting antique gold and oxidised silver",
+          "Cascading drop medallions with soft kinetic movement and chime",
+          "Protective e-coat preventing oxidation and tarnish",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Dual-Tone Brass & Sterling Silver Polish',
+    gemstones: 'Kundan Accents & Kinetic Silver Bell Tassels',
+    inStock: true,
+    isBestseller: true,
+    isNew: true,
+    dimensions: '42cm choker curve + 6cm extender',
+    weight: '58.0g',
+    sku: 'RASS-TRB-003',
+    stockCount: 1
+  },
+
+  // Tribal 16 [Sage]. Tribal Textured Choker (Edition II)
+  {
+    id: 'rass-trb-19',
+    name: 'Tribal Textured Choker (Edition II)',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 1850,
+    originalPrice: 2450,
+    costPrice: 800,
+    image: '/images/tribal/tribal-textured-choker-edition-2.webp',
+    cleanImage: '/images/tribal/tribal-textured-choker-edition-2.webp',
+    description: "A companion edition featuring deeper chiseled chevron grooves and darker smoky oxidisation for an authentic tribal bohemian allure.",
+    details: [
+          "Hand-chiseled textured bands displaying raw artisanal charisma",
+          "Smoky dark patina accentuating geometric light reflection",
+          "Smooth hand-finished edges for comfortable wear",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Solid Brass with Dark Antique Patina',
+    gemstones: 'Chiseled Chevron Bands & Drop Beads',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '38cm neck curve + 6cm extender',
+    weight: '42.9g',
+    sku: 'RASS-TRB-019',
+    stockCount: 1
+  },
+
+  // Tribal 17 [Floral]. Leher Wave Hasali
+  {
+    id: 'rass-trb-12',
+    name: 'Leher Wave Hasali',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 1450,
+    originalPrice: 1950,
+    costPrice: 650,
+    image: '/images/tribal/leher-wave-hasali.webp',
+    cleanImage: '/images/tribal/leher-wave-hasali.webp',
+    description: "Modern minimalism meets tribal heritage in this streamlined hasali, featuring undulating hammer marks that catch the light like sunlit water.",
+    details: [
+          "Subtle hammered ripples created by hand with silversmith forging hammer",
+          "Featherlight feel for all-day comfort without neck fatigue",
+          "Understated statement styling for both fusion and traditional silhouettes",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Solid Brass with Silver Patina',
+    gemstones: 'Hand-Hammered Wave Undulations',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '14.0cm collar diameter + cord',
+    weight: '34.2g',
+    sku: 'RASS-TRB-012',
+    stockCount: 1
+  },
+
+  // Tribal 18 [Mauve]. Classic Tribal Bell Choker
+  {
+    id: 'rass-trb-20',
+    name: 'Classic Tribal Bell Choker',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 1650,
+    originalPrice: 2150,
+    costPrice: 720,
+    image: '/images/tribal/classic-tribal-bell-choker.webp',
+    cleanImage: '/images/tribal/classic-tribal-bell-choker.webp',
+    description: "Rhythmic and playful, this classic tribal choker features a neat ribbon of silver bells that create a subtle, melodious whisper with every movement.",
+    details: [
+          "A continuous fringe of hollow musical ghungroo bells",
+          "Subtle musical presence ideal for festive celebrations and dandiya",
+          "Hypoallergenic, nickel-free alloy with skin-friendly polish",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Solid Brass with Silver Polish',
+    gemstones: 'Artisan Ghungroo Bell Fringe',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '36cm collar line + 6cm extender',
+    weight: '39.0g',
+    sku: 'RASS-TRB-020',
+    stockCount: 1
+  },
+
+  // Tribal 19 [Sage]. Aarohi Tribal Choker
   {
     id: 'rass-trb-23',
     name: 'Aarohi Tribal Choker',
@@ -2253,6 +2135,126 @@ export const PRODUCTS: Product[] = [
     dimensions: '36cm neck curve + 6cm extender',
     weight: '32.5g',
     sku: 'RASS-TRB-023',
+    stockCount: 1
+  },
+
+  // Tribal 20 [Floral]. Magnificent Tribal Choker
+  {
+    id: 'rass-trb-14',
+    name: 'Magnificent Tribal Choker',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 3250,
+    originalPrice: 4250,
+    costPrice: 1450,
+    image: '/images/tribal/magnificent-tribal-choker.webp',
+    cleanImage: '/images/tribal/magnificent-tribal-choker.webp',
+    description: "A heavyweight heirloom collar featuring embossed tribal chevron plates linked in harmony, finished with rhythmic chiming drop charms.",
+    details: [
+          "Interlocking chevron plates sculpted with Rajasthani tribal motifs",
+          "Substantial heirloom heft with velvety smooth skin-contact backing",
+          "Durable dual clasp with security extender chain",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Heavy Oxidised Brass & Silver Plating',
+    gemstones: 'Sculpted Diamond Medallions & Rhythmic Tassels',
+    inStock: true,
+    isBestseller: true,
+    isNew: true,
+    dimensions: '41cm choker line + 5cm extender',
+    weight: '66.4g',
+    sku: 'RASS-TRB-014',
+    stockCount: 1
+  },
+
+  // Tribal 21 [Mauve]. Oxidised Silver Pendant Necklace
+  {
+    id: 'rass-trb-17',
+    name: 'Oxidised Silver Pendant Necklace',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 2150,
+    originalPrice: 2850,
+    costPrice: 950,
+    image: '/images/tribal/oxidised-silver-pendant-necklace.webp',
+    cleanImage: '/images/tribal/oxidised-silver-pendant-necklace.webp',
+    description: "An everyday statement talisman centered on an ornate tribal medallion, framed by hanging bead drops on an artisanal chain.",
+    details: [
+          "Intricately embossed central talisman with high-relief depth",
+          "Medium-length chain ideal for v-neck kurtas, sarees, and dresses",
+          "Long-lasting dual coat protection against oxidation",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Antique Oxidised Silver on Brass',
+    gemstones: 'Embossed Floral Medallion & Beaded Fringe',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '52cm chain; 45mm pendant drop',
+    weight: '41.3g',
+    sku: 'RASS-TRB-017',
+    stockCount: 1
+  },
+
+  // Tribal 22 [Floral]. Kiyaara Coin Drop Choker
+  {
+    id: 'rass-trb-04',
+    name: 'Kiyaara Coin Drop Choker',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 2450,
+    originalPrice: 3250,
+    costPrice: 1100,
+    image: '/images/tribal/kiyaara-coin-drop-choker.webp',
+    cleanImage: '/images/tribal/kiyaara-coin-drop-choker.webp',
+    description: "Inspired by ancient royal treasury currencies, the Kiyaara choker arrays delicately stamped coin medallions with soft brushed oxidisation.",
+    details: [
+          "Authentic antique coin replicas with embossed dynastic crests",
+          "High-grade skin-safe alloy with anti-tarnish micro lacquer",
+          "Comfort-fit links that articulate fluidly with neck movement",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Oxidised German Silver Plating',
+    gemstones: 'Embossed Regal Coin Motifs',
+    inStock: true,
+    isBestseller: true,
+    isNew: true,
+    dimensions: '38cm choker + 7cm extender',
+    weight: '52.4g',
+    sku: 'RASS-TRB-004',
+    stockCount: 1
+  },
+
+  // Tribal 23 [Mauve]. Dual Brass & Silver Choker
+  {
+    id: 'rass-trb-21',
+    name: 'Dual Brass & Silver Choker',
+    category: 'tribal',
+    categoryDisplay: 'Tribal Jewellery',
+    price: 1450,
+    originalPrice: 1950,
+    costPrice: 650,
+    image: '/images/tribal/dual-brass-silver-choker.webp',
+    cleanImage: '/images/tribal/dual-brass-silver-choker.webp',
+    description: "An eclectic two-tone choker intertwining golden brass warmth with cool silver oxidisation, effortlessly matching both gold and silver accessories.",
+    details: [
+          "Seamless two-tone palette easily paired with diverse jewellery styles",
+          "Streamlined modern tribal aesthetic for everyday casual wear",
+          "Anti-oxidation protective sealing ensuring lasting luster",
+          "100% skin-safe & hypoallergenic (nickel-free and lead-free)",
+          "Single exclusive creation (1 piece only)"
+    ],
+    metal: 'Dual-Finish Antique Brass & Silver Polish',
+    gemstones: 'Two-Tone Geometric Textured Plates',
+    inStock: true,
+    isBestseller: false,
+    isNew: true,
+    dimensions: '37cm neck curve + 5cm extender',
+    weight: '36.5g',
+    sku: 'RASS-TRB-021',
     stockCount: 1
   }
 ];
