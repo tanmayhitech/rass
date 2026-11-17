@@ -338,7 +338,7 @@ class HomeMediaService {
     this.notifyListeners();
 
     // Asynchronously push update to Supabase Cloud Storage
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.location?.host) {
       fetch('/api/sync-home-media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -37,7 +37,7 @@ async function runAdvancedSuite() {
   // SUITE 1: CONCURRENCY & RACE CONDITION TEST (SIMULTANEOUS CHECKOUTS)
   // ==========================================================================
   console.log('>> [SUITE 1]: High-Concurrency Race Condition & Row-Locking Stress Test');
-  const targetVariantId = 'var-neck-01-std'; // Low-stock collar with 3 units
+  const targetVariantId = 'var-rass-pin-05-std'; // Genuine low-stock item with 3 units
   const orderBatchPrefix = `STRESS-ORD-${Date.now()}`;
 
   // Step 1: Fire 10 simultaneous atomic reservation requests in parallel
@@ -96,7 +96,7 @@ async function runAdvancedSuite() {
   const { data: tamperedProd, error: prodTamperErr } = await supabase
     .from('products')
     .update({ base_price: 1 })
-    .eq('id', 'rass-necklace-01')
+    .eq('id', 'rass-jhumka-01')
     .select();
 
   assert(
@@ -109,11 +109,11 @@ async function runAdvancedSuite() {
   const { data: checkProd } = await supabase
     .from('products')
     .select('base_price')
-    .eq('id', 'rass-necklace-01')
+    .eq('id', 'rass-jhumka-01')
     .single();
   assert(
-    checkProd?.base_price === 38000,
-    'Product price remains securely untampered at ₹38,000',
+    checkProd?.base_price === 5000,
+    'Product price remains securely untampered at ₹5,000',
     `Current price: ₹${checkProd?.base_price}`
   );
 
@@ -194,8 +194,8 @@ async function runAdvancedSuite() {
     .insert([
       {
         order_id: e2eOrderId,
-        product_variant_id: 'var-neck-01-std',
-        product_id_snapshot: 'rass-necklace-01',
+        product_variant_id: 'var-rass-pin-05-std',
+        product_id_snapshot: 'rass-jhumka-01',
         product_title_snapshot: 'Rajkumari Cascading Jhumka Collar',
         variant_name_snapshot: 'Standard Collar',
         sku_snapshot: 'RASS-NCK-01-STD',
@@ -211,7 +211,7 @@ async function runAdvancedSuite() {
   // Step 3: Trigger atomic inventory deduction for the confirmed order
   const { data: deductResult, error: deductErr } = await supabase.rpc('deduct_inventory_atomic', {
     p_order_id: e2eOrderId,
-    p_variant_id: 'var-neck-01-std',
+    p_variant_id: 'var-rass-pin-05-std',
     p_quantity: 1,
   });
 
@@ -221,7 +221,7 @@ async function runAdvancedSuite() {
   // Step 4: Simulate order cancellation and atomic inventory replenishment
   const { data: restockResult, error: restockErr } = await supabase.rpc('release_inventory_atomic', {
     p_order_id: e2eOrderId,
-    p_variant_id: 'var-neck-01-std',
+    p_variant_id: 'var-rass-pin-05-std',
     p_quantity: 1,
   });
 
@@ -266,7 +266,7 @@ async function runAdvancedSuite() {
     itemSnapshots: [
       {
         id: 'snap-e2e-1',
-        productId: 'rass-necklace-01',
+        productId: 'rass-jhumka-01',
         productTitle: 'Rajkumari Cascading Jhumka Collar',
         variantName: 'Standard Collar',
         sku: 'RASS-NCK-01-STD',

@@ -1081,7 +1081,7 @@ class StoreService {
     this.saveState();
 
     // Asynchronously synchronize new product to Supabase Cloud Database
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.location?.host) {
       (async () => {
         try {
           const apiResp = await fetch('/api/catalog', {
@@ -1184,7 +1184,7 @@ class StoreService {
   }
 
   public setProductStatus(id: string, status: ProductStatus): Product {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.location?.host) {
       fetch('/api/catalog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1235,7 +1235,7 @@ class StoreService {
     this.saveState();
 
     // Asynchronously delete from Supabase via serverless API
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.location?.host) {
       fetch('/api/catalog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1324,7 +1324,7 @@ class StoreService {
     this.saveState();
 
     // Asynchronously push stock adjustment to Supabase via serverless API
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.location?.host) {
       fetch('/api/catalog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
