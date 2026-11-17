@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { uploadImageToCloud } from './imageUploadService';
 
 export interface ImageOptimizationResult {
   url: string;
@@ -92,11 +93,31 @@ export class ImageService {
       .toLowerCase()
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-z0-9_-]/g, '-');
-    const filename = `${folder}/${Date.now()}-${cleanBaseName}.${format}`;
 
-    // Upload to Supabase Storage if configured
+    const dataUrl = await this.blobToDataUrl(blob);
+
+    // Primary: Upload to Supabase Storage via serverless API
+    try {
+      const cloudRes = await uploadImageToCloud(dataUrl, cleanBaseName, folder);
+      if (cloudRes.success && cloudRes.publicUrl) {
+        return {
+          url: cloudRes.publicUrl,
+          originalSize,
+          optimizedSize,
+          savedPercentage,
+          dimensions,
+          format,
+          isCloudUrl: true,
+        };
+      }
+    } catch (err) {
+      console.warn('[ImageService] Cloud upload via serverless API deferred:', err);
+    }
+
+    // Direct Supabase Storage fallback
     if (isSupabaseConfigured) {
       try {
+        const filename = `${folder}/${Date.now()}-${cleanBaseName}.${format}`;
         const { data, error } = await supabase.storage
           .from(this.STORAGE_BUCKET)
           .upload(filename, blob, {
@@ -121,16 +142,13 @@ export class ImageService {
               isCloudUrl: true,
             };
           }
-        } else if (error) {
-          console.warn('[ImageService] Supabase upload failed, falling back to WebP DataURL:', error.message);
         }
       } catch (err) {
-        console.warn('[ImageService] Supabase cloud upload error:', err);
+        console.warn('[ImageService] Direct Supabase storage fallback error:', err);
       }
     }
 
-    // Offline / fallback: WebP DataURL
-    const dataUrl = await this.blobToDataUrl(blob);
+    // Offline / local fallback: WebP DataURL
     return {
       url: dataUrl,
       originalSize,
