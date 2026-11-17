@@ -19,7 +19,7 @@ export interface HomeMediaItem {
   lastUpdated?: string;
 }
 
-const STORAGE_KEY = 'rass_home_media_v26';
+const STORAGE_KEY = 'rass_home_media_v27';
 const CLOUD_CONFIG_URL = 'https://ukgjkmjhhxtaedxyhaeu.supabase.co/storage/v1/object/public/product-images/home-media-config.json';
 
 export const INITIAL_HOME_MEDIA: HomeMediaItem[] = [
@@ -190,9 +190,9 @@ export const INITIAL_HOME_MEDIA: HomeMediaItem[] = [
     section: 'editorial',
     order: 1,
     heightClass: 'aspect-[16/10]',
-    defaultImage: '/images/craftsmanship.png',
-    cleanImage: '/images/craftsmanship.png',
-    currentImage: '/images/craftsmanship.png',
+    defaultImage: '/images/craftsmanship.webp',
+    cleanImage: '/images/craftsmanship.webp',
+    currentImage: '/images/craftsmanship.webp',
     altText: 'Artisan jeweler delicately setting emerald gemstone onto gold filigree ring',
     isVisible: true,
     isCustom: false,
@@ -204,9 +204,9 @@ export const INITIAL_HOME_MEDIA: HomeMediaItem[] = [
     section: 'editorial',
     order: 2,
     heightClass: 'aspect-[1/1.2]',
-    defaultImage: '/images/everyday_moments.png',
-    cleanImage: '/images/everyday_moments.png',
-    currentImage: '/images/everyday_moments.png',
+    defaultImage: '/images/everyday_moments.webp',
+    cleanImage: '/images/everyday_moments.webp',
+    currentImage: '/images/everyday_moments.webp',
     altText: 'Intricate golden chandelier jhumka earrings resting gracefully on stone block',
     isVisible: true,
     isCustom: false,

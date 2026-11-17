@@ -103,10 +103,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
     const counts: Record<string, number> = { all: products.length };
     categories.forEach((cat) => {
       if (cat.id !== 'all') {
-        counts[cat.id] = products.filter((p) => 
-          p.category === cat.id || 
-          (['jhumka', 'tribal'].includes(cat.id) && ['jhumka', 'tribal'].includes(p.category))
-        ).length;
+        counts[cat.id] = products.filter((p) => p.category === cat.id).length;
       }
     });
     return counts;
@@ -136,11 +133,7 @@ export const ShopView: React.FC<ShopViewProps> = ({
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       if (selectedCategory !== 'all') {
-        const matchesCategory = 
-          product.category === selectedCategory ||
-          (['jhumka', 'tribal'].includes(selectedCategory) &&
-            ['jhumka', 'tribal'].includes(product.category));
-        if (!matchesCategory) return false;
+        if (product.category !== selectedCategory) return false;
       }
       if (priceTier === 'under-18k' && product.price >= 18000) return false;
       if (priceTier === '18k-25k' && (product.price < 18000 || product.price > 25000)) return false;
