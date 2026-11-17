@@ -235,7 +235,9 @@ class HomeMediaService {
    */
   public async syncWithCloud(): Promise<void> {
     try {
-      const resp = await fetch(CLOUD_CONFIG_URL + '?t=' + Date.now());
+      const resp = await fetch(CLOUD_CONFIG_URL + '?t=' + Date.now(), {
+        cache: 'no-store',
+      });
       if (resp.ok) {
         const cloudItems = (await resp.json()) as HomeMediaItem[];
         if (Array.isArray(cloudItems) && cloudItems.length > 0) {
@@ -267,7 +269,11 @@ class HomeMediaService {
 
           this.mediaItems = [...merged, ...customAdded];
           if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mediaItems));
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mediaItems));
+            } catch (e) {
+              console.warn('[HomeMediaService] Failed to cache cloud items to localStorage:', e);
+            }
           }
           this.notifyListeners();
         }
@@ -296,9 +302,7 @@ class HomeMediaService {
                   order: isCustom && found.order !== undefined ? found.order : def.order,
                   heightClass: def.heightClass,
                   isCustom,
-                  // Ensure currentImage fallback
                   currentImage: found.currentImage || def.currentImage,
-                  // When custom, cleanImage must NOT be restored from def
                   cleanImage: isCustom ? undefined : (found.cleanImage ?? def.cleanImage),
                   isVisible: found.isVisible !== undefined ? found.isVisible : def.isVisible,
                   title: found.title || def.title,
@@ -323,10 +327,22 @@ class HomeMediaService {
       console.warn('Could not load home media from localStorage:', e);
     }
 
+    // Default fallback: initialize in-memory array ONLY.
+    // CRITICAL: NEVER call saveToStorage() or pushToCloud() here!
+    // A fresh visitor or second device opening the site must NEVER overwrite the cloud config.
     this.mediaItems = [...INITIAL_HOME_MEDIA];
-    this.saveToStorage();
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mediaItems));
+      } catch (err) {
+        // ignore
+      }
+    }
   }
 
+  /**
+   * Save media items to browser localStorage ONLY (fast, non-destructive, zero network)
+   */
   private saveToStorage(): void {
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -336,16 +352,37 @@ class HomeMediaService {
       console.error('Failed to save home media to localStorage:', e);
     }
     this.notifyListeners();
+  }
 
-    // Asynchronously push update to Supabase Cloud Storage
-    if (typeof window !== 'undefined' && window.location?.host) {
-      fetch('/api/sync-home-media', {
+  /**
+   * Explicitly broadcast media items to Supabase Cloud Storage (home-media-config.json)
+   * ONLY invoked by verified Admin actions (replace, toggle, reset, add, delete)
+   */
+  public async pushToCloud(): Promise<boolean> {
+    if (typeof window === 'undefined' || !window.location?.host) {
+      return false;
+    }
+
+    try {
+      const sanitizedItems = this.mediaItems.map((item) => ({
+        ...item,
+        cleanImage: item.isCustom ? undefined : (item.cleanImage ?? item.defaultImage),
+      }));
+
+      const res = await fetch('/api/sync-home-media', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: this.mediaItems }),
-      }).catch((err) => {
-        console.warn('[HomeMediaService] Cloud backup sync deferred:', err);
+        body: JSON.stringify({ items: sanitizedItems }),
       });
+
+      if (!res.ok) {
+        console.warn('[HomeMediaService] /api/sync-home-media returned status:', res.status);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn('[HomeMediaService] Cloud push error:', err);
+      return false;
     }
   }
 
@@ -441,7 +478,51 @@ class HomeMediaService {
   }
 
   /**
-   * Replace an image with a new image URL or base64 data URL
+   * Replace an image with a new image URL or base64 data URL asynchronously.
+   * If a base64 data URL is provided, it uploads to Supabase CDN FIRST,
+   * ensuring the permanent CDN URL is stored and pushed to cloud config.
+   */
+  public async replaceImageAsync(
+    id: string,
+    newImageUrl: string,
+    options?: { title?: string; subtitle?: string; altText?: string }
+  ): Promise<HomeMediaItem> {
+    const index = this.mediaItems.findIndex((item) => item.id === id);
+    if (index === -1) {
+      throw new Error(`Media item with id '${id}' not found`);
+    }
+
+    let finalImageUrl = newImageUrl.trim();
+
+    // If new image is a base64 data URL, upload to Supabase Cloud Storage BEFORE saving
+    if (finalImageUrl.startsWith('data:')) {
+      const uploadRes = await uploadImageToCloud(finalImageUrl, id, 'home-media');
+      if (uploadRes.success && uploadRes.publicUrl) {
+        finalImageUrl = uploadRes.publicUrl;
+      }
+    }
+
+    const current = this.mediaItems[index];
+    const updated: HomeMediaItem = {
+      ...current,
+      currentImage: finalImageUrl,
+      cleanImage: undefined, // Clear clean image override so custom image takes priority
+      isCustom: true,
+      lastUpdated: new Date().toISOString(),
+      ...(options?.title !== undefined && { title: options.title.trim() }),
+      ...(options?.subtitle !== undefined && { subtitle: options.subtitle.trim() }),
+      ...(options?.altText !== undefined && { altText: options.altText.trim() }),
+    };
+
+    this.mediaItems[index] = updated;
+    this.saveToStorage();
+    await this.pushToCloud();
+
+    return updated;
+  }
+
+  /**
+   * Replace an image with a new image URL or base64 data URL (Synchronous)
    */
   public replaceImage(
     id: string,
@@ -480,12 +561,15 @@ class HomeMediaService {
                 currentImage: res.publicUrl,
               };
               this.saveToStorage();
+              this.pushToCloud();
             }
           }
         })
         .catch((e) => {
           console.warn('[HomeMediaService] Background cloud image upload deferred:', e);
         });
+    } else {
+      this.pushToCloud();
     }
 
     return updated;
@@ -507,6 +591,7 @@ class HomeMediaService {
     };
 
     this.saveToStorage();
+    this.pushToCloud();
     return nextVisibility;
   }
 
@@ -524,6 +609,7 @@ class HomeMediaService {
     };
 
     this.saveToStorage();
+    this.pushToCloud();
   }
 
   /**
@@ -548,6 +634,7 @@ class HomeMediaService {
 
     this.mediaItems[index] = restored;
     this.saveToStorage();
+    this.pushToCloud();
     return restored;
   }
 
@@ -565,6 +652,7 @@ class HomeMediaService {
     }));
 
     this.saveToStorage();
+    this.pushToCloud();
     return [...this.mediaItems];
   }
 
@@ -595,12 +683,15 @@ class HomeMediaService {
                 defaultImage: res.publicUrl,
               };
               this.saveToStorage();
+              this.pushToCloud();
             }
           }
         })
         .catch((e) => {
           console.warn('[HomeMediaService] Background cloud image upload deferred:', e);
         });
+    } else {
+      this.pushToCloud();
     }
 
     return newCard;
@@ -614,6 +705,7 @@ class HomeMediaService {
     this.mediaItems = this.mediaItems.filter((item) => item.id !== id);
     if (this.mediaItems.length !== prevLen) {
       this.saveToStorage();
+      this.pushToCloud();
       return true;
     }
     return false;

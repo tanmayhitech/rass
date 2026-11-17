@@ -208,10 +208,10 @@ export const AdminHomeMediaManager: React.FC<AdminHomeMediaManagerProps> = ({
     if (!targetItem) return;
 
     try {
-      showToast(`Optimizing image for "${targetItem.title}"...`, 'info');
+      showToast(`Uploading photo for "${targetItem.title}" to cloud CDN...`, 'info');
       const result = await optimizeImageFile(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.82 });
       
-      homeMediaService.replaceImage(quickSwapTargetId, result.dataUrl);
+      await homeMediaService.replaceImageAsync(quickSwapTargetId, result.dataUrl);
       showToast(`Replaced photo for "${targetItem.title}" (${result.optimizedSizeFormatted})!`, 'success', true);
     } catch (err: any) {
       showToast(err.message || 'Failed to replace image', 'error');
@@ -256,7 +256,8 @@ export const AdminHomeMediaManager: React.FC<AdminHomeMediaManagerProps> = ({
     }
 
     try {
-      homeMediaService.replaceImage(replacingItem.id, finalImage, {
+      setIsOptimizing(true);
+      await homeMediaService.replaceImageAsync(replacingItem.id, finalImage, {
         title: customTitle.trim() || undefined,
         subtitle: customSubtitle.trim() || undefined,
         altText: customAltText.trim() || undefined,
@@ -266,6 +267,8 @@ export const AdminHomeMediaManager: React.FC<AdminHomeMediaManagerProps> = ({
       setReplacingItem(null);
     } catch (err: any) {
       showToast(err.message || 'Failed to replace image', 'error');
+    } finally {
+      setIsOptimizing(false);
     }
   };
 
