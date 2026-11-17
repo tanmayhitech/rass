@@ -888,6 +888,38 @@ class StoreService {
         }
       }
 
+      const { data: remoteVariants } = await supabase.from('product_variants').select('*');
+      const { data: remoteInventory } = await supabase.from('inventory_items').select('*');
+
+      const invMap = new Map<string, number>();
+      if (remoteInventory) {
+        for (const inv of remoteInventory) {
+          invMap.set(inv.variant_id, inv.quantity_on_hand ?? 0);
+        }
+      }
+
+      const variantMap = new Map<string, ProductVariant[]>();
+      if (remoteVariants) {
+        for (const v of remoteVariants) {
+          if (!variantMap.has(v.product_id)) {
+            variantMap.set(v.product_id, []);
+          }
+          const stock = invMap.get(v.id) ?? 10;
+          variantMap.get(v.product_id)!.push({
+            id: v.id,
+            productId: v.product_id,
+            sku: v.sku,
+            variantName: v.variant_name || 'Standard',
+            optionType: v.option_type || 'Standard',
+            optionValue: v.option_value || 'Standard',
+            isActive: v.is_active !== false,
+            stockQuantity: stock,
+            reservedQuantity: 0,
+            lowStockThreshold: 3,
+          });
+        }
+      }
+
       const currentIds = new Set(this.products.map((p) => p.id));
       let stateChanged = false;
 
@@ -920,6 +952,12 @@ class StoreService {
         if (remote.id.startsWith('rass-prod-') && !currentIds.has(remote.id)) {
           const category = (remote.category_id || 'western') as ProductCategory;
           const imgInfo = imageMap.get(remote.id);
+          const attachedVariants = variantMap.get(remote.id) || [];
+          const totalStock = attachedVariants.length > 0
+            ? attachedVariants.reduce((sum, v) => sum + v.stockQuantity, 0)
+            : 10;
+          const primarySku = attachedVariants[0]?.sku || `RASS-SKU-${remote.id.toUpperCase()}`;
+
           const newProduct: Product = {
             id: remote.id,
             name: remote.title,
@@ -938,16 +976,21 @@ class StoreService {
             gemstones: remote.gemstones || '',
             dimensions: remote.dimensions || '',
             weight: remote.weight_grams ? `${remote.weight_grams}g` : '10g',
-            sku: `RASS-SKU-${remote.id.toUpperCase()}`,
-            inStock: remote.status === 'published',
+            sku: primarySku,
+            inStock: remote.status === 'published' && totalStock > 0,
             status: (remote.status || 'published') as ProductStatus,
-            variants: [],
-            stockCount: 10,
+            variants: attachedVariants,
+            stockCount: totalStock,
             lowStockThreshold: 3,
             createdAt: remote.created_at || new Date().toISOString(),
             updatedAt: remote.updated_at || new Date().toISOString(),
           };
           this.products.push(newProduct);
+          for (const v of attachedVariants) {
+            if (!this.variants.some((existing) => existing.id === v.id)) {
+              this.variants.push(v);
+            }
+          }
           stateChanged = true;
         }
       }

@@ -528,7 +528,6 @@ class OrderService {
       });
     }
 
-    // Asynchronously synchronize order to Supabase PostgreSQL database
     if (isSupabaseConfigured) {
       (async () => {
         try {
@@ -620,6 +619,18 @@ class OrderService {
       console.warn('[OrderService] Resend order confirmation email dispatch failed:', err);
     });
 
+    if (typeof window !== 'undefined' && window.location?.host) {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sync_order',
+          orderId: params.orderId,
+          updates: { fulfilmentStatus: 'processing', paymentStatus: 'captured' }
+        }),
+      }).catch((err) => console.warn('Order status sync deferred:', err));
+    }
+
     if (isSupabaseConfigured) {
       try {
         await supabase
@@ -653,6 +664,18 @@ class OrderService {
     order.updatedAt = new Date().toISOString();
 
     this.saveOrders();
+
+    if (typeof window !== 'undefined' && window.location?.host) {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sync_order',
+          orderId,
+          updates: { fulfilmentStatus: order.fulfilmentStatus, paymentStatus: order.paymentStatus }
+        }),
+      }).catch((err) => console.warn('Order status sync deferred:', err));
+    }
 
     if (isSupabaseConfigured) {
       try {
@@ -696,6 +719,18 @@ class OrderService {
     this.orders[index] = order;
     this.saveOrders();
 
+    if (typeof window !== 'undefined' && window.location?.host) {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sync_order',
+          orderId,
+          updates: { fulfilmentStatus: order.fulfilmentStatus }
+        }),
+      }).catch((err) => console.warn('Order status sync deferred:', err));
+    }
+
     // Await status update email dispatch via Resend
     let emailResult: EmailSendResult = { success: false, error: 'Not dispatched' };
     try {
@@ -724,6 +759,22 @@ class OrderService {
     order.updatedAt = new Date().toISOString();
 
     this.saveOrders();
+
+    if (typeof window !== 'undefined' && window.location?.host) {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sync_order',
+          orderId: params.orderId,
+          updates: {
+            fulfilmentStatus: 'shipped',
+            courierName: params.courierPartner,
+            trackingNumber: params.awbNumber,
+          }
+        }),
+      }).catch((err) => console.warn('Order tracking sync deferred:', err));
+    }
 
     // Await tracking update email dispatch via Resend
     let emailResult: EmailSendResult = { success: false, error: 'Not dispatched' };
@@ -769,6 +820,22 @@ class OrderService {
 
     this.saveOrders();
 
+    if (typeof window !== 'undefined' && window.location?.host) {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'sync_order',
+          orderId,
+          updates: {
+            fulfilmentStatus: 'cancelled',
+            paymentStatus: 'refunded',
+            adminNotes: order.adminNotes,
+          }
+        }),
+      }).catch((err) => console.warn('Order cancel sync deferred:', err));
+    }
+
     // Await cancellation notice via Resend
     let emailResult: EmailSendResult = { success: false, error: 'Not dispatched' };
     try {
@@ -778,6 +845,36 @@ class OrderService {
     }
 
     return Object.assign(order, { emailResult });
+  }
+
+  /**
+   * Synchronize orders from remote Supabase PostgreSQL database
+   */
+  public async syncWithSupabase(): Promise<Order[]> {
+    if (typeof window === 'undefined' || !window.location?.host) return this.orders;
+    try {
+      const resp = await fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_orders' }),
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.success && Array.isArray(json.orders)) {
+          const remoteOrders = json.orders as Order[];
+          const localOnly = this.orders.filter(
+            (local) => !remoteOrders.some((remote) => remote.id === local.id)
+          );
+          this.orders = [...remoteOrders, ...localOnly].sort((a, b) => 
+            new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+          );
+          this.saveOrders();
+        }
+      }
+    } catch (e) {
+      console.warn('[OrderService] Could not sync orders from cloud:', e);
+    }
+    return this.orders;
   }
 
   /**
@@ -791,6 +888,16 @@ class OrderService {
 
     this.orders.splice(index, 1);
     this.saveOrders();
+
+    if (typeof window !== 'undefined' && window.location?.host) {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_order', orderId }),
+      }).catch((err) => {
+        console.warn('Serverless order delete error:', err);
+      });
+    }
 
     if (isSupabaseConfigured && supabase) {
       try {

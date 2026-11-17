@@ -149,6 +149,46 @@ class CouponService {
     return this.festiveCampaign.isEnabled;
   }
 
+  public async syncWithSupabase(): Promise<Coupon[]> {
+    if (typeof window === 'undefined' || !window.location?.host) return this.coupons;
+    try {
+      const resp = await fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_coupons' }),
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.success && Array.isArray(json.coupons)) {
+          for (const remote of json.coupons) {
+            const formatted = remote.code.toUpperCase();
+            if (!this.coupons.some((c) => c.code === formatted)) {
+              this.coupons.push({
+                id: remote.id,
+                code: formatted,
+                discountType: remote.discount_type,
+                discountValue: Number(remote.discount_value),
+                minOrderValue: Number(remote.min_order_value) || 0,
+                maxDiscountCap: Number(remote.max_discount_cap) || 5000,
+                startDate: remote.start_date || remote.created_at,
+                expiryDate: remote.end_date,
+                maxRedemptions: Number(remote.max_redemptions) || 100,
+                redemptionCount: Number(remote.current_redemptions) || 0,
+                maxPerCustomer: 1,
+                isActive: remote.is_active !== false,
+                createdAt: remote.created_at,
+              });
+            }
+          }
+          this.saveState();
+        }
+      }
+    } catch (e) {
+      console.warn('[CouponService] Cloud sync deferred:', e);
+    }
+    return this.coupons;
+  }
+
   public createCoupon(data: {
     code: string;
     discountType: 'percentage' | 'fixed_amount';
@@ -196,6 +236,16 @@ class CouponService {
 
     this.coupons.unshift(newCoupon);
     this.saveState();
+
+    // Push coupon to Supabase Cloud Database via serverless API
+    if (typeof window !== 'undefined' && window.location?.host) {
+      fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save_coupon', coupon: newCoupon }),
+      }).catch((err) => console.warn('[CouponService] Cloud coupon sync deferred:', err));
+    }
+
     return newCoupon;
   }
 

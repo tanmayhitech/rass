@@ -197,7 +197,7 @@ export class DatabaseDiagnosticsService {
       const testOrderId = `DIAG-ORD-${Date.now()}`;
       const { data, error } = await supabase.rpc('reserve_inventory_atomic', {
         p_order_id: testOrderId,
-        p_variant_id: 'var-ring-01-std',
+        p_variant_id: 'var-jhumka-01-std',
         p_quantity: 1,
       });
       const latencyMs = Math.round(performance.now() - t6Start);
@@ -207,7 +207,7 @@ export class DatabaseDiagnosticsService {
       // Immediately release test reservation to maintain inventory balance
       await supabase.rpc('release_inventory_atomic', {
         p_order_id: testOrderId,
-        p_variant_id: 'var-ring-01-std',
+        p_variant_id: 'var-jhumka-01-std',
         p_quantity: 1,
       });
 
@@ -239,7 +239,7 @@ export class DatabaseDiagnosticsService {
       const testOrderId = `DIAG-REL-${Date.now()}`;
       const { data, error } = await supabase.rpc('release_inventory_atomic', {
         p_order_id: testOrderId,
-        p_variant_id: 'var-ring-01-std',
+        p_variant_id: 'var-jhumka-01-std',
         p_quantity: 0,
       });
       const latencyMs = Math.round(performance.now() - t7Start);

@@ -202,6 +202,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const refreshAllData = async () => {
     try {
       await storeService.syncWithSupabase();
+      await orderService.syncWithSupabase();
+      await couponService.syncWithSupabase();
       setProducts(storeService.getProducts(true));
       setVariants(storeService.getVariants());
       setOrders(orderService.getOrders());

@@ -157,6 +157,138 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Stock updated.', newQuantity: newQty });
     }
 
+    if (action === 'get_orders') {
+      const { data: dbOrders, error: oErr } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (oErr) throw new Error(`Orders fetch error: ${oErr.message}`);
+
+      const { data: dbItems } = await supabase.from('order_items').select('*');
+
+      const itemsByOrderId = new Map();
+      if (dbItems) {
+        for (const item of dbItems) {
+          if (!itemsByOrderId.has(item.order_id)) {
+            itemsByOrderId.set(item.order_id, []);
+          }
+          itemsByOrderId.get(item.order_id).push({
+            id: item.id,
+            productId: item.product_id_snapshot,
+            productTitle: item.product_title_snapshot,
+            variantName: item.variant_name_snapshot,
+            sku: item.sku_snapshot,
+            imageUrl: item.image_url_snapshot,
+            unitPrice: Number(item.unit_price) || 0,
+            quantity: Number(item.quantity) || 1,
+            lineSubtotal: Number(item.line_subtotal) || 0,
+          });
+        }
+      }
+
+      const orders = (dbOrders || []).map((o) => {
+        const snapshots = itemsByOrderId.get(o.id) || [];
+        const dateObj = new Date(o.created_at || Date.now());
+        return {
+          id: o.id,
+          customerName: o.customer_name || 'Valued Patron',
+          email: o.customer_email || '',
+          phone: o.customer_phone || '',
+          shippingAddress: o.shipping_address_line1 || '',
+          city: o.shipping_city || 'Mumbai',
+          state: o.shipping_state || 'Maharashtra',
+          pincode: o.shipping_pincode || '',
+          country: o.shipping_country || 'India',
+          subtotal: Number(o.subtotal) || 0,
+          discount: Number(o.discount_amount) || 0,
+          shippingFee: Number(o.shipping_fee) || 0,
+          tax: Number(o.tax_amount) || 0,
+          total: Number(o.total_amount) || 0,
+          date: dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+          orderTime: dateObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          status: o.fulfilment_status === 'delivered' ? 'Delivered' : (o.fulfilment_status === 'shipped' ? 'Shipped' : (o.payment_status === 'captured' ? 'Processing' : 'Pending')),
+          paymentStatus: o.payment_status || 'pending',
+          fulfilmentStatus: o.fulfilment_status || 'unfulfilled',
+          paymentMethod: o.payment_method || 'Prepaid',
+          razorpayOrderId: o.razorpay_order_id,
+          razorpayPaymentId: o.razorpay_payment_id,
+          razorpaySignature: o.razorpay_signature,
+          appliedCoupon: o.applied_coupon_code,
+          trackingNumber: o.tracking_number,
+          courierName: o.courier_name,
+          adminNotes: o.admin_notes,
+          itemSnapshots: snapshots,
+          items: snapshots.map((s) => ({
+            product: {
+              id: s.productId,
+              name: s.productTitle,
+              title: s.productTitle,
+              price: s.unitPrice,
+              image: s.imageUrl,
+              cleanImage: s.imageUrl,
+              sku: s.sku,
+            },
+            quantity: s.quantity,
+            selectedSize: s.variantName,
+          })),
+          createdAt: o.created_at,
+          updatedAt: o.updated_at,
+        };
+      });
+
+      return res.status(200).json({ success: true, orders });
+    }
+
+    if (action === 'sync_order') {
+      const { orderId, updates } = req.body || {};
+      if (!orderId) return res.status(400).json({ success: false, message: 'Missing orderId' });
+
+      const dbUpdates = {};
+      if (updates.fulfilmentStatus) dbUpdates.fulfilment_status = updates.fulfilmentStatus;
+      if (updates.paymentStatus) dbUpdates.payment_status = updates.paymentStatus;
+      if (updates.trackingNumber !== undefined) dbUpdates.tracking_number = updates.trackingNumber;
+      if (updates.courierName !== undefined) dbUpdates.courier_name = updates.courierName;
+      if (updates.adminNotes !== undefined) dbUpdates.admin_notes = updates.adminNotes;
+      dbUpdates.updated_at = new Date().toISOString();
+
+      await supabase.from('orders').update(dbUpdates).eq('id', orderId);
+      return res.status(200).json({ success: true, message: 'Order updated in cloud database.' });
+    }
+
+    if (action === 'delete_order') {
+      const { orderId } = req.body || {};
+      if (!orderId) return res.status(400).json({ success: false, message: 'Missing orderId' });
+
+      await supabase.from('order_items').delete().eq('order_id', orderId);
+      await supabase.from('orders').delete().eq('id', orderId);
+      return res.status(200).json({ success: true, message: 'Order permanently deleted from cloud database.' });
+    }
+
+    if (action === 'get_coupons') {
+      const { data: coupons, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+      if (error) throw new Error(error.message);
+      return res.status(200).json({ success: true, coupons });
+    }
+
+    if (action === 'save_coupon') {
+      const { coupon } = req.body || {};
+      if (!coupon || !coupon.code) return res.status(400).json({ success: false, message: 'Invalid coupon' });
+
+      await supabase.from('coupons').upsert([{
+        id: coupon.id || `coup-${coupon.code.toLowerCase()}`,
+        code: coupon.code.toUpperCase(),
+        discount_type: coupon.discountType || 'percentage',
+        discount_value: Number(coupon.discountValue) || 10,
+        min_order_value: Number(coupon.minOrderValue) || 0,
+        max_discount_cap: Number(coupon.maxDiscountCap) || 5000,
+        max_redemptions: Number(coupon.maxRedemptions) || 100,
+        is_active: coupon.isActive !== false,
+        created_at: new Date().toISOString(),
+      }]);
+      return res.status(200).json({ success: true, message: 'Coupon saved in cloud database.' });
+    }
+
     return res.status(400).json({ success: false, message: `Unknown action: ${action}` });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });

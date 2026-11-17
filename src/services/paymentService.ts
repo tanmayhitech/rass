@@ -150,8 +150,14 @@ class PaymentService {
       return { success: false, error: `Payment verification failed: Order "${params.orderId}" not found.` };
     }
 
-    // 3. Verify order association
-    if (order.razorpayOrderId && order.razorpayOrderId !== params.razorpayOrderId) {
+    // 3. Verify order association (allow updating placeholder simulated IDs)
+    if (
+      order.razorpayOrderId && 
+      !order.razorpayOrderId.startsWith('order_sim_') && 
+      params.razorpayOrderId && 
+      !params.razorpayOrderId.startsWith('order_sim_') && 
+      order.razorpayOrderId !== params.razorpayOrderId
+    ) {
       return {
         success: false,
         error: `Security Violation: Razorpay order mismatch. Expected "${order.razorpayOrderId}", received "${params.razorpayOrderId}".`
