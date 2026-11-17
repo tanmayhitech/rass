@@ -102,17 +102,17 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBackToHome, onExploreSho
               
               <div className="relative rounded-tl-[120px] sm:rounded-tl-[150px] rounded-tr-3xl rounded-b-3xl overflow-hidden shadow-[0_12px_36px_rgba(41,38,36,0.08)] border border-[#E7E0DA] bg-white group">
                 <img
-                  src="/images/craftsmanship.png"
-                  alt="Artisan jeweler delicately setting gemstones onto gold filigree jewellery"
-                  className="w-full h-[380px] sm:h-[490px] object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                  src="/images/founder-photo-real.jpeg"
+                  alt="Ridhima — Founder & Creative Director of Rass by Ridhima"
+                  className="w-full h-[380px] sm:h-[490px] object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                 
                 {/* Floating Glass Studio Tag */}
                 <div className="absolute bottom-4 left-4 right-4 p-3.5 bg-white/95 backdrop-blur-md rounded-2xl border border-[#E7E0DA] flex items-center justify-between shadow-xs">
                   <div>
-                    <span className="text-[10px] uppercase tracking-[0.16em] text-[#A783A2] font-semibold block">Headquartered in Hyderabad</span>
-                    <span className="font-cormorant text-[16px] sm:text-[17px] text-[#292624] font-medium leading-snug">Dispatched in 2–4 Business Days • Pan-India Delivery</span>
+                    <span className="text-[10px] uppercase tracking-[0.16em] text-[#A783A2] font-semibold block">Rass by Ridhima • Founder</span>
+                    <span className="font-cormorant text-[16px] sm:text-[17px] text-[#292624] font-medium leading-snug">Ridhima — Head of Design &amp; Founder</span>
                   </div>
                   <Sparkles className="w-4 h-4 text-[#A783A2] shrink-0" />
                 </div>
@@ -121,7 +121,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBackToHome, onExploreSho
               {/* Floating Mini Accent Badge */}
               <div className="absolute -bottom-5 -right-2 sm:-right-4 hidden sm:flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-[#E7E0DA] shadow-sm">
                 <ShieldCheck className="w-4 h-4 text-[#6E8B62]" />
-                <span className="text-[11px] font-sans font-medium text-[#292624] tracking-wider uppercase">100% Skin-Safe & Hypoallergenic</span>
+                <span className="text-[11px] font-sans font-medium text-[#292624] tracking-wider uppercase">Handcrafted with Love</span>
               </div>
             </div>
           </div>
@@ -542,7 +542,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ onBackToHome, onExploreSho
                 <div>
                   <h4 className="font-cormorant font-medium text-[22px] text-[#292624]">Customer Care</h4>
                   <p className="text-xs text-[#77716F] max-w-xs mx-auto leading-relaxed mt-1 font-sans">
-                    Need help with ring or kada sizing? Send us an email and we will be delighted to guide you.
+                    Need help with kada or jewellery sizing? Send us an email and we will be delighted to guide you.
                   </p>
                 </div>
                 <div className="pt-2">

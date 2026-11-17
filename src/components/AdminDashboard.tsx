@@ -44,13 +44,16 @@ import {
   Activity,
   BarChart3,
   ArrowUpRight,
+  ArrowRight,
   CheckCircle2,
   Upload,
   Image as ImageIcon,
   Menu,
   Database,
   Loader2,
-  Copy
+  Copy,
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 import { 
   Product, 
@@ -75,6 +78,8 @@ import { AdminHomeMediaManager } from './AdminHomeMediaManager';
 import { emailService } from '../services/emailService';
 import { ImageService, ImageOptimizationResult } from '../services/imageService';
 import { WelcomeOfferModal } from './WelcomeOfferModal';
+import { uploadImageToCloud } from '../services/imageUploadService';
+import confetti from 'canvas-confetti';
 
 type AdminNavTab = 
   | 'overview' 
@@ -143,6 +148,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [overviewOrderFilter, setOverviewOrderFilter] = useState<'all' | 'Processing' | 'Shipped' | 'Delivered'>('all');
   const [productCategoryFilter, setProductCategoryFilter] = useState('all');
   const [productStatusFilter, setProductStatusFilter] = useState('all');
+  const [productSearch, setProductSearch] = useState('');
+  const [productSortBy, setProductSortBy] = useState<'default' | 'stock_asc' | 'stock_desc' | 'price_asc' | 'price_desc'>('default');
   const [inventorySearch, setInventorySearch] = useState('');
   const [perfSortBy, setPerfSortBy] = useState<'netRevenue' | 'units'>('units');
   const [perfCategoryFilter, setPerfCategoryFilter] = useState('all');
@@ -172,6 +179,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [previewCourierSlipOrder, setPreviewCourierSlipOrder] = useState<Order | null>(null);
   const [festiveCampaign, setFestiveCampaign] = useState<FestiveCampaignConfig>(() => couponService.getFestiveCampaign());
   const [isPreviewFestiveOpen, setIsPreviewFestiveOpen] = useState(false);
+  const [festivePreviewDevice, setFestivePreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
 
   // Direct Inventory Editing State
   const [quickAdjustVariant, setQuickAdjustVariant] = useState<ProductVariant | null>(null);
@@ -266,20 +274,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const getInitialProductForm = () => ({
     name: '',
-    category: 'rings' as ProductCategory,
-    categoryDisplay: 'Rings',
-    price: 16500,
-    costPrice: 7425,
-    sku: generateCategorySku('rings'),
-    description: 'Sculpted in 18k gold vermeil with authentic natural gemstones and 925 hallmarked sterling silver.',
-    metal: '18k Gold Vermeil',
-    gemstones: 'Natural Zambian Emerald & Basra Pearls',
-    dimensions: '20mm crest',
-    weight: '9.2g',
-    initialStock: 8,
-    lowStockThreshold: 3,
-    image: '/images/cat_rings.png',
-    cleanImage: '/images/clean_cat_rings.png',
+    category: 'western' as ProductCategory,
+    categoryDisplay: 'Western Jewellery',
+    price: 1450,
+    costPrice: 650,
+    sku: generateCategorySku('western'),
+    description: 'Handcrafted contemporary jewellery sculpted with artisan precision, anti-tarnish protective coating and skin-safe finish.',
+    metal: 'Solid Brass with 18k Gold Plating',
+    gemstones: 'Cubic Zirconia & Crystal',
+    dimensions: '42cm length + 5cm extender',
+    weight: '7.5g',
+    initialStock: 5,
+    lowStockThreshold: 1,
+    image: '/images/cat_western.png',
+    cleanImage: '/images/cat_western.png',
     imageUploadMode: 'upload' as 'upload' | 'gallery' | 'url',
   });
 
@@ -325,11 +333,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleSaveNewProduct = (e: React.FormEvent) => {
+  const handleSaveNewProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const defaultImg = categoryDefaultImages[newProductForm.category]?.image || '/images/cat_rings.png';
-      const defaultClean = categoryDefaultImages[newProductForm.category]?.cleanImage || '/images/clean_cat_rings.png';
+      const defaultImg = categoryDefaultImages[newProductForm.category]?.image || '/images/cat_western.png';
+      const defaultClean = categoryDefaultImages[newProductForm.category]?.cleanImage || '/images/clean_cat_western.png';
+
+      let finalImg = newProductForm.image || defaultImg;
+      let finalClean = newProductForm.cleanImage || newProductForm.image || defaultClean;
+
+      // If user uploaded a local image (data: URL), upload directly to Supabase Cloud Storage (CDN)
+      if (finalImg.startsWith('data:')) {
+        showNotification('Uploading image to Supabase Cloud Storage...', 'success');
+        const uploadRes = await uploadImageToCloud(finalImg, newProductForm.sku || 'product', 'products');
+        if (uploadRes.success && uploadRes.publicUrl) {
+          finalImg = uploadRes.publicUrl;
+          finalClean = uploadRes.publicUrl;
+        }
+      }
 
       storeService.createProduct({
         name: newProductForm.name,
@@ -337,8 +358,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         categoryDisplay: newProductForm.categoryDisplay,
         price: Number(newProductForm.price),
         costPrice: Number(newProductForm.costPrice),
-        image: newProductForm.image || defaultImg,
-        cleanImage: newProductForm.cleanImage || newProductForm.image || defaultClean,
+        image: finalImg,
+        cleanImage: finalClean,
         description: newProductForm.description,
         details: [
           `Handcrafted in ${newProductForm.metal}`,
@@ -468,6 +489,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         showNotification(`Order ${orderId} cancelled & restocked • Resend email sent (ID: ${updated.emailResult.id?.slice(0, 8)}...)`);
       } else {
         showNotification(`Order ${orderId} cancelled (Email notice: ${updated.emailResult?.error || 'Failed'})`, 'error');
+      }
+      refreshAllData();
+    } catch (err: any) {
+      showNotification(err.message, 'error');
+    }
+  };
+
+  const handlePermanentlyDeleteOrder = async (orderId: string) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to PERMANENTLY delete order #${orderId}?\n\nThis will remove it completely from all order lists and records. This action cannot be undone.`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      showNotification(`Permanently deleting order ${orderId}...`);
+      const res = await orderService.deleteOrder(orderId);
+      if (res.success) {
+        showNotification(`Order ${orderId} permanently deleted.`);
+      } else {
+        showNotification(res.message, 'error');
       }
       refreshAllData();
     } catch (err: any) {
@@ -651,12 +692,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Filtered Lists & Analytics (Optimized with useMemo to prevent main-thread lag)
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    const list = products.filter((p) => {
+      if (productSearch.trim()) {
+        const query = productSearch.toLowerCase().trim();
+        const matchName = (p.name || '').toLowerCase().includes(query);
+        const matchSku = (p.sku || p.id || '').toLowerCase().includes(query);
+        const matchCat = (p.categoryDisplay || p.category || '').toLowerCase().includes(query);
+        if (!matchName && !matchSku && !matchCat) return false;
+      }
       if (productCategoryFilter !== 'all' && p.category !== productCategoryFilter) return false;
       if (productStatusFilter !== 'all' && p.status !== productStatusFilter) return false;
       return true;
     });
-  }, [products, productCategoryFilter, productStatusFilter]);
+
+    if (productSortBy === 'stock_asc') {
+      return [...list].sort((a, b) => (a.stockCount ?? 0) - (b.stockCount ?? 0));
+    }
+    if (productSortBy === 'stock_desc') {
+      return [...list].sort((a, b) => (b.stockCount ?? 0) - (a.stockCount ?? 0));
+    }
+    if (productSortBy === 'price_asc') {
+      return [...list].sort((a, b) => a.price - b.price);
+    }
+    if (productSortBy === 'price_desc') {
+      return [...list].sort((a, b) => b.price - a.price);
+    }
+    return list;
+  }, [products, productSearch, productCategoryFilter, productStatusFilter, productSortBy]);
 
   // Fast Product Table Pagination (12 designs per page)
   const [productPage, setProductPage] = useState(1);
@@ -670,7 +732,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Reset page when filter changes
   useEffect(() => {
     setProductPage(1);
-  }, [productCategoryFilter, productStatusFilter]);
+  }, [productCategoryFilter, productStatusFilter, productSearch, productSortBy]);
 
   const filteredVariants = useMemo(() => {
     if (!inventorySearch.trim()) return variants;
@@ -841,8 +903,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {[
               { id: 'overview', label: 'Overview', icon: DollarSign },
               { id: 'orders', label: 'Orders', icon: ShoppingCart, badge: orders.length > 0 ? `${orders.length}` : undefined },
-              { id: 'products', label: 'Products', icon: Package },
-              { id: 'inventory', label: 'Inventory', icon: Boxes, badge: stockValuation.lowStockSKUs > 0 ? `${stockValuation.lowStockSKUs}` : undefined },
+              { id: 'products', label: 'Products & Stock', icon: Package, badge: stockValuation.lowStockSKUs > 0 ? `${stockValuation.lowStockSKUs} low` : undefined },
               { id: 'performance', label: 'Best Sellers', icon: TrendingUp },
               { id: 'coupons', label: 'Coupons', icon: Tag },
               { id: 'ledger', label: 'Order Ledger', icon: FileSpreadsheet },
@@ -949,8 +1010,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {[
               { id: 'overview', label: 'Overview', icon: DollarSign },
               { id: 'orders', label: 'Orders', icon: ShoppingCart, badge: orders.length > 0 ? `${orders.length}` : undefined },
-              { id: 'products', label: 'Products', icon: Package },
-              { id: 'inventory', label: 'Inventory', icon: Boxes, badge: stockValuation.lowStockSKUs > 0 ? `${stockValuation.lowStockSKUs}` : undefined },
+              { id: 'products', label: 'Products & Stock', icon: Package, badge: stockValuation.lowStockSKUs > 0 ? `${stockValuation.lowStockSKUs} low` : undefined },
               { id: 'performance', label: 'Best Sellers', icon: TrendingUp },
               { id: 'coupons', label: 'Coupons', icon: Tag },
               { id: 'ledger', label: 'Order Ledger', icon: FileSpreadsheet },
@@ -1042,7 +1102,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
 
             <h2 className="text-xs sm:text-sm font-semibold text-[#292624] capitalize tracking-wide truncate max-w-[130px] sm:max-w-none">
-              {activeTab === 'performance' ? 'Best Sellers' : activeTab === 'home_media' ? 'Home Media Manager' : activeTab.replace('_', ' ')}
+              {activeTab === 'performance' ? 'Best Sellers' : activeTab === 'home_media' ? 'Home Media Manager' : activeTab === 'products' ? 'Products & Stock' : activeTab.replace('_', ' ')}
             </h2>
           </div>
 
@@ -1095,32 +1155,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span className="sm:hidden text-xs">CSV</span>
             </button>
 
-            {/* Supabase Database Diagnostics Trigger */}
-            <button
-              onClick={() => setIsDiagnosticsOpen(true)}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-xs font-medium text-emerald-800 cursor-pointer transition-colors shadow-xs"
-              title="Inspect live PostgreSQL database, Row Level Security, and stored procedures"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-              <span className="hidden md:inline font-medium">Database Health</span>
-              <span className="md:hidden">DB</span>
-              <Database className="w-3.5 h-3.5 text-emerald-700" />
-            </button>
+            {/* Sleek System Health & Diagnostic Quick Triggers */}
+            <div className="hidden sm:flex items-center space-x-1.5 bg-[#FAF8F5] p-1 rounded-xl border border-[#E7E0DA]">
+              <button
+                onClick={() => setIsDiagnosticsOpen(true)}
+                className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg hover:bg-white text-[11px] font-medium text-[#77716F] hover:text-[#292624] cursor-pointer transition-all shadow-2xs"
+                title="PostgreSQL database diagnostics & RLS status"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                <span>DB Online</span>
+              </button>
 
-            {/* Resend Email Integration Trigger */}
-            <button
-              onClick={handleSendTestEmail}
-              disabled={isSendingTestMail}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md border border-purple-200 bg-purple-50/70 hover:bg-purple-100 text-xs font-medium text-purple-800 cursor-pointer transition-colors shadow-xs disabled:opacity-50"
-              title="Send a live test order status update email via Resend to verify configuration"
-            >
-              <Mail className="w-3.5 h-3.5 text-purple-700" />
-              <span className="hidden md:inline font-medium">
-                {isSendingTestMail ? 'Sending...' : 'Test Resend Mail'}
-              </span>
-              <span className="md:hidden">Mail</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-            </button>
+              <button
+                onClick={handleSendTestEmail}
+                disabled={isSendingTestMail}
+                className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg hover:bg-white text-[11px] font-medium text-[#77716F] hover:text-[#292624] cursor-pointer transition-all shadow-2xs disabled:opacity-40"
+                title="Send test status email via Resend"
+              >
+                <Mail className="w-3 h-3 text-[#A783A2]" />
+                <span>{isSendingTestMail ? 'Sending...' : 'Mail Test'}</span>
+              </button>
+            </div>
 
             {/* Admin User Pill */}
             <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 bg-[#FAF8F5] rounded-md border border-[#E7E0DA] text-xs">
@@ -1159,365 +1214,264 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'overview' && metrics && (
             <div className="space-y-6">
               
-              {/* 1. STORE EXECUTIVE BANNER WITH RASS WORDMARK LOGO & LIVE PULSE */}
-              <div className="bg-white rounded-xl border border-[#E7E0DA] shadow-subtle p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5 relative overflow-hidden">
-                {/* Subtle decorative motif sprig in background */}
-                <div className="absolute right-0 top-0 bottom-0 pointer-events-none opacity-[0.06] select-none overflow-hidden">
-                  <img
-                    src={getOptimizedImageUrl('/elements/Mauve Botanical Sprig Line Art.png')}
-                    alt=""
-                    className="h-full w-auto object-cover object-right"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-3 sm:space-x-4 z-10">
-                  <div className="p-2 sm:p-2.5 bg-[#FAF8F5] rounded-xl border border-[#E7E0DA] shrink-0 shadow-2xs">
+              {/* 1. Serene Executive Greeting Banner */}
+              <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-12 h-12 rounded-xl bg-[#FAF8F5] border border-[#E7E0DA] flex items-center justify-center shrink-0 p-2 shadow-2xs">
                     <img
                       src={getOptimizedImageUrl('/images/Rass by Ridhima Wordmark.png')}
                       alt="Rass by Riddhima"
-                      className="h-7 sm:h-9 w-auto object-contain select-none"
-                      loading="eager"
-                      {...({ fetchpriority: "high" } as any)}
-                      decoding="async"
-                      onError={(e) => handleImageError(e, '/images/Rass by Ridhima Wordmark.png')}
+                      className="w-full h-auto object-contain select-none"
                     />
                   </div>
                   <div>
-                    <div className="flex items-center space-x-2">
-                      <h1 className="text-sm sm:text-lg font-bold tracking-tight text-[#292624]">
-                        Store Commercial Pulse
-                      </h1>
-                      <span className="hidden sm:inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#EEF3EC] text-[#3B5432] border border-[#D3E0CE]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#3B5432] animate-pulse"></span>
+                    <div className="flex items-center space-x-2.5">
+                      <h2 className="text-base sm:text-lg font-serif font-bold text-[#292624]">
+                        Store Overview
+                      </h2>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                         <span>Storefront Live</span>
                       </span>
                     </div>
                     <p className="text-xs text-[#77716F] mt-0.5">
-                      Haute demi-fine jewellery operations, real-time inventory balances & courier fulfillment console.
+                      Real-time snapshot of your jewellery sales, orders, and stock.
                     </p>
                   </div>
                 </div>
 
-                {/* Quick Action Toolbar on right */}
-                <div className="flex items-center flex-wrap gap-2.5 z-10 shrink-0">
+                <div className="flex items-center space-x-2.5 shrink-0">
                   <button
+                    type="button"
                     onClick={() => {
                       setNewProductForm(getInitialProductForm());
                       setIsNewProductModalOpen(true);
                     }}
-                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-medium cursor-pointer transition-colors shadow-xs"
+                    className="px-4 py-2 rounded-xl bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-semibold cursor-pointer transition-all shadow-xs active:scale-95 flex items-center space-x-1.5"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#B49A6C]" />
-                    <span>Add Design</span>
+                    <span>Add Product</span>
                   </button>
-
                   <button
-                    onClick={() => setActiveTab('inventory')}
-                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-xs font-medium text-[#292624] cursor-pointer transition-colors shadow-xs"
+                    type="button"
+                    onClick={() => onBackToStore()}
+                    className="px-4 py-2 rounded-xl border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-xs font-semibold text-[#292624] cursor-pointer transition-all shadow-2xs active:scale-95 flex items-center space-x-1.5"
                   >
-                    <Boxes className="w-3.5 h-3.5 text-[#B49A6C]" />
-                    <span>Restock Vault</span>
-                  </button>
-
-                  <button
-                    onClick={() => AnalyticsService.downloadLedgerCSV(orders)}
-                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-xs font-medium text-[#292624] cursor-pointer transition-colors shadow-xs"
-                  >
-                    <Download className="w-3.5 h-3.5 text-[#77716F]" />
-                    <span>Ledger CSV</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-[#77716F]" />
+                    <span>View Storefront</span>
                   </button>
                 </div>
               </div>
 
-              {/* 2. OPERATIONAL STATUS STRIP (DISPATCH & VAULT GUARDS) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Fulfillment Dispatch Notice */}
-                <div className="p-3.5 rounded-xl border border-[#E7E0DA] bg-white shadow-2xs flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#F5F0F5] border border-[#E5D7E5] flex items-center justify-center shrink-0">
-                      <Truck className="w-4 h-4 text-[#694868]" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-[#292624]">
-                        {orders.filter(o => o.status === 'Processing').length} Orders Awaiting Dispatch
-                      </div>
-                      <div className="text-[11px] text-[#77716F]">
-                        Insured courier packaging ready for express air routing
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setActiveTab('orders');
-                      setOrderStatusFilter('Processing');
-                    }}
-                    className="text-xs font-semibold text-[#B49A6C] hover:underline cursor-pointer shrink-0 ml-3"
-                  >
-                    Review Queue →
-                  </button>
-                </div>
-
-                {/* Stock Vault Health Notice */}
-                <div className="p-3.5 rounded-xl border border-[#E7E0DA] bg-white shadow-2xs flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-                      stockValuation.lowStockSKUs > 0
-                        ? 'bg-[#FDF2F0] border-[#F8D4CF] text-[#8F3B30]'
-                        : 'bg-[#EEF3EC] border-[#D3E0CE] text-[#3B5432]'
-                    }`}>
-                      <AlertTriangle className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-semibold text-[#292624]">
-                        {stockValuation.lowStockSKUs > 0
-                          ? `${stockValuation.lowStockSKUs} Pieces Below Safety Threshold`
-                          : 'Inventory Vault Fully Stocked'}
-                      </div>
-                      <div className="text-[11px] text-[#77716F]">
-                        {stockValuation.lowStockSKUs > 0
-                          ? 'Restock recommended to prevent checkout stockouts'
-                          : 'All designs healthy above buffer threshold'}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab('inventory')}
-                    className="text-xs font-semibold text-[#B49A6C] hover:underline cursor-pointer shrink-0 ml-3"
-                  >
-                    Manage Stock →
-                  </button>
-                </div>
-              </div>
-
-              {/* 3. ELEVATED RASS KPI CARDS WITH BRAND PALETTE */}
+              {/* 2. Four Clean KPI Metric Cards (Uniform Warm Champagne Luxury Tone) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 
                 {/* 1. Today's Net Sales */}
-                <div className="p-5 bg-white rounded-xl border border-[#E7E0DA] shadow-subtle flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] uppercase tracking-wider text-[#77716F] font-bold">
-                        Today's Net Sales
-                      </span>
-                      <div className="w-7 h-7 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center">
-                        <DollarSign className="w-3.5 h-3.5 text-[#B49A6C]" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-[#292624] tracking-tight">
-                      ₹{metrics.netSalesToday.toLocaleString('en-IN')}
+                <div className="p-5 bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs hover:border-[#B49A6C]/40 hover:shadow-subtle transition-all duration-300 flex flex-col justify-between space-y-3">
+                  <div className="flex items-center justify-between text-[#77716F]">
+                    <span className="text-[10.5px] uppercase font-bold tracking-wider">Today's Sales</span>
+                    <div className="w-8 h-8 rounded-xl bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C]">
+                      <DollarSign className="w-4 h-4" />
                     </div>
                   </div>
-                  <div className="pt-3 mt-3 border-t border-[#E7E0DA]/60 flex items-center justify-between text-[11px]">
-                    <span className="text-[#77716F]">Gross: ₹{metrics.grossSalesToday.toLocaleString('en-IN')}</span>
-                    <span className="font-semibold text-[#3B5432] bg-[#EEF3EC] px-1.5 py-0.5 rounded text-[10px]">
-                      Live Pulse
+                  <div>
+                    <span className="text-2xl sm:text-3xl font-bold font-mono text-[#292624] tracking-tight block">
+                      ₹{metrics.netSalesToday.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[11px] text-[#77716F] mt-1 block">
+                      Gross sales: ₹{metrics.grossSalesToday.toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
 
                 {/* 2. Total Captured Revenue */}
-                <div className="p-5 bg-white rounded-xl border border-[#E7E0DA] shadow-subtle flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] uppercase tracking-wider text-[#77716F] font-bold">
-                        Total Captured
-                      </span>
-                      <div className="w-7 h-7 rounded-lg bg-[#EEF3EC] border border-[#D3E0CE] flex items-center justify-center">
-                        <ShieldCheck className="w-3.5 h-3.5 text-[#3B5432]" />
-                      </div>
+                <div className="p-5 bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs hover:border-[#B49A6C]/40 hover:shadow-subtle transition-all duration-300 flex flex-col justify-between space-y-3">
+                  <div className="flex items-center justify-between text-[#77716F]">
+                    <span className="text-[10.5px] uppercase font-bold tracking-wider">Total Sales</span>
+                    <div className="w-8 h-8 rounded-xl bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C]">
+                      <ShieldCheck className="w-4 h-4" />
                     </div>
-                    <div className="text-2xl font-bold text-[#292624] tracking-tight">
+                  </div>
+                  <div>
+                    <span className="text-2xl sm:text-3xl font-bold font-mono text-[#292624] tracking-tight block">
                       ₹{metrics.paidRevenueTotal.toLocaleString('en-IN')}
-                    </div>
-                  </div>
-                  <div className="pt-3 mt-3 border-t border-[#E7E0DA]/60 flex items-center justify-between text-[11px]">
-                    <span className="text-[#77716F]">
-                      {orders.filter(o => o.paymentStatus === 'captured').length} captured orders
                     </span>
-                    <span className="font-semibold text-[#694868] bg-[#F5F0F5] px-1.5 py-0.5 rounded text-[10px]">
-                      100% Verified
+                    <span className="text-[11px] text-[#77716F] mt-1 block">
+                      Across all {orders.length} orders
                     </span>
                   </div>
                 </div>
 
-                {/* 3. Total Orders & Basket Size */}
-                <div className="p-5 bg-white rounded-xl border border-[#E7E0DA] shadow-subtle flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] uppercase tracking-wider text-[#77716F] font-bold">
-                        Orders & Basket
-                      </span>
-                      <div className="w-7 h-7 rounded-lg bg-[#F5F0F5] border border-[#E5D7E5] flex items-center justify-center">
-                        <ShoppingCart className="w-3.5 h-3.5 text-[#694868]" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-[#292624] tracking-tight">
-                      {metrics.totalOrdersCount} <span className="text-sm font-normal text-[#77716F]">orders</span>
+                {/* 3. Total Orders */}
+                <div className="p-5 bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs hover:border-[#B49A6C]/40 hover:shadow-subtle transition-all duration-300 flex flex-col justify-between space-y-3">
+                  <div className="flex items-center justify-between text-[#77716F]">
+                    <span className="text-[10.5px] uppercase font-bold tracking-wider">Total Orders</span>
+                    <div className="w-8 h-8 rounded-xl bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C]">
+                      <ShoppingCart className="w-4 h-4" />
                     </div>
                   </div>
-                  <div className="pt-3 mt-3 border-t border-[#E7E0DA]/60 flex items-center justify-between text-[11px]">
-                    <span className="text-[#77716F]">
-                      AOV: ₹{metrics.averageOrderValue.toLocaleString('en-IN')}
+                  <div>
+                    <span className="text-2xl sm:text-3xl font-bold font-mono text-[#292624] tracking-tight block">
+                      {metrics.totalOrdersCount} <span className="text-sm font-normal text-[#77716F] font-sans">orders</span>
                     </span>
-                    <span className="font-semibold text-[#B49A6C]">
-                      {orders.filter(o => o.status === 'Delivered').length} Delivered
+                    <span className="text-[11px] text-[#77716F] mt-1 block">
+                      Avg. order: ₹{metrics.averageOrderValue.toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
 
-                {/* 4. Vault Stock & Valuation */}
-                <div className="p-5 bg-white rounded-xl border border-[#E7E0DA] shadow-subtle flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] uppercase tracking-wider text-[#77716F] font-bold">
-                        Jewellery in Vault
-                      </span>
-                      <div className="w-7 h-7 rounded-lg bg-[#FAF8F5] border border-[#E7E0DA] flex items-center justify-center">
-                        <Boxes className="w-3.5 h-3.5 text-[#292624]" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-[#292624] tracking-tight">
-                      {stockValuation.totalUnits} <span className="text-sm font-normal text-[#77716F]">pieces</span>
+                {/* 4. Ready Stock on Hand */}
+                <div className="p-5 bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs hover:border-[#B49A6C]/40 hover:shadow-subtle transition-all duration-300 flex flex-col justify-between space-y-3">
+                  <div className="flex items-center justify-between text-[#77716F]">
+                    <span className="text-[10.5px] uppercase font-bold tracking-wider">Stock on Hand</span>
+                    <div className="w-8 h-8 rounded-xl bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C]">
+                      <Package className="w-4 h-4" />
                     </div>
                   </div>
-                  <div className="pt-3 mt-3 border-t border-[#E7E0DA]/60 flex items-center justify-between text-[11px]">
-                    <span className="text-[#77716F]">
-                      Val: ₹{stockValuation.retailValuation.toLocaleString('en-IN')}
-                    </span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                      stockValuation.lowStockSKUs > 0 ? 'bg-[#FDF2F0] text-[#8F3B30]' : 'bg-[#EEF3EC] text-[#3B5432]'
-                    }`}>
-                      {stockValuation.lowStockSKUs > 0 ? `${stockValuation.lowStockSKUs} Low` : 'Healthy'}
-                    </span>
+                  <div>
+                    <div className="flex items-baseline space-x-1.5">
+                      <span className="text-2xl sm:text-3xl font-bold font-mono text-[#292624] tracking-tight">
+                        {stockValuation.totalUnits}
+                      </span>
+                      <span className="text-xs text-[#77716F]">pieces</span>
+                    </div>
+                    <div className="text-[11px] text-[#77716F] mt-1 flex items-center justify-between">
+                      <span>Val: ₹{stockValuation.retailValuation.toLocaleString('en-IN')}</span>
+                      {stockValuation.lowStockSKUs > 0 ? (
+                        <span className="text-[#8F3B30] font-semibold">
+                          {stockValuation.lowStockSKUs} low
+                        </span>
+                      ) : (
+                        <span className="text-emerald-700 font-semibold">Healthy</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
               </div>
 
-              {/* 4. TWO-COLUMN OPERATIONS CONTROL CENTER */}
+              {/* 3. Action Required Notice Strip (Atelier Attention) */}
+              {(orders.filter(o => o.status === 'Processing').length > 0 || stockValuation.lowStockSKUs > 0) && (
+                <div className="p-4 sm:p-5 rounded-2xl bg-[#FDFBF7] border border-[#E9DFD1] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs text-xs">
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#F6EFE6] border border-[#E5DACB] text-[#9E6D28] flex items-center justify-center shrink-0">
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <span className="font-semibold text-xs text-[#292624] uppercase tracking-wider block">
+                        Action Required Today
+                      </span>
+                      <p className="text-[11px] text-[#77716F]">
+                        {orders.filter(o => o.status === 'Processing').length > 0 && (
+                          <span>{orders.filter(o => o.status === 'Processing').length} order{orders.filter(o => o.status === 'Processing').length === 1 ? '' : 's'} waiting to be packed &amp; shipped. </span>
+                        )}
+                        {stockValuation.lowStockSKUs > 0 && (
+                          <span>{stockValuation.lowStockSKUs} piece{stockValuation.lowStockSKUs === 1 ? '' : 's'} running low in stock.</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0">
+                    {orders.filter(o => o.status === 'Processing').length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('orders');
+                          setOrderStatusFilter('Processing');
+                        }}
+                        className="px-4 py-2 rounded-xl bg-[#292624] text-white text-xs font-semibold cursor-pointer hover:bg-black transition-all shadow-xs"
+                      >
+                        Pack Orders →
+                      </button>
+                    )}
+                    {stockValuation.lowStockSKUs > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('products');
+                          setProductSortBy('stock_asc');
+                        }}
+                        className="px-4 py-2 rounded-xl border border-[#DCD5CB] bg-white text-[#292624] text-xs font-semibold cursor-pointer hover:bg-[#FAF8F5] transition-all shadow-2xs"
+                      >
+                        View Low Stock →
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 4. Two-Column Calm Split: Recent Orders (Left) + Top Creation & Quick Shortcuts (Right) */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                {/* LEFT COLUMN (2 of 3 spans): Recent Orders & Live Fulfillment Stream */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-[#E7E0DA] shadow-subtle p-5 flex flex-col justify-between">
+                {/* LEFT COLUMN (2 Cols): Recent Customer Orders */}
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 sm:p-6 flex flex-col justify-between space-y-4">
                   <div>
-                    {/* Header with Title & Filter Tabs */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E7E0DA] mb-3">
+                    <div className="flex items-center justify-between pb-3.5 border-b border-[#F2ECE5]">
                       <div>
-                        <h3 className="font-semibold text-sm text-[#292624] flex items-center space-x-2">
-                          <span>Fulfillment Stream</span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#FAF8F5] border border-[#E7E0DA] text-[#77716F]">
-                            {orders.length} total
-                          </span>
+                        <h3 className="font-semibold text-xs text-[#292624] uppercase tracking-wider">
+                          Recent Customer Orders
                         </h3>
-                        <p className="text-xs text-[#77716F]">Live customer orders and courier dispatches</p>
+                        <p className="text-[11px] text-[#77716F] mt-0.5">
+                          Latest purchases from website &amp; concierge
+                        </p>
                       </div>
-
-                      {/* Filter Pills */}
-                      <div className="flex items-center space-x-1 bg-[#FAF8F5] p-1 rounded-lg border border-[#E7E0DA] text-[11px]">
-                        {(['all', 'Processing', 'Shipped', 'Delivered'] as const).map((st) => (
-                          <button
-                            key={st}
-                            onClick={() => setOverviewOrderFilter(st)}
-                            className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
-                              overviewOrderFilter === st
-                                ? 'bg-[#292624] text-white shadow-xs'
-                                : 'text-[#77716F] hover:text-[#292624]'
-                            }`}
-                          >
-                            {st === 'all' ? 'All' : st}
-                          </button>
-                        ))}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('orders')}
+                        className="text-xs font-semibold text-[#B49A6C] hover:underline cursor-pointer"
+                      >
+                        View All Orders →
+                      </button>
                     </div>
 
-                    {/* Orders List */}
-                    <div className="divide-y divide-[#E7E0DA] text-xs">
-                      {orders
-                        .filter(o => overviewOrderFilter === 'all' || o.status === overviewOrderFilter)
-                        .slice(0, 6)
-                        .map((o) => {
-                          const snapshots = o.itemSnapshots && o.itemSnapshots.length > 0 ? o.itemSnapshots : [];
-                          const safeItems = Array.isArray(o.items) ? o.items : [];
-                          const pieceCount = snapshots.length > 0
-                            ? snapshots.reduce((acc, s) => acc + (s.quantity || 1), 0)
-                            : safeItems.reduce((acc, i) => acc + (i?.quantity || 1), 0);
-                          const pieceTitles = snapshots.length > 0
-                            ? snapshots.map(s => s.productTitle).filter(Boolean).join(', ')
-                            : safeItems.map(i => i?.product?.name).filter(Boolean).join(', ');
+                    {/* Calm Orders List */}
+                    <div className="divide-y divide-[#F2ECE5] text-xs mt-1">
+                      {orders.slice(0, 4).map((o) => {
+                        const snapshots = o.itemSnapshots && o.itemSnapshots.length > 0 ? o.itemSnapshots : [];
+                        const safeItems = Array.isArray(o.items) ? o.items : [];
+                        const pieceCount = snapshots.length > 0
+                          ? snapshots.reduce((acc, s) => acc + (s.quantity || 1), 0)
+                          : safeItems.reduce((acc, i) => acc + (i?.quantity || 1), 0);
+                        const pieceTitles = snapshots.length > 0
+                          ? snapshots.map(s => s.productTitle).filter(Boolean).join(', ')
+                          : safeItems.map(i => i?.product?.name).filter(Boolean).join(', ');
 
-                          return (
-                            <div key={o.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#FAF8F5]/60 px-2 rounded-lg transition-colors">
-                              <div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-mono font-bold text-[#292624]">{o.id}</span>
-                                  <span className="text-[#C2BCB6]">•</span>
-                                  <span className="font-medium text-[#292624]">{o.customerName}</span>
-                                  <span className="text-[#C2BCB6]">•</span>
-                                  <span className="text-[#77716F]">{o.city}</span>
-                                </div>
-                                <div className="text-[11px] text-[#77716F] mt-0.5">
-                                  {o.date} at {o.orderTime || '02:30 PM'} • {pieceCount} piece{pieceCount !== 1 ? 's' : ''} {pieceTitles ? `(${pieceTitles})` : ''}
-                                </div>
+                        return (
+                          <div
+                            key={o.id}
+                            onClick={() => {
+                              setActiveTab('orders');
+                              setOrderSearch(o.id);
+                            }}
+                            className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-[#FAF8F5] px-3 rounded-xl transition-all cursor-pointer group"
+                            title="Click to view full order details in Orders tab"
+                          >
+                            <div className="space-y-0.5">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-semibold text-sm text-[#292624] group-hover:text-[#B49A6C] transition-colors">{o.customerName}</span>
+                                <span className="text-[#C2BCB6]">•</span>
+                                <span className="text-[#77716F]">{o.city}</span>
+                                <span className="text-[#C2BCB6]">•</span>
+                                <span className="font-mono text-xs text-[#9E9792]">{o.id}</span>
                               </div>
+                              <p className="text-[11px] text-[#77716F] truncate max-w-md">
+                                {pieceCount} piece{pieceCount !== 1 ? 's' : ''} {pieceTitles ? `(${pieceTitles})` : ''} • {o.date}
+                              </p>
+                            </div>
 
-                            <div className="flex items-center flex-wrap gap-2 shrink-0 justify-between sm:justify-end w-full sm:w-auto">
-                              <span className="font-bold text-sm text-[#292624] font-mono mr-1">
+                            <div className="flex items-center space-x-3 shrink-0">
+                              <span className="font-bold text-sm font-mono text-[#292624]">
                                 ₹{o.total.toLocaleString('en-IN')}
                               </span>
-
-                              <select
-                                value={o.status}
-                                onChange={(e) => handleUpdateOrderStatus(o.id, e.target.value as any)}
-                                className={`px-2 py-0.5 rounded text-[11px] font-medium border focus:outline-none cursor-pointer ${
-                                  o.status === 'Delivered' ? 'bg-[#EEF3EC] text-[#3B5432] border-[#D3E0CE]' :
-                                  o.status === 'Shipped' ? 'bg-[#F5F0F5] text-[#694868] border-[#E5D7E5]' :
-                                  o.status === 'Cancelled' ? 'bg-[#FDF2F0] text-[#8F3B30] border-[#F8D4CF]' :
-                                  'bg-[#FAF5EC] text-[#785E2F] border-[#EFE3CF]'
-                                }`}
-                              >
-                                <option value="Processing">Processing</option>
-                                <option value="Shipped">Shipped</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Cancelled">Cancelled</option>
-                              </select>
-
-                              <button
-                                onClick={() => setPreviewInvoiceOrder(o)}
-                                title="Tax Invoice"
-                                className="px-2 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[11px] font-medium text-[#292624] flex items-center space-x-1 cursor-pointer transition-colors"
-                              >
-                                <Printer className="w-3 h-3 text-[#77716F]" />
-                                <span>Invoice</span>
-                              </button>
-
-                              <button
-                                onClick={() => setPreviewCourierSlipOrder(o)}
-                                title="Courier Shipping Slip"
-                                className="px-2 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[11px] font-medium text-[#292624] flex items-center space-x-1 cursor-pointer transition-colors"
-                              >
-                                <Truck className="w-3 h-3 text-[#77716F]" />
-                                <span>Slip</span>
-                              </button>
-                              {/* 1-Click WhatsApp Customer Contact */}
-                              <button
-                                onClick={() => {
-                                  const phoneClean = (o.phone || '').replace(/[^0-9]/g, '');
-                                  const message = `Namaste ${o.customerName},\n\nThank you for choosing Rass by Riddhima.\nYour order *#${o.id}* is currently ${o.status}.\n\nItems:\n` +
-                                    (o.itemSnapshots?.map(i => `• ${i.productTitle} (Qty: ${i.quantity})`).join('\n') || 'Demi-fine handcrafted jewellery') +
-                                    (o.awbNumber ? `\n\nCourier Partner: ${o.courierPartner || 'Express'}\nTracking Number: ${o.awbNumber}` : '') +
-                                    `\n\nWith love,\nTeam Rass by Riddhima`;
-                                  const url = `https://wa.me/${phoneClean.startsWith('91') ? phoneClean : '91' + phoneClean}?text=${encodeURIComponent(message)}`;
-                                  window.open(url, '_blank');
-                                }}
-                                title="Chat with Customer on WhatsApp"
-                                className="px-2 py-1 rounded border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-[11px] font-semibold text-emerald-800 flex items-center space-x-1 cursor-pointer transition-colors"
-                              >
-                                <Phone className="w-3 h-3 text-emerald-600" />
-                                <span className="hidden sm:inline">WhatsApp</span>
-                              </button>
-
+                              <span className={`px-2.5 py-1 rounded-lg text-[10.5px] font-semibold uppercase ${
+                                o.status === 'Delivered' ? 'bg-[#EEF3EC] text-[#3B5432] border border-[#D3E0CE]' :
+                                o.status === 'Shipped' ? 'bg-[#F5F0F5] text-[#694868] border border-[#E5D7E5]' :
+                                o.status === 'Cancelled' ? 'bg-[#FDF2F0] text-[#8F3B30] border border-[#F8D4CF]' :
+                                'bg-[#FAF5EC] text-[#785E2F] border border-[#EFE3CF]'
+                              }`}>
+                                {o.status}
+                              </span>
                             </div>
                           </div>
                         );
@@ -1525,156 +1479,155 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   </div>
 
-                  <div className="pt-3 mt-3 border-t border-[#E7E0DA] flex items-center justify-between text-xs">
-                    <span className="text-[#77716F]">
-                      Showing recent orders • Instant printable tax invoices & courier slips
-                    </span>
+                  <div className="pt-3 border-t border-[#F2ECE5]">
                     <button
+                      type="button"
                       onClick={() => setActiveTab('orders')}
-                      className="font-medium text-[#B49A6C] hover:underline cursor-pointer"
+                      className="w-full py-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-xs font-semibold text-[#292624] text-center cursor-pointer transition-all shadow-2xs hover:shadow-xs"
                     >
-                      View Complete Order Stream ({orders.length}) →
+                      Open Full Customer Orders Console ({orders.length} total orders) →
                     </button>
                   </div>
                 </div>
 
-                {/* RIGHT COLUMN (1 of 3 spans): Performance Highlights & Quick Controls */}
+                {/* RIGHT COLUMN (1 Col): Top Creation & Quick Shortcuts */}
                 <div className="space-y-5">
                   
-                  {/* 1. Best Seller Design Spotlight */}
-                  {performance.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E7E0DA] shadow-subtle p-5">
-                      <div className="flex items-center justify-between pb-3 border-b border-[#E7E0DA] mb-3">
-                        <div className="flex items-center space-x-2">
-                          <Sparkles className="w-3.5 h-3.5 text-[#B49A6C]" />
-                          <span className="font-semibold text-xs tracking-wider uppercase text-[#292624]">
-                            Top Selling Piece
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#FAF5EC] text-[#785E2F] border border-[#EFE3CF]">
-                          #1 Demand
+                  {/* Top Selling Design Card */}
+                  {performance && performance[0] && (
+                    <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 space-y-3.5">
+                      <div className="flex items-center justify-between pb-2.5 border-b border-[#F2ECE5]">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-[#B49A6C]">
+                          #1 Customer Favorite
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('performance')}
+                          className="text-[11px] font-semibold text-[#77716F] hover:text-[#292624] cursor-pointer"
+                        >
+                          Rankings →
+                        </button>
                       </div>
 
                       <div className="flex items-center space-x-3.5">
                         <img
                           src={getOptimizedImageUrl(performance[0].imageUrl)}
                           alt={performance[0].productTitle}
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => handleImageError(e, performance[0].imageUrl)}
-                          className="w-16 h-16 rounded-lg object-cover border border-[#E7E0DA] bg-[#FAF8F5] shrink-0"
+                          className="w-14 h-14 rounded-xl object-cover bg-stone-100 border border-[#E7E0DA] shrink-0"
                         />
-                        <div>
-                          <h4 className="font-semibold text-xs text-[#292624] line-clamp-1">
+                        <div className="space-y-0.5 truncate">
+                          <span className="font-semibold text-xs text-[#292624] block truncate">
                             {performance[0].productTitle}
-                          </h4>
-                          <div className="text-[11px] text-[#77716F] font-mono mt-0.5">
-                            {performance[0].sku}
-                          </div>
-                          <div className="text-xs font-bold text-[#292624] mt-1">
-                            ₹{performance[0].netRevenue.toLocaleString('en-IN')}{' '}
-                            <span className="text-[11px] font-normal text-[#77716F]">
+                          </span>
+                          <span className="text-[11px] text-[#77716F] capitalize block">
+                            {performance[0].category.replace('-', ' ')}
+                          </span>
+                          <span className="font-mono font-bold text-xs text-[#292624] block">
+                            ₹{performance[0].netRevenue.toLocaleString('en-IN')}
+                            <span className="text-[10px] font-normal text-[#77716F] ml-1">
                               ({performance[0].unitsSold} sold)
                             </span>
-                          </div>
+                          </span>
                         </div>
-                      </div>
-
-                      <div className="pt-3 mt-3 border-t border-[#E7E0DA] flex items-center justify-between text-xs">
-                        <span className="text-[#77716F]">
-                          In Vault: <strong className="text-[#292624]">{performance[0].stockAvailable} units</strong>
-                        </span>
-                        <button
-                          onClick={() => setActiveTab('performance')}
-                          className="text-xs font-medium text-[#B49A6C] hover:underline cursor-pointer"
-                        >
-                          Rankings →
-                        </button>
                       </div>
                     </div>
                   )}
 
-                  {/* 2. Category Performance Bars */}
-                  <div className="bg-white rounded-xl border border-[#E7E0DA] shadow-subtle p-5">
-                    <div className="flex items-center justify-between pb-3 border-b border-[#E7E0DA] mb-3">
-                      <span className="font-semibold text-xs tracking-wider uppercase text-[#292624]">
-                        Category Sales Share
-                      </span>
-                      <span className="text-[10px] text-[#77716F]">By Volume</span>
-                    </div>
+                  {/* Atelier Quick Actions Panel */}
+                  <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 space-y-3">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#77716F] block pb-2 border-b border-[#F2ECE5]">
+                      Atelier Quick Actions
+                    </span>
+                    <div className="space-y-2 text-xs">
+                      
+                      {/* Action 1: Products & Stock */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab('products');
+                          setProductSortBy('stock_asc');
+                        }}
+                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
+                          <Package className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
+                            Products &amp; Stock
+                          </span>
+                          <span className="text-[11px] text-[#77716F] block truncate">
+                            Manage prices, photos &amp; {stockValuation.totalUnits} pieces
+                          </span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
+                      </button>
 
-                    <div className="space-y-3 text-xs">
-                      {categoryPerf.slice(0, 4).map((cat, idx) => {
-                        const barColors = [
-                          'bg-[#B49A6C]', // Antique Gold
-                          'bg-[#A783A2]', // Dusty Mauve
-                          'bg-[#C8D4C1]', // Muted Sage
-                          'bg-[#292624]', // Deep Espresso
-                        ];
-                        const colorClass = barColors[idx % barColors.length];
+                      {/* Action 2: Welcome Offer & Popup */}
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('coupons')}
+                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
+                          <Tag className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
+                            Welcome Offer &amp; Popup
+                          </span>
+                          <span className="text-[11px] text-[#77716F] block truncate">
+                            Edit live popup discount &amp; banner
+                          </span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
+                      </button>
 
-                        return (
-                          <div key={cat.category}>
-                            <div className="flex justify-between text-[11px] mb-1">
-                              <span className="font-medium text-[#292624]">{cat.label}</span>
-                              <span className="text-[#77716F] font-mono">
-                                ₹{(cat.revenue ?? cat.netRevenue ?? 0).toLocaleString('en-IN')} ({cat.percentage ?? 0}%)
-                              </span>
-                            </div>
-                            <div className="w-full h-1.5 bg-[#FAF8F5] rounded-full overflow-hidden border border-[#E7E0DA]/50">
-                              <div
-                                className={`h-full ${colorClass} rounded-full transition-all duration-500`}
-                                style={{ width: `${Math.max(cat.percentage ?? 0, 8)}%` }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {/* Action 3: Create Manual Order */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setManualOrderForm(prev => ({ ...prev, productId: products[0]?.id || '' }));
+                          setIsManualOrderModalOpen(true);
+                        }}
+                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
+                          <Plus className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
+                            + Create Manual Order
+                          </span>
+                          <span className="text-[11px] text-[#77716F] block truncate">
+                            For WhatsApp &amp; phone concierge
+                          </span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
+                      </button>
+
+                      {/* Action 4: Sales Ledger CSV */}
+                      <button
+                        type="button"
+                        onClick={() => AnalyticsService.downloadLedgerCSV(orders)}
+                        className="w-full p-2.5 rounded-xl border border-[#E7E0DA] bg-[#FAF8F5] hover:bg-white text-left transition-all cursor-pointer flex items-center space-x-3 group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] flex items-center justify-center text-[#B49A6C] shrink-0">
+                          <Download className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-[#292624] block text-xs group-hover:text-[#B49A6C] transition-colors">
+                            Export Sales Ledger
+                          </span>
+                          <span className="text-[11px] text-[#77716F] block truncate">
+                            Instant tax &amp; accounting Excel/CSV
+                          </span>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#A09A96] group-hover:text-[#292624] transition-colors shrink-0" />
+                      </button>
+
                     </div>
                   </div>
-
-                  {/* 3. Low Stock Attention Box (if any items low) */}
-                  {variants.filter(v => (v.stockQuantity - v.reservedQuantity) <= v.lowStockThreshold).length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#F8D4CF] shadow-subtle p-4 bg-gradient-to-br from-white to-[#FDF2F0]/30">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#8F3B30]">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>Vault Restock Needed</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-[#8F3B30] bg-[#FDF2F0] px-1.5 py-0.5 rounded border border-[#F8D4CF]">
-                          {variants.filter(v => (v.stockQuantity - v.reservedQuantity) <= v.lowStockThreshold).length} SKUs
-                        </span>
-                      </div>
-
-                      <div className="divide-y divide-[#E7E0DA]/50 text-xs">
-                        {variants
-                          .filter(v => (v.stockQuantity - v.reservedQuantity) <= v.lowStockThreshold)
-                          .slice(0, 3)
-                          .map((v) => {
-                            const prod = products.find(p => p.id === v.productId);
-                            return (
-                              <div key={v.id} className="py-2 flex items-center justify-between">
-                                <div>
-                                  <span className="font-medium text-[#292624] block text-[11px] line-clamp-1">{prod?.name || v.sku}</span>
-                                  <span className="text-[10px] font-mono text-[#77716F]">{v.sku}</span>
-                                </div>
-                                <div className="flex items-center space-x-2 shrink-0">
-                                  <span className="font-bold text-[#8F3B30] text-[11px]">{v.stockQuantity} left</span>
-                                  <button
-                                    onClick={() => handleQuickStockStep(v, 5)}
-                                    className="px-2 py-0.5 rounded bg-[#292624] hover:bg-[#1C1A18] text-white text-[10px] font-medium cursor-pointer transition-colors"
-                                    title="Add 5 units immediately"
-                                  >
-                                    +5
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
 
                 </div>
 
@@ -1682,326 +1635,314 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             </div>
           )}
-
+{/* TAB: PRODUCTS & STOCK (UNIFIED MANAGEMENT WITH SORTING)           */}
           {/* ----------------------------------------------------------------- */}
-          {/* TAB: INVENTORY & STOCK MANAGEMENT (FULLY WORKING UPDATES) */}
-          {/* ----------------------------------------------------------------- */}
-          {activeTab === 'inventory' && (
+          {(activeTab === 'products' || (activeTab as string) === 'inventory') && (
             <div className="space-y-6">
-              {/* Stats Bar */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-white rounded-lg border border-[#E7E0DA] shadow-subtle text-xs">
+              
+              {/* Top Stock Valuation & Health Summary Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 sm:p-5 bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs text-xs">
                 <div>
-                  <span className="text-[#77716F] block font-semibold uppercase text-[11px] tracking-wider">Total Available Units</span>
-                  <span className="text-xl font-bold text-[#292624]">{stockValuation.totalUnits} pcs</span>
+                  <span className="text-[#77716F] block font-semibold uppercase text-[10.5px] tracking-wider">
+                    Total Pieces in Stock
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-[#292624] mt-0.5 block font-mono">
+                    {stockValuation.totalUnits} pcs
+                  </span>
+                  <span className="text-[11px] text-[#77716F] mt-0.5 block">
+                    Across all {products.length} live catalog designs
+                  </span>
                 </div>
+
                 <div>
-                  <span className="text-[#77716F] block font-semibold uppercase text-[11px] tracking-wider">Retail Stock Value</span>
-                  <span className="text-xl font-bold text-[#292624]">₹{stockValuation.retailValuation.toLocaleString('en-IN')}</span>
+                  <span className="text-[#77716F] block font-semibold uppercase text-[10.5px] tracking-wider">
+                    Total Stock Value
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-[#292624] mt-0.5 block font-mono">
+                    ₹{stockValuation.retailValuation.toLocaleString('en-IN')}
+                  </span>
+                  <span className="text-[11px] text-[#77716F] mt-0.5 block">
+                    Current retail value of available jewellery
+                  </span>
                 </div>
+
                 <div>
-                  <span className="text-[#77716F] block font-semibold uppercase text-[11px] tracking-wider">Cost Inventory Value</span>
-                  <span className="text-xl font-bold text-[#292624]">₹{stockValuation.costValuation.toLocaleString('en-IN')}</span>
-                </div>
-                <div>
-                  <span className="text-[#77716F] block font-semibold uppercase text-[11px] tracking-wider">Low Stock SKUs</span>
-                  <span className={`text-xl font-bold ${stockValuation.lowStockSKUs > 0 ? 'text-[#8F3B30]' : 'text-[#3B5432]'}`}>
-                    {stockValuation.lowStockSKUs}
+                  <span className="text-[#77716F] block font-semibold uppercase text-[10.5px] tracking-wider">
+                    Low Stock Alerts
+                  </span>
+                  <div className="flex items-center space-x-2 mt-0.5">
+                    <span className={`text-xl sm:text-2xl font-bold font-mono ${
+                      stockValuation.lowStockSKUs > 0 ? 'text-[#8F3B30]' : 'text-emerald-700'
+                    }`}>
+                      {stockValuation.lowStockSKUs} {stockValuation.lowStockSKUs === 1 ? 'piece' : 'pieces'}
+                    </span>
+                    {stockValuation.lowStockSKUs > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setProductSortBy('stock_asc')}
+                        className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold border transition-all cursor-pointer ${
+                          productSortBy === 'stock_asc'
+                            ? 'bg-[#8F3B30] text-white border-[#8F3B30]'
+                            : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                        }`}
+                      >
+                        {productSortBy === 'stock_asc' ? 'Sorting: Least Stock First' : 'Show Low Stock First'}
+                      </button>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-[#77716F] mt-0.5 block">
+                    {stockValuation.lowStockSKUs > 0
+                      ? 'Designs with 3 or fewer units remaining'
+                      : 'All jewellery pieces are well-stocked'}
                   </span>
                 </div>
               </div>
 
-              {/* Search & Filter */}
-              <div className="p-3 bg-white rounded-lg border border-[#E7E0DA] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="relative w-full sm:w-72">
+              {/* Product Filters & Sorting Bar */}
+              <div className="p-4 bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+                
+                {/* Search Input */}
+                <div className="relative w-full sm:w-64">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#77716F]" />
                   <input
                     type="text"
-                    placeholder="Search by SKU or product name..."
-                    value={inventorySearch}
-                    onChange={(e) => setInventorySearch(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 rounded border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C]"
+                    placeholder="Search by name, SKU or code..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full pl-8 pr-3 py-2 rounded-xl border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] transition-colors"
                   />
+                  {productSearch && (
+                    <button
+                      onClick={() => setProductSearch('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#77716F] hover:text-[#292624]"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-                <span className="text-xs text-[#77716F]">
-                  Click +/- to step stock or "Batch Adjust" for restock
-                </span>
+
+                {/* Filter & Sort Controls */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Category Filter */}
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[#77716F] font-semibold uppercase text-[10.5px] tracking-wider">Category:</span>
+                    <select
+                      value={productCategoryFilter}
+                      onChange={(e) => setProductCategoryFilter(e.target.value)}
+                      className="border border-[#E7E0DA] rounded-xl px-3 py-1.5 bg-white text-[#292624] focus:outline-none focus:border-[#B49A6C] font-medium cursor-pointer"
+                    >
+                      <option value="all">All Categories</option>
+                      <option value="rings">Rings</option>
+                      <option value="earrings">Earrings</option>
+                      <option value="jhumka">Dome Jhumka</option>
+                      <option value="kangan-sets">Kangan Sets</option>
+                      <option value="kangna">Kangna</option>
+                      <option value="necklaces">Necklaces</option>
+                      <option value="bracelets">Bracelets</option>
+                      <option value="western">Western Jewellery</option>
+                      <option value="tribal">Tribal Jewellery</option>
+                      <option value="kadas">Kadas</option>
+                      <option value="accessories">Earpins &amp; Bugadi</option>
+                      <option value="toran">Toran</option>
+                    </select>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[#77716F] font-semibold uppercase text-[10.5px] tracking-wider">Status:</span>
+                    <select
+                      value={productStatusFilter}
+                      onChange={(e) => setProductStatusFilter(e.target.value)}
+                      className="border border-[#E7E0DA] rounded-xl px-3 py-1.5 bg-white text-[#292624] focus:outline-none focus:border-[#B49A6C] font-medium cursor-pointer"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="published">Published</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+
+                  {/* Sort By Filter (USER REQUEST: sort by least unit and max) */}
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[#77716F] font-semibold uppercase text-[10.5px] tracking-wider">Sort:</span>
+                    <select
+                      value={productSortBy}
+                      onChange={(e) => setProductSortBy(e.target.value as any)}
+                      className="border border-[#E7E0DA] rounded-xl px-3 py-1.5 bg-white text-[#292624] focus:outline-none focus:border-[#B49A6C] font-semibold cursor-pointer"
+                    >
+                      <option value="default">Default (Newest)</option>
+                      <option value="stock_asc">Least Units First (Low Stock)</option>
+                      <option value="stock_desc">Most Units First (High Stock)</option>
+                      <option value="price_asc">Price: Low to High</option>
+                      <option value="price_desc">Price: High to Low</option>
+                    </select>
+                  </div>
+                </div>
+
               </div>
 
-              {/* Inventory Balances Table */}
-              <div className="bg-white rounded-lg border border-[#E7E0DA] shadow-subtle overflow-hidden">
+              {/* Products Table */}
+              <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-subtle overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[760px]">
+                  <table className="w-full text-left text-xs min-w-[700px]">
                     <thead className="bg-[#FAF8F5] text-[#77716F] uppercase font-semibold text-[11px] tracking-wider border-b border-[#E7E0DA]">
                       <tr>
-                        <th className="py-2.5 px-4">SKU</th>
-                        <th className="py-2.5 px-4">Design Name</th>
-                        <th className="py-2.5 px-4">Option</th>
-                        <th className="py-2.5 px-4">Stock on Hand</th>
-                        <th className="py-2.5 px-4">Reserved</th>
-                        <th className="py-2.5 px-4">Available</th>
-                        <th className="py-2.5 px-4">Safety Status</th>
-                        <th className="py-2.5 px-4 text-right">Quick Stock Update</th>
+                        <th className="py-3 px-4">Design &amp; SKU</th>
+                        <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">
+                          <button
+                            type="button"
+                            onClick={() => setProductSortBy(prev => prev === 'price_asc' ? 'price_desc' : 'price_asc')}
+                            className="flex items-center space-x-1 uppercase hover:text-[#292624] cursor-pointer"
+                          >
+                            <span>Selling Price</span>
+                            {productSortBy === 'price_asc' && <span>↑</span>}
+                            {productSortBy === 'price_desc' && <span>↓</span>}
+                          </button>
+                        </th>
+                        <th className="py-3 px-4">
+                          <button
+                            type="button"
+                            onClick={() => setProductSortBy(prev => prev === 'stock_asc' ? 'stock_desc' : 'stock_asc')}
+                            className="flex items-center space-x-1 uppercase hover:text-[#292624] cursor-pointer"
+                            title="Click to sort by stock units"
+                          >
+                            <span>Stock on Hand</span>
+                            {productSortBy === 'stock_asc' && <span className="text-[#8F3B30] font-bold">↑ (Least First)</span>}
+                            {productSortBy === 'stock_desc' && <span className="text-emerald-700 font-bold">↓ (Most First)</span>}
+                          </button>
+                        </th>
+                        <th className="py-3 px-4">Website Status</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E7E0DA]">
-                      {filteredVariants.map((v) => {
-                        const prod = products.find((p) => p.id === v.productId);
-                        const available = v.stockQuantity - v.reservedQuantity;
-                        const isLow = available <= v.lowStockThreshold;
-                        const isOut = available <= 0;
-
-                        return (
-                          <tr key={v.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
-                            <td className="py-3 px-4 font-mono font-semibold text-[#292624]">{v.sku}</td>
-                            <td className="py-3 px-4 font-medium text-[#292624]">{prod?.name || 'Design'}</td>
-                            <td className="py-3 px-4 text-[#77716F]">{v.variantName}</td>
-                            <td className="py-3 px-4 font-bold text-[#292624]">{v.stockQuantity}</td>
-                            <td className="py-3 px-4 text-[#77716F]">{v.reservedQuantity}</td>
-                            <td className="py-3 px-4 font-semibold text-[#292624]">{available}</td>
-                            <td className="py-3 px-4">
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                isOut ? 'bg-[#FDF2F0] text-[#8F3B30] border border-[#F8D4CF]' :
-                                isLow ? 'bg-[#FAF5EC] text-[#785E2F] border border-[#EFE3CF]' : 'bg-[#EEF3EC] text-[#3B5432] border border-[#D3E0CE]'
-                              }`}>
-                                {isOut ? 'Out of Stock' : isLow ? `Low Stock (${available} <= ${v.lowStockThreshold})` : 'In Stock'}
-                              </span>
+                      {paginatedProducts.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-12 text-center text-[#77716F]">
+                            No designs found matching your search or filters.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedProducts.map((p) => (
+                          <tr key={p.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
+                            <td className="py-3.5 px-4 flex items-center space-x-3">
+                              <img
+                                src={getOptimizedImageUrl(p.cleanImage || p.image)}
+                                alt={p.name}
+                                loading="lazy"
+                                decoding="async"
+                                onError={(e) => handleImageError(e, p.cleanImage || p.image)}
+                                className="w-11 h-11 rounded-xl object-cover bg-stone-100 border border-[#E7E0DA] shrink-0"
+                              />
+                              <div>
+                                <span className="font-semibold text-[#292624] block">{p.name}</span>
+                                <span className="text-[10px] text-[#77716F] font-mono">{p.sku || p.id}</span>
+                              </div>
                             </td>
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end space-x-1.5">
-                                {/* Direct Steppers */}
+                            <td className="py-3.5 px-4 uppercase text-[#77716F] font-medium">{p.categoryDisplay}</td>
+                            <td className="py-3.5 px-4 font-bold text-[#292624]">₹{p.price.toLocaleString('en-IN')}</td>
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center space-x-1.5">
                                 <button
-                                  onClick={() => handleQuickStockStep(v, -1)}
-                                  disabled={v.stockQuantity <= 0}
-                                  title="Deduct 1 unit"
-                                  className="w-7 h-7 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-30 text-[#292624] flex items-center justify-center font-bold text-sm cursor-pointer transition-colors"
+                                  type="button"
+                                  onClick={() => {
+                                    const v = variants.find(vr => vr.productId === p.id);
+                                    if (v) handleQuickStockStep(v, -1);
+                                  }}
+                                  disabled={(p.stockCount ?? 0) <= 0}
+                                  title="Deduct 1 piece"
+                                  className="w-7 h-7 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-30 text-[#292624] flex items-center justify-center font-bold text-xs cursor-pointer transition-colors active:scale-95 shadow-2xs"
                                 >
                                   -
                                 </button>
-                                <span className="font-mono text-xs font-bold w-6 text-center text-[#292624]">{v.stockQuantity}</span>
+                                <span className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold font-mono ${
+                                  (p.stockCount ?? 0) === 0
+                                    ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                                    : (p.stockCount ?? 0) <= 3
+                                    ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                }`}>
+                                  {p.stockCount ?? 0} {p.stockCount === 1 ? 'unit' : 'units'}
+                                </span>
                                 <button
-                                  onClick={() => handleQuickStockStep(v, 1)}
-                                  title="Add 1 unit"
-                                  className="w-7 h-7 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[#292624] flex items-center justify-center font-bold text-sm cursor-pointer transition-colors"
+                                  type="button"
+                                  onClick={() => {
+                                    const v = variants.find(vr => vr.productId === p.id);
+                                    if (v) handleQuickStockStep(v, 1);
+                                  }}
+                                  title="Add 1 piece"
+                                  className="w-7 h-7 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[#292624] flex items-center justify-center font-bold text-xs cursor-pointer transition-colors active:scale-95 shadow-2xs"
                                 >
                                   +
                                 </button>
-
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase ${
+                                p.status === 'published' ? 'bg-[#EEF3EC] text-[#3B5432] border border-[#D3E0CE]' :
+                                p.status === 'archived' ? 'bg-[#F2EFEA] text-[#6E6761] border border-[#E4DFD8]' : 'bg-[#FAF5EC] text-[#785E2F] border border-[#EFE3CF]'
+                              }`}>
+                                {p.status || 'published'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex items-center justify-end space-x-1.5">
                                 <button
-                                  onClick={() => {
-                                    setQuickAdjustVariant(v);
-                                    setQuickAdjustUnits(5);
-                                    setQuickAdjustReason('Batch Restock');
-                                  }}
-                                  className="ml-2 px-2.5 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[11px] font-medium text-[#292624] cursor-pointer transition-colors"
+                                  type="button"
+                                  onClick={() => handleToggleProductStatus(p)}
+                                  className="px-2.5 py-1 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[11px] font-medium text-[#292624] transition-colors cursor-pointer"
                                 >
-                                  Batch Adjust
+                                  {p.status === 'published' ? 'Deactivate' : 'Publish'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleArchiveProduct(p)}
+                                  title="Archive product"
+                                  className="p-1.5 rounded-lg hover:bg-[#FAF8F5] text-[#77716F] hover:text-[#B49A6C] transition-colors cursor-pointer"
+                                >
+                                  <Archive className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteProductSafely(p)}
+                                  title="Safe delete"
+                                  className="p-1.5 rounded-lg hover:bg-[#FDF2F0] text-[#8F3B30] transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
                             </td>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Movement Ledger View */}
-              <div className="bg-white rounded-lg border border-[#E7E0DA] shadow-subtle p-4">
-                <h3 className="font-semibold text-sm text-[#292624] mb-3">Inventory Movement History</h3>
-                <div className="overflow-x-auto max-h-64 divide-y divide-[#E7E0DA] text-xs">
-                  {movements.slice(0, 15).map((m) => (
-                    <div key={m.id} className="py-2 flex items-center justify-between">
-                      <div>
-                        <span className="font-mono font-semibold text-[#292624]">{m.sku}</span>
-                        <span className="text-[#77716F] ml-2">{m.movementType.replace('_', ' ')}: {m.notes}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className={`font-bold ${m.quantityChange > 0 ? 'text-[#3B5432]' : 'text-[#8F3B30]'}`}>
-                          {m.quantityChange > 0 ? `+${m.quantityChange}` : m.quantityChange}
-                        </span>
-                        <span className="text-[10px] text-[#77716F] ml-3">Bal: {m.quantityAfter}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ----------------------------------------------------------------- */}
-          {/* TAB: PRODUCTS (EDIT PRODUCT INFO REMOVED AS REQUESTED!) */}
-          {/* ----------------------------------------------------------------- */}
-          {activeTab === 'products' && (
-            <div className="space-y-6">
-              {/* Product Filters Bar */}
-              <div className="p-3 bg-white rounded-lg border border-[#E7E0DA] flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center space-x-3">
-                  <span className="text-[#77716F] font-semibold uppercase text-[11px] tracking-wider">Category:</span>
-                  <select
-                    value={productCategoryFilter}
-                    onChange={(e) => setProductCategoryFilter(e.target.value)}
-                    className="border border-[#E7E0DA] rounded px-2.5 py-1.5 bg-white text-[#292624] focus:outline-none focus:border-[#B49A6C]"
-                  >
-                    <option value="all">All Categories</option>
-                    <option value="rings">Rings</option>
-                    <option value="earrings">Earrings</option>
-                    <option value="jhumka">Dome Jhumka</option>
-                    <option value="kangan-sets">Kangan Sets</option>
-                    <option value="kangna">Kangna</option>
-                    <option value="necklaces">Necklaces</option>
-                    <option value="bracelets">Bracelets</option>
-                    <option value="western">Western Jewellery</option>
-                    <option value="tribal">Tribal Jewellery</option>
-                    <option value="kadas">Kadas</option>
-                    <option value="accessories">Earpins &amp; Bugadi</option>
-                    <option value="toran">Toran</option>
-                  </select>
-
-                  <span className="text-[#77716F] font-semibold uppercase text-[11px] tracking-wider ml-2">Status:</span>
-                  <select
-                    value={productStatusFilter}
-                    onChange={(e) => setProductStatusFilter(e.target.value)}
-                    className="border border-[#E7E0DA] rounded px-2.5 py-1.5 bg-white text-[#292624] focus:outline-none focus:border-[#B49A6C]"
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="published">Published</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                </div>
-
-                <div className="text-[11px] text-[#77716F]">
-                  Editing existing product prices/titles is disabled to protect Razorpay order reconciliation.
-                </div>
-              </div>
-
-              {/* Products Table */}
-              <div className="bg-white rounded-lg border border-[#E7E0DA] shadow-subtle overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[660px]">
-                    <thead className="bg-[#FAF8F5] text-[#77716F] uppercase font-semibold text-[11px] tracking-wider border-b border-[#E7E0DA]">
-                      <tr>
-                        <th className="py-2.5 px-4">Design & SKU</th>
-                        <th className="py-2.5 px-4">Category</th>
-                        <th className="py-2.5 px-4">Retail Price</th>
-                        <th className="py-2.5 px-4">Stock Count</th>
-                        <th className="py-2.5 px-4">Storefront Status</th>
-                        <th className="py-2.5 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E7E0DA]">
-                      {paginatedProducts.map((p) => (
-                        <tr key={p.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
-                          <td className="py-3 px-4 flex items-center space-x-3">
-                            <img
-                              src={getOptimizedImageUrl(p.cleanImage || p.image)}
-                              alt={p.name}
-                              loading="lazy"
-                              decoding="async"
-                              onError={(e) => handleImageError(e, p.cleanImage || p.image)}
-                              className="w-10 h-10 rounded object-cover bg-stone-100 border border-[#E7E0DA]"
-                            />
-                            <div>
-                              <span className="font-semibold text-[#292624] block">{p.name}</span>
-                              <span className="text-[10px] text-[#77716F] font-mono">{p.sku || p.id}</span>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 uppercase text-[#77716F] font-medium">{p.categoryDisplay}</td>
-                          <td className="py-3 px-4 font-bold text-[#292624]">₹{p.price.toLocaleString('en-IN')}</td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center space-x-1.5">
-                              <button
-                                onClick={() => {
-                                  const v = variants.find(vr => vr.productId === p.id);
-                                  if (v) handleQuickStockStep(v, -1);
-                                }}
-                                disabled={(p.stockCount ?? 0) <= 0}
-                                title="Deduct 1 piece"
-                                className="w-6 h-6 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-30 text-[#292624] flex items-center justify-center font-bold text-xs cursor-pointer transition-colors"
-                              >
-                                -
-                              </button>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                (p.stockCount ?? 0) <= 3 ? 'bg-[#FAF5EC] text-[#785E2F] border border-[#EFE3CF]' : 'bg-[#EEF3EC] text-[#3B5432] border border-[#D3E0CE]'
-                              }`}>
-                                {p.stockCount ?? 0} units
-                              </span>
-                              <button
-                                onClick={() => {
-                                  const v = variants.find(vr => vr.productId === p.id);
-                                  if (v) handleQuickStockStep(v, 1);
-                                }}
-                                title="Add 1 piece"
-                                className="w-6 h-6 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[#292624] flex items-center justify-center font-bold text-xs cursor-pointer transition-colors"
-                              >
-                                +
-                              </button>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                              p.status === 'published' ? 'bg-[#EEF3EC] text-[#3B5432] border border-[#D3E0CE]' :
-                              p.status === 'archived' ? 'bg-[#F2EFEA] text-[#6E6761] border border-[#E4DFD8]' : 'bg-[#FAF5EC] text-[#785E2F] border border-[#EFE3CF]'
-                            }`}>
-                              {p.status || 'published'}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <div className="flex items-center justify-end space-x-1.5">
-                              <button
-                                onClick={() => handleToggleProductStatus(p)}
-                                className="px-2.5 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[11px] font-medium text-[#292624] transition-colors cursor-pointer"
-                              >
-                                {p.status === 'published' ? 'Deactivate' : 'Publish'}
-                              </button>
-                              <button
-                                onClick={() => handleArchiveProduct(p)}
-                                title="Archive product"
-                                className="p-1 rounded hover:bg-[#FAF8F5] text-[#77716F] hover:text-[#B49A6C] transition-colors cursor-pointer"
-                              >
-                                <Archive className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProductSafely(p)}
-                                title="Safe delete"
-                                className="p-1 rounded hover:bg-[#FDF2F0] text-[#8F3B30] transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Snappy Pagination Controls */}
-                {totalProductPages > 1 && (
-                  <div className="px-4 py-3 bg-[#FAF8F5] border-t border-[#E7E0DA] flex items-center justify-between text-xs text-[#77716F]">
-                    <div>
-                      Showing <span className="font-semibold text-[#292624]">{(productPage - 1) * PRODUCTS_PER_PAGE + 1}</span> to{' '}
-                      <span className="font-semibold text-[#292624]">
-                        {Math.min(productPage * PRODUCTS_PER_PAGE, filteredProducts.length)}
-                      </span>{' '}
-                      of <span className="font-semibold text-[#292624]">{filteredProducts.length}</span> designs
-                    </div>
+                {/* Pagination Controls */}
+                {filteredProducts.length > PRODUCTS_PER_PAGE && (
+                  <div className="p-4 border-t border-[#E7E0DA] flex items-center justify-between text-xs text-[#77716F]">
+                    <span>
+                      Showing {Math.min((productPage - 1) * PRODUCTS_PER_PAGE + 1, filteredProducts.length)} to{' '}
+                      {Math.min(productPage * PRODUCTS_PER_PAGE, filteredProducts.length)} of{' '}
+                      <span className="font-semibold text-[#292624]">{filteredProducts.length}</span> designs
+                    </span>
                     <div className="flex items-center space-x-1.5">
                       <button
                         onClick={() => setProductPage(prev => Math.max(1, prev - 1))}
                         disabled={productPage === 1}
-                        className="px-2.5 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-40 disabled:cursor-not-allowed font-medium text-[#292624] transition-colors cursor-pointer"
+                        className="px-3 py-1 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-40 disabled:cursor-not-allowed font-medium text-[#292624] transition-colors cursor-pointer"
                       >
                         Previous
                       </button>
-                      <span className="px-2 font-mono text-[11px] text-[#292624]">
-                        Page {productPage} / {totalProductPages}
+                      <span className="px-2 font-mono text-[11px]">
+                        Page {productPage} of {totalProductPages}
                       </span>
                       <button
                         onClick={() => setProductPage(prev => Math.min(totalProductPages, prev + 1))}
                         disabled={productPage === totalProductPages}
-                        className="px-2.5 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-40 disabled:cursor-not-allowed font-medium text-[#292624] transition-colors cursor-pointer"
+                        className="px-3 py-1 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] disabled:opacity-40 disabled:cursor-not-allowed font-medium text-[#292624] transition-colors cursor-pointer"
                       >
                         Next
                       </button>
@@ -2011,8 +1952,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
           )}
-
-          {/* ----------------------------------------------------------------- */}
+{/* ----------------------------------------------------------------- */}
           {/* TAB: CUSTOMER ORDERS (WITH INVOICE & COURIER SLIP MODALS) */}
           {/* ----------------------------------------------------------------- */}
           {activeTab === 'orders' && (
@@ -2184,6 +2124,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                   <X className="w-3.5 h-3.5" />
                                 </button>
                               )}
+
+                              {/* Permanently Delete Order */}
+                              <button
+                                onClick={() => handlePermanentlyDeleteOrder(o.id)}
+                                title="Permanently delete order"
+                                className="p-1 rounded hover:bg-red-50 text-[#8F3B30] hover:text-red-700 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2203,173 +2152,299 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeTab === 'coupons' && (
             <div className="space-y-6">
 
-              {/* Festive Campaign & Storefront Popup Controller */}
-              <div className="p-5 sm:p-6 bg-white rounded-xl border border-[#A783A2]/40 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E7E0DA] pb-4">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-9 h-9 rounded-full bg-[#FAF5F9] border border-[#A783A2]/30 flex items-center justify-center text-[#8B5E86]">
-                      <Sparkles className="w-4 h-4 text-[#A783A2]" />
+              {/* ============================================================= */}
+              {/* FESTIVE CAMPAIGN & STOREFRONT POPUP (SIMPLE & CLEAN)         */}
+              {/* ============================================================= */}
+              {(() => {
+                const previewLinkedCoupon = coupons.find(c => c.code === festiveCampaign.linkedCouponCode) || couponService.getCouponByCode(festiveCampaign.linkedCouponCode);
+                const previewDiscountFormula = previewLinkedCoupon
+                  ? `${previewLinkedCoupon.discountType === 'percentage' ? `Flat ${previewLinkedCoupon.discountValue}% OFF` : `Flat ₹${previewLinkedCoupon.discountValue.toLocaleString('en-IN')} OFF`} • ${previewLinkedCoupon.minOrderValue > 0 ? `Min. cart ₹${previewLinkedCoupon.minOrderValue.toLocaleString('en-IN')}` : 'No minimum spend'}`
+                  : 'Flat 20% OFF • Min. cart ₹2,999';
+
+                return (
+                  <div className="bg-white rounded-3xl border border-[#E7E0DA] p-6 sm:p-8 space-y-6">
+                    
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E7E0DA]">
+                      <div className="flex items-center space-x-3.5">
+                        <div className="w-10 h-10 rounded-xl bg-[#FAF5F9] border border-[#E2D5E5] flex items-center justify-center text-[#8B5E86] shrink-0">
+                          <Sparkles className="w-5 h-5 text-[#A783A2]" />
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-3">
+                            <h3 className="font-serif text-lg sm:text-xl font-bold text-[#292624]">
+                              Welcome Offer Popup
+                            </h3>
+                            {festiveCampaign.isEnabled ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                                <span>Live on Website</span>
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#F2EFEA] text-[#77716F] border border-[#E7E0DA]">
+                                Paused
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#77716F] mt-0.5">
+                            The welcome offer shown to new visitors when they arrive on your site.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setIsPreviewFestiveOpen(true)}
+                          className="px-4 py-2 rounded-xl border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-xs font-semibold text-[#292624] flex items-center space-x-1.5 cursor-pointer transition-all active:scale-95"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#77716F]" />
+                          <span>Fullscreen View</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = !festiveCampaign.isEnabled;
+                            const updated = couponService.saveFestiveCampaign({ isEnabled: next });
+                            setFestiveCampaign(updated);
+                            showNotification(next ? 'Welcome popup is now LIVE on website' : 'Welcome popup paused');
+                          }}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all active:scale-95 ${
+                            festiveCampaign.isEnabled
+                              ? 'bg-[#8F3B30] text-white hover:bg-[#783026]'
+                              : 'bg-[#3B5432] text-white hover:bg-[#2C3F25]'
+                          }`}
+                        >
+                          {festiveCampaign.isEnabled ? 'Turn OFF' : 'Turn ON'}
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-sm text-[#292624] flex items-center gap-2">
-                        <span>Festive Storefront Campaign &amp; Entry Popup</span>
-                        {festiveCampaign.isEnabled ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            ● Live on Storefront
+
+                    {/* Side-by-Side: Simple Form (Left) & Live Preview (Right) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                      
+                      {/* Left: Simple Form */}
+                      <div className="lg:col-span-5 space-y-4">
+                        
+                        {/* Coupon Offer */}
+                        <div>
+                          <label className="block text-xs font-semibold text-[#292624] mb-1.5">
+                            Coupon Offer
+                          </label>
+                          <select
+                            value={festiveCampaign.linkedCouponCode}
+                            onChange={(e) => setFestiveCampaign(prev => ({ ...prev, linkedCouponCode: e.target.value }))}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0DA] bg-white text-xs font-medium text-[#292624] focus:outline-none focus:border-[#B49A6C] transition-all cursor-pointer"
+                          >
+                            {coupons.filter(c => c.isActive !== false).map(c => (
+                              <option key={c.id} value={c.code}>
+                                {c.code} — {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue.toLocaleString('en-IN')} OFF`} (Min cart ₹{c.minOrderValue.toLocaleString('en-IN')})
+                              </option>
+                            ))}
+                          </select>
+                          <p className="text-[11px] text-[#77716F] mt-1">
+                            When visitors click "Apply", this code is copied &amp; applied to their order.
+                          </p>
+                        </div>
+
+                        {/* Top Badge */}
+                        <div>
+                          <label className="block text-xs font-semibold text-[#292624] mb-1.5">
+                            Top Badge
+                          </label>
+                          <input
+                            type="text"
+                            value={festiveCampaign.badgeText}
+                            onChange={(e) => setFestiveCampaign(prev => ({ ...prev, badgeText: e.target.value }))}
+                            placeholder="e.g. FESTIVE PRIVILEGE • SPECIAL CELEBRATION"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] transition-all"
+                          />
+                          <p className="text-[11px] text-[#77716F] mt-1">
+                            Small tag shown above the main heading.
+                          </p>
+                        </div>
+
+                        {/* Heading */}
+                        <div>
+                          <label className="block text-xs font-semibold text-[#292624] mb-1.5">
+                            Heading
+                          </label>
+                          <input
+                            type="text"
+                            value={festiveCampaign.headline}
+                            onChange={(e) => setFestiveCampaign(prev => ({ ...prev, headline: e.target.value }))}
+                            placeholder="e.g. A Little Magic for Your First Rass Creation"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0DA] bg-white text-xs font-serif text-sm text-[#292624] focus:outline-none focus:border-[#B49A6C] transition-all"
+                          />
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <label className="block text-xs font-semibold text-[#292624] mb-1.5">
+                            Description
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={festiveCampaign.description}
+                            onChange={(e) => setFestiveCampaign(prev => ({ ...prev, description: e.target.value }))}
+                            placeholder="e.g. Enjoy an exclusive 20% discount across our handcrafted demi-fine jewelry collections."
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] transition-all leading-relaxed resize-none"
+                          />
+                        </div>
+
+                        {/* Button Text */}
+                        <div>
+                          <label className="block text-xs font-semibold text-[#292624] mb-1.5">
+                            Button Text
+                          </label>
+                          <input
+                            type="text"
+                            value={festiveCampaign.buttonText}
+                            onChange={(e) => setFestiveCampaign(prev => ({ ...prev, buttonText: e.target.value }))}
+                            placeholder="e.g. Apply &amp; Explore Collection"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#B49A6C] transition-all"
+                          />
+                        </div>
+
+                        {/* Save Button */}
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              couponService.saveFestiveCampaign(festiveCampaign);
+                              showNotification('Popup settings saved successfully!');
+                            }}
+                            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-bold uppercase tracking-wider cursor-pointer transition-all shadow-xs active:scale-95"
+                          >
+                            Save Settings
+                          </button>
+                        </div>
+
+                      </div>
+
+                      {/* Right: Live Preview */}
+                      <div className="lg:col-span-7 bg-[#FAF8F5] p-6 sm:p-7 rounded-3xl border border-[#E7E0DA]">
+                        <div className="flex items-center justify-between pb-3.5 border-b border-[#E7E0DA] mb-5">
+                          <div className="flex items-center space-x-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                            <span className="text-xs font-semibold text-[#292624]">
+                              Live Preview
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-[#77716F]">
+                            What visitors see on the site
                           </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2EFEA] text-[#77716F] border border-[#E7E0DA]">
-                            Disabled
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-xs text-[#77716F]">
-                        Control the celebratory welcome offer modal that greets site visitors. Select the coupon offer, headline, and festive copy.
-                      </p>
+                        </div>
+
+                        {/* Modal Replica */}
+                        <div className="relative bg-white rounded-3xl border border-[#E7E0DA] p-6 sm:p-8 text-center text-[#292624] overflow-hidden shadow-xs">
+                          
+                          {/* Botanical Sprigs Background */}
+                          <div className="absolute top-0 left-0 pointer-events-none opacity-20 select-none">
+                            <img
+                              src={getOptimizedImageUrl('/elements/Mauve Botanical Sprig Line Art.png')}
+                              alt=""
+                              className="w-20 sm:w-28 h-auto object-contain"
+                            />
+                          </div>
+                          <div className="absolute top-0 right-0 pointer-events-none opacity-20 select-none -scale-x-100">
+                            <img
+                              src={getOptimizedImageUrl('/elements/Mauve Botanical Sprig Line Art.png')}
+                              alt=""
+                              className="w-20 sm:w-28 h-auto object-contain"
+                            />
+                          </div>
+
+                          {/* Top Badge */}
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF5F9] border border-[#A783A2]/30 text-[#8B5E86] text-[10px] uppercase tracking-wider font-semibold mb-3">
+                            <Sparkles className="w-3 h-3 text-[#A783A2]" />
+                            <span>{festiveCampaign.badgeText || 'FESTIVE PRIVILEGE • SPECIAL CELEBRATION'}</span>
+                          </div>
+
+                          {/* Heading */}
+                          <h2
+                            className="text-2xl sm:text-[28px] font-serif text-[#292624] tracking-tight leading-snug mb-2 font-normal"
+                            style={{ fontFamily: '"Cormorant Garamond", "Playfair Display", Georgia, serif' }}
+                          >
+                            {festiveCampaign.headline || 'A Little Magic for Your First Rass Creation'}
+                          </h2>
+
+                          {/* Description */}
+                          <p className="text-xs sm:text-[13px] text-[#77716F] leading-relaxed max-w-sm mx-auto mb-5">
+                            {festiveCampaign.description || 'Enjoy an exclusive 20% discount across our handcrafted demi-fine jewelry collections.'}
+                          </p>
+
+                          {/* Coupon Box */}
+                          <div className="bg-[#FAF5F9] rounded-2xl border-2 border-dashed border-[#A783A2]/50 p-4 relative mb-5">
+                            {/* Cutout notches */}
+                            <div className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-r-2 border-dashed border-[#A783A2]/50" />
+                            <div className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white border-l-2 border-dashed border-[#A783A2]/50" />
+
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                              <div>
+                                <span className="text-[10px] uppercase tracking-wider text-[#8B5E86] font-semibold block mb-0.5">
+                                  Coupon Code
+                                </span>
+                                <span className="font-mono text-xl sm:text-2xl font-bold tracking-widest text-[#292624]">
+                                  {festiveCampaign.linkedCouponCode || 'FESTIVE20'}
+                                </span>
+                                <p className="text-[11px] text-[#77716F] mt-0.5">
+                                  {previewDiscountFormula}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  try {
+                                    confetti({ particleCount: 35, spread: 60, origin: { y: 0.6 } });
+                                  } catch (e) {}
+                                  showNotification(`Copied: ${festiveCampaign.linkedCouponCode}`);
+                                }}
+                                className="px-4 py-2 rounded-xl bg-[#292624] text-white text-[11px] font-semibold uppercase tracking-wider flex items-center space-x-1.5 cursor-pointer hover:bg-black transition-all shrink-0 active:scale-95"
+                              >
+                                <Copy className="w-3.5 h-3.5 text-[#B49A6C]" />
+                                <span>Copy Code</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* CTA Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                confetti({ particleCount: 45, spread: 70, origin: { y: 0.6 } });
+                              } catch (e) {}
+                              showNotification('Preview: Coupon applied to cart!');
+                            }}
+                            className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-[#A783A2] to-[#8E6389] hover:from-[#956E90] hover:to-[#7E5279] text-white font-semibold text-xs tracking-wider uppercase transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer active:scale-95"
+                          >
+                            <span>{festiveCampaign.buttonText || 'Apply & Explore Collection'}</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Trust Badges */}
+                          <div className="flex items-center justify-center space-x-5 pt-4 text-[10px] text-[#77716F]">
+                            <div className="flex items-center space-x-1.5">
+                              <Truck className="w-3 h-3 text-[#B49A6C]" />
+                              <span>Complimentary Delivery</span>
+                            </div>
+                            <div className="flex items-center space-x-1.5">
+                              <ShieldCheck className="w-3 h-3 text-[#A783A2]" />
+                              <span>925 Hallmarked Purity</span>
+                            </div>
+                          </div>
+
+                        </div>
+
+                      </div>
+
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsPreviewFestiveOpen(true)}
-                      className="px-3 py-1.5 rounded-lg border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-xs font-medium text-[#292624] flex items-center space-x-1.5 cursor-pointer transition-colors shadow-2xs"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-[#77716F]" />
-                      <span>Preview Popup</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = !festiveCampaign.isEnabled;
-                        const updated = couponService.saveFestiveCampaign({ isEnabled: next });
-                        setFestiveCampaign(updated);
-                        showNotification(next ? 'Festive storefront popup enabled' : 'Festive storefront popup disabled');
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-2xs ${
-                        festiveCampaign.isEnabled
-                          ? 'bg-[#8F3B30] text-white hover:bg-[#783026]'
-                          : 'bg-[#3B5432] text-white hover:bg-[#2C3F25]'
-                      }`}
-                    >
-                      {festiveCampaign.isEnabled ? 'Turn OFF' : 'Turn ON'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Form Controls */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <label className="block font-medium text-[#292624] mb-1">
-                      Link Coupon Offer
-                    </label>
-                    <select
-                      value={festiveCampaign.linkedCouponCode}
-                      onChange={(e) => {
-                        const code = e.target.value;
-                        setFestiveCampaign(prev => ({ ...prev, linkedCouponCode: code }));
-                      }}
-                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
-                    >
-                      {coupons.map((c) => (
-                        <option key={c.id} value={c.code}>
-                          {c.code} — {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue.toLocaleString('en-IN')} FLAT`} (Min cart ₹{c.minOrderValue})
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-[10px] text-[#77716F] mt-1 block">
-                      When visitors click &quot;Apply&quot;, this coupon code is auto-copied &amp; applied to cart.
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="block font-medium text-[#292624] mb-1">
-                      Festive Ribbon / Badge Tag
-                    </label>
-                    <input
-                      type="text"
-                      value={festiveCampaign.badgeText}
-                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, badgeText: e.target.value }))}
-                      placeholder="e.g. DIWALI SPECIAL • FESTIVE PRIVILEGE"
-                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
-                    />
-                    <span className="text-[10px] text-[#77716F] mt-1 block">
-                      Upper pill badge on the popup.
-                    </span>
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block font-medium text-[#292624] mb-1">
-                      Headline Title
-                    </label>
-                    <input
-                      type="text"
-                      value={festiveCampaign.headline}
-                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, headline: e.target.value }))}
-                      placeholder="e.g. A Little Magic for Your First Rass Creation"
-                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block font-medium text-[#292624] mb-1">
-                      Festive Description / Subtitle
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={festiveCampaign.description}
-                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="e.g. Celebrate in heirloom gold vermeil with 20% off on your order."
-                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-medium text-[#292624] mb-1">
-                      Call to Action Button Text
-                    </label>
-                    <input
-                      type="text"
-                      value={festiveCampaign.buttonText}
-                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, buttonText: e.target.value }))}
-                      placeholder="e.g. Apply &amp; Explore Collection"
-                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-medium text-[#292624] mb-1">
-                      Popup Delay on Site (Seconds)
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={10}
-                      step={0.5}
-                      value={festiveCampaign.delaySeconds}
-                      onChange={(e) => setFestiveCampaign(prev => ({ ...prev, delaySeconds: Number(e.target.value) || 2.5 }))}
-                      className="w-full px-3 py-2 rounded-lg border border-[#E7E0DA] bg-white text-xs text-[#292624] focus:outline-none focus:border-[#A783A2]"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2 flex items-center justify-between pt-2 border-t border-[#E7E0DA]">
-                    <span className="text-[11px] text-[#77716F]">
-                      Changes will take effect immediately on the storefront entry popup.
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        couponService.saveFestiveCampaign(festiveCampaign);
-                        showNotification('Festive campaign configuration saved successfully');
-                      }}
-                      className="px-5 py-2 rounded-lg bg-[#292624] hover:bg-[#1C1A18] text-white text-xs font-semibold cursor-pointer transition-colors shadow-xs"
-                    >
-                      Save Festive Settings
-                    </button>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               <div>
                 <h4 className="font-semibold text-xs text-[#292624] uppercase tracking-wider mb-3">
@@ -2473,6 +2548,160 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
+              {/* Visual Sales & Revenue Performance Chart Panel */}
+              {(() => {
+                const topChartItems = performance
+                  .filter(p => perfCategoryFilter === 'all' || p.category === perfCategoryFilter)
+                  .slice(0, 5);
+
+                const totalPerfRevenue = performance.reduce((s, p) => s + p.netRevenue, 0);
+
+                const categoryMap = performance.reduce((acc, p) => {
+                  acc[p.category] = (acc[p.category] || 0) + p.netRevenue;
+                  return acc;
+                }, {} as Record<string, number>);
+
+                const categoryBreakdown = Object.entries(categoryMap)
+                  .filter(([_, rev]) => rev > 0)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([cat, rev]) => ({
+                    category: cat,
+                    label: cat.replace('-', ' '),
+                    revenue: rev,
+                    percentage: totalPerfRevenue > 0 ? Math.max(1, Math.round((rev / totalPerfRevenue) * 100)) : 0,
+                  }));
+
+                return (
+                  <div className="bg-white rounded-2xl border border-[#E7E0DA] shadow-2xs p-5 sm:p-6 space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[#F2ECE5]">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold tracking-[0.16em] text-[#B49A6C] block">
+                          Visual Leaderboard Chart
+                        </span>
+                        <h4 className="font-serif text-base sm:text-lg font-bold text-[#292624] mt-0.5">
+                          Top Performing Creations ({perfSortBy === 'netRevenue' ? 'By Revenue' : 'By Units Sold'})
+                        </h4>
+                      </div>
+                      <div className="text-[11px] text-[#77716F]">
+                        Ranked by {perfSortBy === 'netRevenue' ? 'net captured revenue' : 'sales volume'}
+                      </div>
+                    </div>
+
+                    {/* Top Comparative Bar Chart */}
+                    <div className="space-y-3.5">
+                      {topChartItems.length === 0 ? (
+                        <p className="text-xs text-[#77716F] py-4 text-center">No sales data for selected category.</p>
+                      ) : (
+                        topChartItems.map((item, idx) => {
+                          const maxVal = topChartItems[0]
+                            ? (perfSortBy === 'netRevenue' ? topChartItems[0].netRevenue : topChartItems[0].unitsSold)
+                            : 1;
+                          const currentVal = perfSortBy === 'netRevenue' ? item.netRevenue : item.unitsSold;
+                          const pct = maxVal > 0 ? Math.max(10, Math.round((currentVal / maxVal) * 100)) : 10;
+
+                          return (
+                            <div key={item.productId} className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center space-x-2.5 truncate pr-2">
+                                  <span className="w-5 text-center font-mono font-bold text-[#B49A6C] text-[11px]">
+                                    0{idx + 1}
+                                  </span>
+                                  <img
+                                    src={getOptimizedImageUrl(item.imageUrl)}
+                                    alt={item.productTitle}
+                                    className="w-7 h-7 rounded-lg object-cover bg-stone-100 border border-[#E7E0DA] shrink-0"
+                                  />
+                                  <span className="font-semibold text-[#292624] truncate">
+                                    {item.productTitle}
+                                  </span>
+                                  <span className="text-[10.5px] text-[#77716F] uppercase hidden md:inline font-mono">
+                                    ({item.category.replace('-', ' ')})
+                                  </span>
+                                </div>
+                                
+                                <div className="text-right shrink-0 flex items-center space-x-2 font-mono">
+                                  <span className="text-xs font-bold text-[#292624]">
+                                    {perfSortBy === 'netRevenue' ? `₹${item.netRevenue.toLocaleString('en-IN')}` : `${item.unitsSold} pcs`}
+                                  </span>
+                                  <span className="text-[10px] text-[#77716F] hidden sm:inline">
+                                    {perfSortBy === 'netRevenue' ? `(${item.unitsSold} sold)` : `(₹${item.netRevenue.toLocaleString('en-IN')})`}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Luxury Bar Track */}
+                              <div className="w-full h-3 bg-[#FAF8F5] rounded-full overflow-hidden border border-[#E7E0DA]/70 p-0.5">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-[#B49A6C] to-[#8F3B30]"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Category Sales Share Multi-Segment Bar */}
+                    {categoryBreakdown.length > 0 && (
+                      <div className="pt-4 border-t border-[#F2ECE5] space-y-2.5">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-semibold text-[#77716F] uppercase tracking-wider text-[10px]">
+                            Category Revenue Distribution
+                          </span>
+                          <span className="text-[#77716F] font-mono font-medium">
+                            Total: ₹{totalPerfRevenue.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+
+                        {/* Segment Bar */}
+                        <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-stone-200 shadow-2xs">
+                          {categoryBreakdown.map((cat, idx) => {
+                            const colors = [
+                              'bg-[#B49A6C]', // Gold
+                              'bg-[#292624]', // Charcoal
+                              'bg-[#A783A2]', // Mauve
+                              'bg-[#3B5432]', // Forest
+                              'bg-[#8F3B30]', // Rust
+                            ];
+                            const colorClass = colors[idx % colors.length];
+                            return (
+                              <div
+                                key={cat.category}
+                                className={`${colorClass} transition-all duration-300`}
+                                style={{ width: `${cat.percentage}%` }}
+                                title={`${cat.label}: ₹${cat.revenue.toLocaleString('en-IN')} (${cat.percentage}%)`}
+                              />
+                            );
+                          })}
+                        </div>
+
+                        {/* Legend */}
+                        <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-[#77716F]">
+                          {categoryBreakdown.map((cat, idx) => {
+                            const dotColors = [
+                              'bg-[#B49A6C]',
+                              'bg-[#292624]',
+                              'bg-[#A783A2]',
+                              'bg-[#3B5432]',
+                              'bg-[#8F3B30]',
+                            ];
+                            return (
+                              <div key={cat.category} className="flex items-center space-x-1.5">
+                                <span className={`w-2 h-2 rounded-full ${dotColors[idx % dotColors.length]}`} />
+                                <span className="font-medium text-[#292624] capitalize">{cat.label}</span>
+                                <span className="font-mono text-[10.5px]">({cat.percentage}%)</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })()}
+
               {/* Category Filter Pills */}
               <div className="flex flex-wrap items-center gap-1.5">
                 {[
@@ -2484,6 +2713,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   { id: 'kangna', label: 'Kangna' },
                   { id: 'necklaces', label: 'Necklaces' },
                   { id: 'bracelets', label: 'Bracelets' },
+                  { id: 'western', label: 'Western Jewellery' },
+                  { id: 'tribal', label: 'Tribal' },
+                  { id: 'accessories', label: 'Earpins & Bugadi' },
                 ].map((cat) => (
                   <button
                     key={cat.id}
@@ -2510,9 +2742,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <th className="py-2.5 px-4">SKU</th>
                         <th className="py-2.5 px-4">Category</th>
                         <th className="py-2.5 px-4 text-center">Units Sold</th>
-                        <th className="py-2.5 px-4">Net Revenue</th>
-                        <th className="py-2.5 px-4 text-center">Stock</th>
-                        <th className="py-2.5 px-4 text-right">Action</th>
+                        <th className="py-2.5 px-4 text-center">Net Revenue</th>
+                        <th className="py-2.5 px-4 text-right">Current Stock</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E7E0DA]">
@@ -2568,33 +2799,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </td>
 
                               {/* Net Revenue */}
-                              <td className="py-3 px-4 font-semibold text-[#292624] font-mono">
+                              <td className="py-3 px-4 font-semibold text-[#292624] font-mono text-center">
                                 ₹{item.netRevenue.toLocaleString('en-IN')}
                               </td>
 
-                              {/* Stock */}
-                              <td className="py-3 px-4 text-center">
-                                <span className={`font-medium ${isLowStock ? 'text-[#8F3B30] font-semibold' : 'text-[#292624]'}`}>
-                                  {item.stockAvailable} {isLowStock && <span className="text-[10px] block text-[#8F3B30]">(Low)</span>}
-                                </span>
-                              </td>
-
-                              {/* Action */}
+                              {/* Current Stock */}
                               <td className="py-3 px-4 text-right">
-                                {variant ? (
-                                  <button
-                                    onClick={() => {
-                                      setQuickAdjustVariant(variant);
-                                      setQuickAdjustUnits(5);
-                                      setQuickAdjustReason('Restock');
-                                    }}
-                                    className="px-2.5 py-1 rounded border border-[#E7E0DA] bg-white hover:bg-[#FAF8F5] text-[11px] font-medium text-[#292624] cursor-pointer transition-colors"
-                                  >
-                                    + Restock
-                                  </button>
-                                ) : (
-                                  <span className="text-[#C2BCB6]">—</span>
-                                )}
+                                <span className={`font-mono text-xs ${isLowStock ? 'text-[#8F3B30] font-bold' : 'text-[#292624] font-semibold'}`}>
+                                  {item.stockAvailable} units
+                                  {isLowStock && <span className="text-[10px] block text-[#8F3B30] font-sans font-medium">(Low Stock)</span>}
+                                </span>
                               </td>
 
                             </tr>
@@ -2663,6 +2877,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 <Truck className="w-3 h-3 text-[#77716F]" />
                                 <span>Slip</span>
                               </button>
+                              <button
+                                onClick={() => handlePermanentlyDeleteOrder(o.id)}
+                                title="Permanently Delete Order"
+                                className="p-1 rounded hover:bg-red-50 text-[#8F3B30] hover:text-red-700 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2687,10 +2908,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* ===================================================================== */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E7E0DA] px-2 py-1.5 flex items-center justify-around shadow-lg">
           {[
-            { id: 'overview', label: 'Pulse', icon: DollarSign },
+            { id: 'overview', label: 'Overview', icon: DollarSign },
             { id: 'orders', label: 'Orders', icon: ShoppingCart, badge: orders.length > 0 ? `${orders.length}` : undefined },
-            { id: 'products', label: 'Catalog', icon: Package },
-            { id: 'inventory', label: 'Vault', icon: Boxes, badge: stockValuation.lowStockSKUs > 0 ? `${stockValuation.lowStockSKUs}` : undefined },
+            { id: 'products', label: 'Products & Stock', icon: Package, badge: stockValuation.lowStockSKUs > 0 ? `${stockValuation.lowStockSKUs}` : undefined },
+            { id: 'coupons', label: 'Coupons', icon: Tag },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

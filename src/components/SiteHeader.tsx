@@ -80,6 +80,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
     { label: 'Necklaces', value: 'necklaces' },
     { label: 'Earrings', value: 'earrings' },
     { label: 'Kangan Sets', value: 'kangan-sets' },
+    { label: 'Kangna', value: 'kangna' },
     { label: 'Bracelets', value: 'bracelets' },
   ];
 

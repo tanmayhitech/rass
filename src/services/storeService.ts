@@ -16,6 +16,27 @@ const STORAGE_KEYS = {
   ORDERS: 'rass_orders',
 };
 
+// Deprecated legacy non-client dummy products that must never be loaded
+const DEPRECATED_LEGACY_IDS = new Set([
+  'rass-ring-01',
+  'rass-earring-01',
+  'rass-kangan-01',
+  'rass-kangna-01',
+  'rass-kangna-02',
+  'rass-necklace-01',
+  'rass-bracelet-01',
+]);
+
+// Categories that have 0 client products (must remain empty unless new products are added via admin)
+const ZERO_PRODUCT_CATEGORIES = new Set([
+  'rings',
+  'kangan-sets',
+  'kangna',
+  'bracelets',
+  'necklaces',
+  'earrings',
+]);
+
 // Initial Variants generated from PRODUCTS
 const INITIAL_VARIANTS: ProductVariant[] = [
   {
@@ -748,8 +769,18 @@ class StoreService {
 
       if (storedProducts) {
         const parsed = JSON.parse(storedProducts) as Product[];
-        // Preserve both canonical catalog products AND any newly created/custom admin products
-        const valid = parsed.filter((p) => p && p.id && (PRODUCTS.some((prod) => prod.id === p.id) || p.id.startsWith('rass-prod-') || !p.id.startsWith('rass-seed-')));
+        // Strictly filter out legacy dummy non-client products (rings, bracelets, kangna, kangan-sets, necklaces, etc.)
+        // Only accept canonical PRODUCTS or custom products created by admin (rass-prod-)
+        const valid = parsed.filter((p) => {
+          if (!p || !p.id) return false;
+          if (DEPRECATED_LEGACY_IDS.has(p.id)) return false;
+          if (p.id.startsWith('rass-seed-')) return false;
+          if (ZERO_PRODUCT_CATEGORIES.has(p.category) && !p.id.startsWith('rass-prod-')) {
+            return false;
+          }
+          return PRODUCTS.some((prod) => prod.id === p.id) || p.id.startsWith('rass-prod-');
+        });
+
         if (valid.length > 0) {
           const validProductIds = new Set(valid.map((p) => p.id));
           const missingCanonical = INITIAL_PRODUCTS.filter((p) => !validProductIds.has(p.id));
@@ -766,21 +797,25 @@ class StoreService {
                 cleanImage: canonical.cleanImage,
                 details: canonical.details,
                 description: canonical.description,
-                gemstones: canonical.gemstones
+                gemstones: canonical.gemstones,
+                category: canonical.category,
+                categoryDisplay: canonical.categoryDisplay
               } : p;
             }),
             ...missingCanonical,
           ];
           // Preserve the curated editorial order of canonical PRODUCTS, keeping custom products at the front
-          this.products = combined.sort((a, b) => {
-            const isCustomA = a.id.startsWith('rass-prod-');
-            const isCustomB = b.id.startsWith('rass-prod-');
-            if (isCustomA && !isCustomB) return -1;
-            if (!isCustomA && isCustomB) return 1;
-            const indexA = PRODUCTS.findIndex((p) => p.id === a.id);
-            const indexB = PRODUCTS.findIndex((p) => p.id === b.id);
-            return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
-          });
+          this.products = combined
+            .filter((p) => !DEPRECATED_LEGACY_IDS.has(p.id) && (PRODUCTS.some((cp) => cp.id === p.id) || p.id.startsWith('rass-prod-')))
+            .sort((a, b) => {
+              const isCustomA = a.id.startsWith('rass-prod-');
+              const isCustomB = b.id.startsWith('rass-prod-');
+              if (isCustomA && !isCustomB) return -1;
+              if (!isCustomA && isCustomB) return 1;
+              const indexA = PRODUCTS.findIndex((p) => p.id === a.id);
+              const indexB = PRODUCTS.findIndex((p) => p.id === b.id);
+              return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+            });
         } else {
           this.products = INITIAL_PRODUCTS;
         }
@@ -788,18 +823,20 @@ class StoreService {
         this.products = INITIAL_PRODUCTS;
       }
 
+      const currentValidProdIds = new Set(this.products.map((p) => p.id));
+
       if (storedVariants) {
         const parsedV = JSON.parse(storedVariants) as ProductVariant[];
-        const validV = parsedV.filter((v) => v && v.id && (PRODUCTS.some((p) => p.id === v.productId) || v.productId.startsWith('rass-prod-') || !v.productId.startsWith('rass-seed-')));
+        const validV = parsedV.filter((v) => v && v.id && currentValidProdIds.has(v.productId));
         if (validV.length > 0) {
           const validVariantIds = new Set(validV.map((v) => v.id));
-          const missingVariants = INITIAL_VARIANTS.filter((v) => !validVariantIds.has(v.id));
+          const missingVariants = INITIAL_VARIANTS.filter((v) => currentValidProdIds.has(v.productId) && !validVariantIds.has(v.id));
           this.variants = [...validV, ...missingVariants];
         } else {
-          this.variants = INITIAL_VARIANTS;
+          this.variants = INITIAL_VARIANTS.filter((v) => currentValidProdIds.has(v.productId));
         }
       } else {
-        this.variants = INITIAL_VARIANTS;
+        this.variants = INITIAL_VARIANTS.filter((v) => currentValidProdIds.has(v.productId));
       }
 
       this.movements = storedMovements ? JSON.parse(storedMovements) : INITIAL_MOVEMENTS;
@@ -855,8 +892,33 @@ class StoreService {
       let stateChanged = false;
 
       for (const remote of remoteProducts) {
-        if (!currentIds.has(remote.id)) {
-          const category = (remote.category_id || 'earrings') as ProductCategory;
+        // Strictly ignore deprecated legacy non-client dummy products
+        if (DEPRECATED_LEGACY_IDS.has(remote.id)) continue;
+        if (remote.id.startsWith('rass-seed-')) continue;
+        if (ZERO_PRODUCT_CATEGORIES.has(remote.category_id) && !remote.id.startsWith('rass-prod-')) {
+          continue;
+        }
+
+        // If it's a canonical product (e.g. the 17 earrings), ensure category is synced from canonical PRODUCTS
+        const canonical = PRODUCTS.find((p) => p.id === remote.id);
+        if (canonical) {
+          const localIdx = this.products.findIndex((p) => p.id === remote.id);
+          if (localIdx !== -1) {
+            if (this.products[localIdx].category !== canonical.category || this.products[localIdx].categoryDisplay !== canonical.categoryDisplay) {
+              this.products[localIdx] = {
+                ...this.products[localIdx],
+                category: canonical.category,
+                categoryDisplay: canonical.categoryDisplay,
+              };
+              stateChanged = true;
+            }
+          }
+          continue;
+        }
+
+        // Only allow new custom admin products from remote
+        if (remote.id.startsWith('rass-prod-') && !currentIds.has(remote.id)) {
+          const category = (remote.category_id || 'western') as ProductCategory;
           const imgInfo = imageMap.get(remote.id);
           const newProduct: Product = {
             id: remote.id,
@@ -864,12 +926,12 @@ class StoreService {
             title: remote.title,
             slug: remote.slug,
             category,
-            categoryDisplay: remote.category_id || 'Earrings',
+            categoryDisplay: remote.category_id || 'Western Jewellery',
             price: Number(remote.base_price) || 0,
             originalPrice: remote.compare_at_price ? Number(remote.compare_at_price) : undefined,
             costPrice: remote.cost_price ? Number(remote.cost_price) : undefined,
-            image: imgInfo?.image_url || '/images/cat_rings.png',
-            cleanImage: imgInfo?.clean_image_url || imgInfo?.image_url || '/images/clean_cat_rings.png',
+            image: imgInfo?.image_url || '/images/western/scarlet-bee-necklace.png',
+            cleanImage: imgInfo?.clean_image_url || imgInfo?.image_url || '/images/western/scarlet-bee-necklace.png',
             description: remote.short_description || remote.long_description || '',
             details: Array.isArray(remote.details) ? remote.details : [],
             metal: remote.metal_type || '18k Gold Vermeil',
@@ -888,6 +950,15 @@ class StoreService {
           this.products.push(newProduct);
           stateChanged = true;
         }
+      }
+
+      // Ensure no deprecated products remain in this.products
+      const initialCount = this.products.length;
+      this.products = this.products.filter(
+        (p) => !DEPRECATED_LEGACY_IDS.has(p.id) && (PRODUCTS.some((cp) => cp.id === p.id) || p.id.startsWith('rass-prod-'))
+      );
+      if (this.products.length !== initialCount) {
+        stateChanged = true;
       }
 
       if (stateChanged) {

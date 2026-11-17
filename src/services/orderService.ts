@@ -30,21 +30,21 @@ const INITIAL_ORDERS: Order[] = [
     itemSnapshots: [
       {
         id: 'snap-01',
-        productId: 'rass-necklace-01',
-        productTitle: 'Rajkumari Cascading Jhumka Collar',
-        variantName: 'Standard Collar',
-        sku: 'RASS-NCK-01-STD',
-        imageUrl: '/images/clean_cat_necklaces.png',
-        unitPrice: 38000,
+        productId: 'rass-jhumka-01',
+        productTitle: 'Pastel Tribal Silver Jhumka Earrings',
+        variantName: 'Standard Pair',
+        sku: 'RASS-JHM-01-STD',
+        imageUrl: '/images/Pastel Tribal Silver Jhumka Earrings.png',
+        unitPrice: 5000,
         quantity: 1,
-        lineSubtotal: 38000,
+        lineSubtotal: 5000,
       }
     ],
-    subtotal: 38000,
-    discount: 3800,
+    subtotal: 5000,
+    discount: 500,
     shippingFee: 0,
     tax: 0,
-    total: 34200,
+    total: 4500,
     date: '14 Oct 2026',
     orderTime: '02:30 PM',
     status: 'Shipped',
@@ -74,32 +74,32 @@ const INITIAL_ORDERS: Order[] = [
     itemSnapshots: [
       {
         id: 'snap-02',
-        productId: 'rass-ring-01',
-        productTitle: 'Gulshan Emerald & Seed Pearl Cocktail Ring',
-        variantName: 'Standard Adjustable',
-        sku: 'RASS-RNG-01-STD',
-        imageUrl: '/images/clean_cat_rings.png',
-        unitPrice: 14500,
+        productId: 'rass-wst-11',
+        productTitle: 'Scarlet Bee Necklace',
+        variantName: 'Standard (1 Piece)',
+        sku: 'RASS-WST-011',
+        imageUrl: '/images/western/scarlet-bee-necklace.png',
+        unitPrice: 1450,
         quantity: 1,
-        lineSubtotal: 14500,
+        lineSubtotal: 1450,
       },
       {
         id: 'snap-03',
-        productId: 'rass-earring-01',
-        productTitle: 'Chandani Double-Tier Jhumka Chandelier',
-        variantName: 'Standard Pair',
-        sku: 'RASS-EAR-01-STD',
-        imageUrl: '/images/clean_cat_earrings.png',
-        unitPrice: 22800,
+        productId: 'rass-ear-07',
+        productTitle: 'Oceania Earrings',
+        variantName: 'Standard Pair (1 Piece)',
+        sku: 'RASS-EAR-007',
+        imageUrl: '/images/earrings/oceania-earrings.png',
+        unitPrice: 1450,
         quantity: 1,
-        lineSubtotal: 22800,
+        lineSubtotal: 1450,
       }
     ],
-    subtotal: 37300,
-    discount: 7460,
+    subtotal: 2900,
+    discount: 580,
     shippingFee: 0,
     tax: 0,
-    total: 29840,
+    total: 2320,
     date: '16 Oct 2026',
     orderTime: '05:15 PM',
     status: 'Delivered',
@@ -129,21 +129,32 @@ const INITIAL_ORDERS: Order[] = [
     itemSnapshots: [
       {
         id: 'snap-04',
-        productId: 'rass-bracelet-01',
-        productTitle: 'Manjari Multi-Strand Gemstone Cuff',
-        variantName: 'Standard 6.5"',
-        sku: 'RASS-BRC-01-STD',
-        imageUrl: '/images/clean_cat_bracelets.png',
-        unitPrice: 19800,
+        productId: 'rass-pin-01',
+        productTitle: 'Golden Leaf Vine Earpin',
+        variantName: 'Single Piece',
+        sku: 'RASS-PIN-001',
+        imageUrl: '/images/earpins/golden-leaf-vine-earpin.png',
+        unitPrice: 750,
         quantity: 1,
-        lineSubtotal: 19800,
+        lineSubtotal: 750,
+      },
+      {
+        id: 'snap-05',
+        productId: 'rass-wst-01',
+        productTitle: 'Beetle Boo Necklace',
+        variantName: 'Standard (1 Piece)',
+        sku: 'RASS-WST-001',
+        imageUrl: '/images/western/beetle-boo-necklace.png',
+        unitPrice: 2250,
+        quantity: 1,
+        lineSubtotal: 2250,
       }
     ],
-    subtotal: 19800,
+    subtotal: 3000,
     discount: 0,
-    shippingFee: 450,
+    shippingFee: 0,
     tax: 0,
-    total: 20250,
+    total: 3000,
     date: '18 Oct 2026',
     orderTime: '11:42 AM',
     status: 'Processing',
@@ -193,11 +204,9 @@ class OrderService {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // ensure existing orders have snapshots
-          this.orders = parsed.map((o: Order) => ({
-            ...o,
-            items: Array.isArray(o.items) ? o.items : [],
-            itemSnapshots: (o.itemSnapshots && o.itemSnapshots.length > 0)
+          // Filter out / sanitize any historical mock items referencing rings, bracelets, kangna, kangan
+          this.orders = parsed.map((o: Order) => {
+            const rawSnapshots = (o.itemSnapshots && o.itemSnapshots.length > 0)
               ? o.itemSnapshots
               : (Array.isArray(o.items) ? o.items.map((i, idx) => ({
                   id: `snap-${o.id}-${idx}`,
@@ -209,11 +218,42 @@ class OrderService {
                   unitPrice: i?.product?.price || 0,
                   quantity: i?.quantity || 1,
                   lineSubtotal: (i?.product?.price || 0) * (i?.quantity || 1),
-                })) : []),
-            paymentStatus: o.paymentStatus || 'captured',
-            fulfilmentStatus: o.fulfilmentStatus || (o.status === 'Delivered' ? 'delivered' : o.status === 'Shipped' ? 'shipped' : 'processing'),
-            orderTime: o.orderTime || (o.createdAt ? new Date(o.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '02:30 PM'),
-          }));
+                })) : []);
+
+            const validSnapshots = rawSnapshots.filter((s) => {
+              const id = (s.productId || '').toLowerCase();
+              const title = (s.productTitle || '').toLowerCase();
+              return !id.includes('ring') && !id.includes('bracelet') && !id.includes('kangan') && !id.includes('kangna') &&
+                     !title.includes('ring') && !title.includes('bracelet') && !title.includes('cuff') && !title.includes('kangan') && !title.includes('kangna');
+            });
+
+            return {
+              ...o,
+              items: Array.isArray(o.items) ? o.items.filter((i) => {
+                const id = (i?.product?.id || '').toLowerCase();
+                const name = (i?.product?.name || '').toLowerCase();
+                return !id.includes('ring') && !id.includes('bracelet') && !id.includes('kangan') && !id.includes('kangna') &&
+                       !name.includes('ring') && !name.includes('bracelet') && !name.includes('cuff') && !name.includes('kangan') && !name.includes('kangna');
+              }) : [],
+              itemSnapshots: validSnapshots.length > 0 ? validSnapshots : [
+                {
+                  id: `snap-${o.id}-def`,
+                  productId: 'rass-jhumka-01',
+                  productTitle: 'Pastel Tribal Silver Jhumka Earrings',
+                  variantName: 'Standard Pair',
+                  sku: 'RASS-JHM-01-STD',
+                  imageUrl: '/images/Pastel Tribal Silver Jhumka Earrings.png',
+                  unitPrice: 5000,
+                  quantity: 1,
+                  lineSubtotal: 5000,
+                }
+              ],
+              paymentStatus: o.paymentStatus || 'captured',
+              fulfilmentStatus: o.fulfilmentStatus || (o.status === 'Delivered' ? 'delivered' : o.status === 'Shipped' ? 'shipped' : 'processing'),
+              orderTime: o.orderTime || (o.createdAt ? new Date(o.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '02:30 PM'),
+            };
+          });
+          this.saveOrders();
           return;
         }
       }
@@ -738,6 +778,30 @@ class OrderService {
     }
 
     return Object.assign(order, { emailResult });
+  }
+
+  /**
+   * Permanently delete an order from memory, localStorage, and database
+   */
+  public async deleteOrder(orderId: string): Promise<{ success: boolean; message: string }> {
+    const index = this.orders.findIndex((o) => o.id === orderId);
+    if (index === -1) {
+      return { success: false, message: `Order #${orderId} was not found.` };
+    }
+
+    this.orders.splice(index, 1);
+    this.saveOrders();
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('order_items').delete().eq('order_id', orderId);
+        await supabase.from('orders').delete().eq('id', orderId);
+      } catch (err) {
+        console.warn('Supabase order delete error:', err);
+      }
+    }
+
+    return { success: true, message: `Order #${orderId} permanently deleted.` };
   }
 }
 

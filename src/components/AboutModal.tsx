@@ -390,16 +390,25 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 </div>
 
                 {/* The Founder Note Box */}
-                <div className="p-4 sm:p-5 bg-[#FAF5F9] rounded-xl border border-[#A783A2]/25 space-y-2">
-                  <span className="font-sans font-bold text-[10px] tracking-[0.2em] text-[#A783A2] uppercase block">
-                    The Founder Note –
-                  </span>
-                  <p className="text-xs sm:text-[13px] text-[#5C5855] leading-relaxed">
-                    Rass by Ridhima was born out of Ridhima’s love for jewellery and her belief that the right piece can make a woman feel beautiful, confident and effortlessly elegant. She wanted to create a brand that brings together traditional Indian craftsmanship, contemporary designs and everyday wearability.
-                  </p>
-                  <p className="text-xs sm:text-[13px] text-[#5C5855] leading-relaxed">
-                    Her personal philosophy is simple: Jewellery is not just an accessory; it is an expression of who you are. It should make you feel confident, special and connected to your personal style. Through Rass by Ridhima, she hopes to make every woman feel that a little piece of jewellery can carry a lot of beauty, personality and emotion.
-                  </p>
+                <div className="p-4 sm:p-5 bg-[#FAF5F9] rounded-xl border border-[#A783A2]/25 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-[#A783A2]/40 shrink-0 shadow-xs">
+                    <img
+                      src="/images/founder-photo-real.jpeg"
+                      alt="Ridhima — Founder"
+                      className="w-full h-full object-cover object-top"
+                    />
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <span className="font-sans font-bold text-[10px] tracking-[0.2em] text-[#A783A2] uppercase block">
+                      The Founder Note –
+                    </span>
+                    <p className="text-xs sm:text-[13px] text-[#5C5855] leading-relaxed">
+                      Rass by Ridhima was born out of Ridhima’s love for jewellery and her belief that the right piece can make a woman feel beautiful, confident and effortlessly elegant. She wanted to create a brand that brings together traditional Indian craftsmanship, contemporary designs and everyday wearability.
+                    </p>
+                    <p className="text-xs sm:text-[13px] text-[#5C5855] leading-relaxed">
+                      Her personal philosophy is simple: Jewellery is not just an accessory; it is an expression of who you are. It should make you feel confident, special and connected to your personal style. Through Rass by Ridhima, she hopes to make every woman feel that a little piece of jewellery can carry a lot of beauty, personality and emotion.
+                    </p>
+                  </div>
                 </div>
 
                 {/* 3 Pillar Cards */}
@@ -602,7 +611,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
                 {/* Kangna / Bangle Sizing Chart */}
                 <div className="space-y-2.5 pt-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Kangna & Bangle Sizing</h3>
+                    <h3 className="font-editorial text-[16px] sm:text-lg text-[#292624] font-medium">Kangna &amp; Bangle Sizing</h3>
                     <span className="text-[11px] text-[#77716F] sm:hidden">Swipe table →</span>
                   </div>
                   <div className="overflow-x-auto rounded-xl border border-[#E7E0DA] bg-white">

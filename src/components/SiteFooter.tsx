@@ -147,10 +147,34 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
                 </li>
                 <li>
                   <button 
+                    onClick={() => onCategoryClick('western')} 
+                    className="hover:text-[#A783A2] transition-colors text-left cursor-pointer"
+                  >
+                    Western Jewellery
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => onCategoryClick('accessories')} 
+                    className="hover:text-[#A783A2] transition-colors text-left cursor-pointer"
+                  >
+                    Earpins &amp; Bugadi
+                  </button>
+                </li>
+                <li>
+                  <button 
                     onClick={() => onCategoryClick('earrings')} 
                     className="hover:text-[#A783A2] transition-colors text-left cursor-pointer"
                   >
                     Earrings
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => onCategoryClick('kadas')} 
+                    className="hover:text-[#A783A2] transition-colors text-left cursor-pointer"
+                  >
+                    Kadas
                   </button>
                 </li>
                 <li>
@@ -324,10 +348,34 @@ export const SiteFooter: React.FC<SiteFooterProps> = ({
                   </li>
                   <li>
                     <button 
+                      onClick={() => onCategoryClick('western')} 
+                      className="w-full text-left py-1 hover:text-[#A783A2] transition-colors"
+                    >
+                      Western Jewellery
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => onCategoryClick('accessories')} 
+                      className="w-full text-left py-1 hover:text-[#A783A2] transition-colors"
+                    >
+                      Earpins &amp; Bugadi
+                    </button>
+                  </li>
+                  <li>
+                    <button 
                       onClick={() => onCategoryClick('earrings')} 
                       className="w-full text-left py-1 hover:text-[#A783A2] transition-colors"
                     >
                       Earrings
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => onCategoryClick('kadas')} 
+                      className="w-full text-left py-1 hover:text-[#A783A2] transition-colors"
+                    >
+                      Kadas
                     </button>
                   </li>
                   <li>

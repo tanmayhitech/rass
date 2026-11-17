@@ -1,4 +1,5 @@
 import { ProductCategory } from '../types';
+import { uploadImageToCloud } from './imageUploadService';
 
 export interface HomeMediaItem {
   id: string;
@@ -19,6 +20,7 @@ export interface HomeMediaItem {
 }
 
 const STORAGE_KEY = 'rass_home_media_v26';
+const CLOUD_CONFIG_URL = 'https://ukgjkmjhhxtaedxyhaeu.supabase.co/storage/v1/object/public/product-images/home-media-config.json';
 
 export const INITIAL_HOME_MEDIA: HomeMediaItem[] = [
   // --- COLUMN 1 (Left Column) ---
@@ -223,6 +225,55 @@ class HomeMediaService {
           this.loadFromStorage();
         }
       });
+      // Synchronize with cloud config so any customer sees live admin updates
+      this.syncWithCloud();
+    }
+  }
+
+  /**
+   * Synchronize media config from Supabase Cloud Storage
+   */
+  public async syncWithCloud(): Promise<void> {
+    try {
+      const resp = await fetch(CLOUD_CONFIG_URL + '?t=' + Date.now());
+      if (resp.ok) {
+        const cloudItems = (await resp.json()) as HomeMediaItem[];
+        if (Array.isArray(cloudItems) && cloudItems.length > 0) {
+          const merged = INITIAL_HOME_MEDIA.map((def) => {
+            const found = cloudItems.find((p) => p.id === def.id);
+            if (found) {
+              const isCustom = Boolean(found.isCustom);
+              return {
+                ...def,
+                ...found,
+                column: isCustom && found.column !== undefined ? found.column : def.column,
+                order: isCustom && found.order !== undefined ? found.order : def.order,
+                heightClass: def.heightClass,
+                isCustom,
+                currentImage: found.currentImage || def.currentImage,
+                cleanImage: isCustom ? undefined : (found.cleanImage ?? def.cleanImage),
+                isVisible: found.isVisible !== undefined ? found.isVisible : def.isVisible,
+                title: found.title || def.title,
+                subtitle: found.subtitle !== undefined ? found.subtitle : def.subtitle,
+                altText: found.altText || def.altText,
+              };
+            }
+            return def;
+          });
+
+          const customAdded = cloudItems.filter(
+            (p) => !INITIAL_HOME_MEDIA.some((def) => def.id === p.id)
+          );
+
+          this.mediaItems = [...merged, ...customAdded];
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.mediaItems));
+          }
+          this.notifyListeners();
+        }
+      }
+    } catch (e) {
+      // Offline or network deferred
     }
   }
 
@@ -283,12 +334,19 @@ class HomeMediaService {
       }
     } catch (e: any) {
       console.error('Failed to save home media to localStorage:', e);
-      if (e?.name === 'QuotaExceededError' || e?.code === 22 || e?.code === 1014) {
-        throw new Error('Browser storage quota exceeded. The image file is too large. Please use an optimized image under 1MB.');
-      }
-      throw e;
     }
     this.notifyListeners();
+
+    // Asynchronously push update to Supabase Cloud Storage
+    if (typeof window !== 'undefined') {
+      fetch('/api/sync-home-media', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: this.mediaItems }),
+      }).catch((err) => {
+        console.warn('[HomeMediaService] Cloud backup sync deferred:', err);
+      });
+    }
   }
 
   private notifyListeners(): void {
@@ -409,6 +467,27 @@ class HomeMediaService {
 
     this.mediaItems[index] = updated;
     this.saveToStorage();
+
+    // If new image is a base64 data URL, upload to Supabase Cloud Storage in the background
+    if (newImageUrl.startsWith('data:')) {
+      uploadImageToCloud(newImageUrl, id, 'home-media')
+        .then((res) => {
+          if (res.success && res.publicUrl) {
+            const itemIdx = this.mediaItems.findIndex((i) => i.id === id);
+            if (itemIdx !== -1) {
+              this.mediaItems[itemIdx] = {
+                ...this.mediaItems[itemIdx],
+                currentImage: res.publicUrl,
+              };
+              this.saveToStorage();
+            }
+          }
+        })
+        .catch((e) => {
+          console.warn('[HomeMediaService] Background cloud image upload deferred:', e);
+        });
+    }
+
     return updated;
   }
 
@@ -503,6 +582,27 @@ class HomeMediaService {
 
     this.mediaItems.push(newCard);
     this.saveToStorage();
+
+    if (card.currentImage.startsWith('data:')) {
+      uploadImageToCloud(card.currentImage, id, 'home-media')
+        .then((res) => {
+          if (res.success && res.publicUrl) {
+            const itemIdx = this.mediaItems.findIndex((i) => i.id === id);
+            if (itemIdx !== -1) {
+              this.mediaItems[itemIdx] = {
+                ...this.mediaItems[itemIdx],
+                currentImage: res.publicUrl,
+                defaultImage: res.publicUrl,
+              };
+              this.saveToStorage();
+            }
+          }
+        })
+        .catch((e) => {
+          console.warn('[HomeMediaService] Background cloud image upload deferred:', e);
+        });
+    }
+
     return newCard;
   }
 

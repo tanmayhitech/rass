@@ -50,7 +50,7 @@ export const App: React.FC = () => {
       } else if (['earpins', 'earpin'].includes(hash)) {
         setActivePage('shop');
         setSelectedCategory('accessories');
-      } else if (['western', 'jhumka', 'tribal', 'rings', 'kadas', 'accessories', 'toran', 'earrings', 'necklaces', 'kangan-sets', 'kangna', 'bracelets'].includes(hash)) {
+      } else if (['western', 'jhumka', 'tribal', 'kadas', 'accessories', 'toran', 'earrings', 'necklaces', 'rings', 'kangan-sets', 'kangna', 'bracelets'].includes(hash)) {
         setActivePage('shop');
         setSelectedCategory(hash as ProductCategory);
       }
@@ -76,8 +76,9 @@ export const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>(() => storeService.getProducts());
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Synchronize catalog with Supabase on mount
+  // Synchronize catalog on mount & listen to store updates
   useEffect(() => {
+    setProducts(storeService.getProducts());
     storeService.syncWithSupabase().then(() => {
       setProducts(storeService.getProducts());
     }).catch((err) => {
@@ -118,33 +119,8 @@ export const App: React.FC = () => {
     return [PRODUCTS[0].id];
   });
 
-  // Orders State (Stored in localStorage)
-  const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('rass_orders');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* fallback */ }
-    }
-    return [
-      {
-        id: 'RASS-ORD-841920',
-        customerName: 'Meera Singhania',
-        email: 'meera.s@example.com',
-        phone: '+91 98201 11223',
-        shippingAddress: '42, Vasant Vihar, Poorvi Marg',
-        city: 'New Delhi',
-        state: 'Delhi',
-        pincode: '110057',
-        items: [{ product: PRODUCTS[0], quantity: 1 }],
-        subtotal: 5000,
-        discount: 500,
-        shippingFee: 0,
-        total: 4500,
-        date: '14 Oct 2026',
-        status: 'Shipped',
-        paymentMethod: 'Razorpay UPI',
-      }
-    ];
-  });
+  // Orders State (Stored in localStorage and synchronized via orderService)
+  const [orders, setOrders] = useState<Order[]>(() => orderService.getOrders());
 
   // Modals & Drawers Visibility
   const [isCartOpen, setIsCartOpen] = useState(false);
