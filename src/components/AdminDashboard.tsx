@@ -201,27 +201,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setTimeout(() => setNotification(null), 3500);
   };
 
-  const refreshAllData = async () => {
-    try {
-      await storeService.syncWithSupabase();
-      await orderService.syncWithSupabase();
-      await couponService.syncWithSupabase();
-      setProducts(storeService.getProducts(true));
-      setVariants(storeService.getVariants());
-      setOrders(orderService.getOrders());
-      setCoupons(couponService.getCoupons(true));
-      setFestiveCampaign(couponService.getFestiveCampaign());
-      setMovements(storeService.getInventoryMovements());
-      setMetrics(AnalyticsService.getDashboardMetrics());
-      setPerformance(AnalyticsService.getProductPerformance(perfSortBy));
-      setCategoryPerf(AnalyticsService.getCategoryPerformance());
-    } catch (e) {
-      console.error('Error refreshing admin dashboard data:', e);
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+
+  const loadLocalData = () => {
+    setProducts(storeService.getProducts(true));
+    setVariants(storeService.getVariants());
+    setOrders(orderService.getOrders());
+    setCoupons(couponService.getCoupons(true));
+    setFestiveCampaign(couponService.getFestiveCampaign());
+    setMovements(storeService.getInventoryMovements());
+    setMetrics(AnalyticsService.getDashboardMetrics());
+    setPerformance(AnalyticsService.getProductPerformance(perfSortBy));
+    setCategoryPerf(AnalyticsService.getCategoryPerformance());
+  };
+
+  const refreshAllData = async (forceCloud = true) => {
+    loadLocalData();
+    if (forceCloud) {
+      setIsSyncingCloud(true);
+      try {
+        await Promise.allSettled([
+          storeService.syncWithSupabase(),
+          orderService.syncWithSupabase(),
+          couponService.syncWithSupabase(),
+        ]);
+        loadLocalData();
+      } catch (e) {
+        console.error('Error syncing cloud data:', e);
+      } finally {
+        setIsSyncingCloud(false);
+      }
     }
   };
 
+  // Initial Mount: Instant 0ms memory render + non-blocking background cloud sync
   useEffect(() => {
-    refreshAllData();
+    loadLocalData();
+    refreshAllData(true);
+  }, []);
+
+  // Update rankings instantly in-memory without firing network requests
+  useEffect(() => {
+    setPerformance(AnalyticsService.getProductPerformance(perfSortBy));
   }, [perfSortBy]);
 
   // Category default studio photography mappings
@@ -761,6 +782,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   }, [orders, orderStatusFilter, orderSearch]);
 
+  // Fast Order Table Pagination (15 orders per page to prevent DOM bloat & lag)
+  const [orderPage, setOrderPage] = useState(1);
+  const ORDERS_PER_PAGE = 15;
+  const totalOrderPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+  const paginatedOrders = useMemo(() => {
+    const start = (orderPage - 1) * ORDERS_PER_PAGE;
+    return filteredOrders.slice(start, start + ORDERS_PER_PAGE);
+  }, [filteredOrders, orderPage]);
+
+  // Reset order page when filter changes
+  useEffect(() => {
+    setOrderPage(1);
+  }, [orderStatusFilter, orderSearch]);
+
   const stockValuation = useMemo(() => {
     return storeService.getStockValuation();
   }, [variants, products]);
@@ -1072,11 +1107,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <span className="text-[10px] text-[#B49A6C]">Live & Secure</span>
               </div>
               <button
-                onClick={refreshAllData}
-                title="Refresh Data"
+                type="button"
+                onClick={() => refreshAllData(true)}
+                title="Refresh Live Data"
                 className="p-1 text-[#9E9793] hover:text-[#FAF8F5] transition-colors cursor-pointer"
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className={`w-3 h-3 ${isSyncingCloud ? 'animate-spin text-[#B49A6C]' : ''}`} />
               </button>
             </div>
           )}
@@ -1611,11 +1647,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {lowestPiece ? (
                           <div className="space-y-2.5">
                             <div className="flex items-center space-x-3 p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-                              <img
-                                src={getOptimizedImageUrl(lowestPiece.image)}
-                                alt={lowestPiece.name}
-                                className="w-11 h-11 rounded-lg object-cover bg-white border border-[#E2E8F0] shrink-0"
-                              />
+                              <div className="w-12 h-12 max-w-[48px] max-h-[48px] rounded-lg overflow-hidden bg-white border border-[#E2E8F0] shrink-0">
+                                <img
+                                  src={getOptimizedImageUrl(lowestPiece.image)}
+                                  alt={lowestPiece.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
                               <div className="flex-1 min-w-0">
                                 <span className="font-semibold text-xs text-[#18181B] block truncate">
                                   {lowestPiece.name}
@@ -1666,11 +1704,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
 
                       <div className="flex items-center space-x-3.5">
-                        <img
-                          src={getOptimizedImageUrl(performance[0].imageUrl)}
-                          alt={performance[0].productTitle}
-                          className="w-13 h-13 rounded-xl object-cover bg-stone-100 border border-[#E2E8F0] shrink-0"
-                        />
+                        <div className="w-14 h-14 max-w-[56px] max-h-[56px] rounded-xl overflow-hidden bg-stone-100 border border-[#E2E8F0] shrink-0">
+                          <img
+                            src={getOptimizedImageUrl(performance[0].imageUrl)}
+                            alt={performance[0].productTitle}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
                         <div className="space-y-0.5 truncate flex-1 min-w-0">
                           <span className="font-semibold text-xs text-[#18181B] block truncate">
                             {performance[0].productTitle}
@@ -2172,7 +2212,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E7E0DA]">
-                      {filteredOrders.map((o) => (
+                      {paginatedOrders.map((o) => (
                         <tr key={o.id} className="hover:bg-[#FAF8F5]/60 transition-colors">
                           <td className="py-3 px-4 font-mono font-medium text-[#292624]">
                             {o.id}
@@ -2297,6 +2337,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </tbody>
                   </table>
                 </div>
+
+                {/* Orders Pagination Controls */}
+                {filteredOrders.length > ORDERS_PER_PAGE && (
+                  <div className="p-4 border-t border-[#E7E0DA] flex items-center justify-between text-xs text-[#77716F]">
+                    <span>
+                      Showing {Math.min((orderPage - 1) * ORDERS_PER_PAGE + 1, filteredOrders.length)} to{' '}
+                      {Math.min(orderPage * ORDERS_PER_PAGE, filteredOrders.length)} of{' '}
+                      <span className="font-semibold text-[#292624]">{filteredOrders.length}</span> orders
+                    </span>
+                    <div className="flex items-center space-x-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setOrderPage(prev => Math.max(1, prev - 1))}
+                        disabled={orderPage === 1}
+                        className="px-3 py-1 rounded border border-[#E7E0DA] bg-white text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FAF8F5] cursor-pointer"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-2 text-xs font-medium text-[#292624]">
+                        Page {orderPage} of {totalOrderPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setOrderPage(prev => Math.min(totalOrderPages, prev + 1))}
+                        disabled={orderPage === totalOrderPages}
+                        className="px-3 py-1 rounded border border-[#E7E0DA] bg-white text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#FAF8F5] cursor-pointer"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
